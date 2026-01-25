@@ -1,0 +1,56 @@
+# Godot 4.x cache and generated files
+.godot/
+.import/
+*.import
+
+# Export templates and builds
+export/
+export_presets.cfg
+*.exe
+*.x86_64
+*.apk
+*.aab
+*.pck
+*.zip
+
+# Project management (internal use only)
+.claude/
+claude.md
+_bmad/
+_bmad-output/
+
+# Reference materials (not game assets)
+images/
+game_board/
+remake character/
+
+# Empty documentation folder
+docs/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Editor backup files
+*.bak
+*.tmp
+*.swp
+*~
+
+# Logs
+*.log
+
+# IDE specific
+.idea/
+.vscode/
+*.code-workspace
+
+# Python cache (if using any Python scripts)
+__pycache__/
+*.py[cod]

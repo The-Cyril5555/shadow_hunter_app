@@ -1,0 +1,17 @@
+{
+	"personality": "aggressive",
+	"description": "Prefers attacking and taking risks",
+	"decision_weights": {
+		"attack": 0.7,
+		"move_to_combat_zone": 0.6,
+		"use_equipment": 0.5,
+		"draw_card": 0.4,
+		"bluff_threshold": 0.3,
+		"reveal_threshold": 0.4
+	},
+	"target_selection": {
+		"prefer_low_hp": 0.8,
+		"prefer_revealed_enemies": 0.9,
+		"random_factor": 0.2
+	}
+}

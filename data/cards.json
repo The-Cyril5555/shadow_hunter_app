@@ -1,0 +1,33 @@
+{
+	"version": "1.0",
+	"description": "Shadow Hunter card definitions",
+	"decks": {
+		"hermit": {
+			"name": "Hermit",
+			"description": "Vision cards from the Hermit's Cabin",
+			"cards": []
+		},
+		"white": {
+			"name": "White (Church)",
+			"description": "Beneficial cards from the Church",
+			"cards": []
+		},
+		"black": {
+			"name": "Black (Cemetery)",
+			"description": "Harmful cards from the Cemetery",
+			"cards": []
+		}
+	},
+	"card_template": {
+		"id": "template",
+		"name": "Card Name",
+		"deck": "hermit|white|black",
+		"type": "equipment|instant|vision",
+		"copies_in_deck": 1,
+		"effect": {
+			"type": "damage|heal|reveal|draw|special",
+			"value": 0,
+			"description": "Effect description"
+		}
+	}
+}

@@ -1,0 +1,17 @@
+{
+	"personality": "balanced",
+	"description": "Adapts to game state, moderate in all approaches",
+	"decision_weights": {
+		"attack": 0.5,
+		"move_to_combat_zone": 0.4,
+		"use_equipment": 0.5,
+		"draw_card": 0.5,
+		"bluff_threshold": 0.5,
+		"reveal_threshold": 0.5
+	},
+	"target_selection": {
+		"prefer_low_hp": 0.6,
+		"prefer_revealed_enemies": 0.7,
+		"random_factor": 0.25
+	}
+}

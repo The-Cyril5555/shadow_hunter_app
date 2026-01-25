@@ -1,0 +1,267 @@
+{
+	"version": "1.0",
+	"description": "Shadow Hunter character definitions - Base game characters",
+	"characters": {
+		"allie": {
+			"id": "allie",
+			"name": "Allie",
+			"faction": "hunter",
+			"hp_max": 8,
+			"is_expansion": false,
+			"ability": {
+				"name": "Teleport",
+				"description": "Once per game, may move to any Area instead of rolling dice.",
+				"type": "active",
+				"trigger": "manual"
+			}
+		},
+		"bob": {
+			"id": "bob",
+			"name": "Bob",
+			"faction": "hunter",
+			"hp_max": 10,
+			"is_expansion": false,
+			"ability": {
+				"name": "Defense",
+				"description": "When attacked, can counterattack immediately dealing 1 damage.",
+				"type": "passive",
+				"trigger": "on_attacked"
+			}
+		},
+		"charles": {
+			"id": "charles",
+			"name": "Charles",
+			"faction": "hunter",
+			"hp_max": 11,
+			"is_expansion": false,
+			"ability": {
+				"name": "Diagnosis",
+				"description": "At the start of your turn, you may pick a player and privately learn if they are a Shadow or not.",
+				"type": "active",
+				"trigger": "on_turn_start"
+			}
+		},
+		"ellen": {
+			"id": "ellen",
+			"name": "Ellen",
+			"faction": "hunter",
+			"hp_max": 10,
+			"is_expansion": false,
+			"ability": {
+				"name": "Exorcism",
+				"description": "Once per game, pick a player. If that player is a Shadow, they receive 2 damage.",
+				"type": "active",
+				"trigger": "manual"
+			}
+		},
+		"franklin": {
+			"id": "franklin",
+			"name": "Franklin",
+			"faction": "hunter",
+			"hp_max": 11,
+			"is_expansion": false,
+			"ability": {
+				"name": "Leadership",
+				"description": "Once per game after moving, you may pick any one player and move them to your Area.",
+				"type": "active",
+				"trigger": "manual"
+			}
+		},
+		"george": {
+			"id": "george",
+			"name": "George",
+			"faction": "hunter",
+			"hp_max": 14,
+			"is_expansion": false,
+			"ability": {
+				"name": "Demolition",
+				"description": "You can use the Demolition ability: pick a player in the same Area and give 3 damage, but receive 2 damage yourself.",
+				"type": "active",
+				"trigger": "manual"
+			}
+		},
+		"vampire": {
+			"id": "vampire",
+			"name": "Vampire",
+			"faction": "shadow",
+			"hp_max": 13,
+			"is_expansion": false,
+			"ability": {
+				"name": "Bloodthirst",
+				"description": "Once per game, at the start of your turn, you may give 1 damage to any player and heal 1 damage.",
+				"type": "active",
+				"trigger": "on_turn_start"
+			}
+		},
+		"werewolf": {
+			"id": "werewolf",
+			"name": "Werewolf",
+			"faction": "shadow",
+			"hp_max": 14,
+			"is_expansion": false,
+			"ability": {
+				"name": "Unearthly Speed",
+				"description": "After attacking, if you killed a Hunter or Neutral, heal 2 damage.",
+				"type": "passive",
+				"trigger": "on_kill"
+			}
+		},
+		"ultra_soul": {
+			"id": "ultra_soul",
+			"name": "Ultra Soul",
+			"faction": "shadow",
+			"hp_max": 11,
+			"is_expansion": false,
+			"ability": {
+				"name": "Soul Steal",
+				"description": "When attacked, the attacker takes 1 damage.",
+				"type": "passive",
+				"trigger": "on_attacked"
+			}
+		},
+		"wight": {
+			"id": "wight",
+			"name": "Wight",
+			"faction": "shadow",
+			"hp_max": 13,
+			"is_expansion": false,
+			"ability": {
+				"name": "Wither",
+				"description": "You may give 1 damage to a player and 1 damage to yourself.",
+				"type": "active",
+				"trigger": "manual"
+			}
+		},
+		"unknown": {
+			"id": "unknown",
+			"name": "Unknown",
+			"faction": "shadow",
+			"hp_max": 11,
+			"is_expansion": false,
+			"ability": {
+				"name": "Copy",
+				"description": "When revealed, you may copy another revealed player's ability.",
+				"type": "passive",
+				"trigger": "on_reveal"
+			}
+		},
+		"valkyrie": {
+			"id": "valkyrie",
+			"name": "Valkyrie",
+			"faction": "shadow",
+			"hp_max": 12,
+			"is_expansion": false,
+			"ability": {
+				"name": "Vengeance",
+				"description": "If you are ever reduced to 0 HP, deal 3 damage to your killer before dying.",
+				"type": "passive",
+				"trigger": "on_death"
+			}
+		},
+		"agnes": {
+			"id": "agnes",
+			"name": "Agnes",
+			"faction": "neutral",
+			"hp_max": 8,
+			"is_expansion": false,
+			"win_condition": "Be the one to kill a 3-letter named character (Bob, Emi).",
+			"ability": {
+				"name": "Vendetta",
+				"description": "Win by killing a 3-letter named character.",
+				"type": "passive",
+				"trigger": "win_condition"
+			}
+		},
+		"allie_n": {
+			"id": "allie_n",
+			"name": "Allie (Neutral)",
+			"faction": "neutral",
+			"hp_max": 8,
+			"is_expansion": false,
+			"win_condition": "Kill another player or be killed by another player.",
+			"ability": {
+				"name": "Lover",
+				"description": "Win by killing or being killed by another player.",
+				"type": "passive",
+				"trigger": "win_condition"
+			}
+		},
+		"bryan": {
+			"id": "bryan",
+			"name": "Bryan",
+			"faction": "neutral",
+			"hp_max": 12,
+			"is_expansion": false,
+			"win_condition": "If no Neutral wins, you must be alive when the game ends.",
+			"ability": {
+				"name": "Survivalist",
+				"description": "Win by surviving to the end if no other Neutral wins.",
+				"type": "passive",
+				"trigger": "win_condition"
+			}
+		},
+		"catherine": {
+			"id": "catherine",
+			"name": "Catherine",
+			"faction": "neutral",
+			"hp_max": 11,
+			"is_expansion": false,
+			"win_condition": "Be the first player to equip the Holy Robe and Chainsaw.",
+			"ability": {
+				"name": "Hoarder",
+				"description": "Win by equipping both Holy Robe and Chainsaw.",
+				"type": "passive",
+				"trigger": "win_condition"
+			}
+		},
+		"daniel": {
+			"id": "daniel",
+			"name": "Daniel",
+			"faction": "neutral",
+			"hp_max": 13,
+			"is_expansion": false,
+			"win_condition": "You must be the first player to kill, or be killed.",
+			"ability": {
+				"name": "Stalker",
+				"description": "Win by being the first to kill or be killed.",
+				"type": "passive",
+				"trigger": "win_condition"
+			}
+		},
+		"emi": {
+			"id": "emi",
+			"name": "Emi",
+			"faction": "neutral",
+			"hp_max": 8,
+			"is_expansion": false,
+			"win_condition": "Be either dead, or have 5+ HP when the game ends.",
+			"ability": {
+				"name": "Blessed",
+				"description": "Win if dead or at 5+ HP when game ends.",
+				"type": "passive",
+				"trigger": "win_condition"
+			}
+		},
+		"fu_ka": {
+			"id": "fu_ka",
+			"name": "Fu-ka",
+			"faction": "neutral",
+			"hp_max": 10,
+			"is_expansion": false,
+			"win_condition": "Your team wins when you are neither the first nor the last to die.",
+			"ability": {
+				"name": "Ghostly",
+				"description": "Win by not being the first or last to die.",
+				"type": "passive",
+				"trigger": "win_condition"
+			}
+		}
+	},
+	"faction_distribution": {
+		"4": { "hunter": 1, "shadow": 1, "neutral": 2 },
+		"5": { "hunter": 2, "shadow": 2, "neutral": 1 },
+		"6": { "hunter": 2, "shadow": 2, "neutral": 2 },
+		"7": { "hunter": 2, "shadow": 2, "neutral": 3 },
+		"8": { "hunter": 3, "shadow": 3, "neutral": 2 }
+	}
+}

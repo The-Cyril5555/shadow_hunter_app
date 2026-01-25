@@ -1,0 +1,17 @@
+{
+	"personality": "prudent",
+	"description": "Prefers defense and information gathering",
+	"decision_weights": {
+		"attack": 0.3,
+		"move_to_combat_zone": 0.2,
+		"use_equipment": 0.6,
+		"draw_card": 0.7,
+		"bluff_threshold": 0.6,
+		"reveal_threshold": 0.7
+	},
+	"target_selection": {
+		"prefer_low_hp": 0.4,
+		"prefer_revealed_enemies": 0.6,
+		"random_factor": 0.3
+	}
+}
