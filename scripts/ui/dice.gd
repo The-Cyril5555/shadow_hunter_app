@@ -40,6 +40,9 @@ func roll() -> void:
 
 	is_rolling = true
 
+	# Play dice roll sound
+	AudioManager.play_sfx("dice_roll")
+
 	# Generate random results (1-6)
 	dice1_result = randi() % 6 + 1
 	dice2_result = randi() % 6 + 1
@@ -79,6 +82,9 @@ func roll() -> void:
 
 	# Wait for animation to finish
 	await tween1.finished
+
+	# Play dice land sound
+	AudioManager.play_sfx("dice_land")
 
 	# Reset rotation for clean display
 	dice1_container.rotation_degrees = 0

@@ -26,6 +26,9 @@ func _setup_button_hover_effects() -> void:
 
 
 func _on_button_hover(button: Button) -> void:
+	# Audio feedback
+	AudioManager.play_sfx("button_hover")
+
 	# Visual feedback on hover - scale up slightly
 	var tween = create_tween()
 	tween.tween_property(button, "scale", Vector2(1.05, 1.05), 0.1)
@@ -38,20 +41,24 @@ func _on_button_unhover(button: Button) -> void:
 
 
 func _on_new_game_pressed() -> void:
+	AudioManager.play_sfx("button_click")
 	print("[MainMenu] New Game pressed")
 	GameModeStateMachine.transition_to(GameModeStateMachine.GameMode.GAME_SETUP)
 
 
 func _on_load_game_pressed() -> void:
+	AudioManager.play_sfx("button_click")
 	print("[MainMenu] Load Game pressed - Not implemented yet")
 	# TODO: Implement in Story 6.3
 
 
 func _on_settings_pressed() -> void:
+	AudioManager.play_sfx("button_click")
 	print("[MainMenu] Settings pressed - Not implemented yet")
 	# TODO: Implement settings screen
 
 
 func _on_quit_pressed() -> void:
+	AudioManager.play_sfx("button_click")
 	print("[MainMenu] Quit pressed")
 	get_tree().quit()

@@ -10,6 +10,8 @@
 	"reveal_shake_intensity": 0.08,
 
 	"damage_shake_intensity": 0.03,
+	"attack_animation_duration": 0.6,
+	"damage_particle_count": 25,
 	"card_play_animation_duration": 0.4,
 	"dice_roll_duration": 1.2,
 

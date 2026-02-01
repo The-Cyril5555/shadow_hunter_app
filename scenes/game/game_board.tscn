@@ -1,6 +1,11 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://scripts/game/game_board.gd" id="1_game_board"]
+[ext_resource type="PackedScene" uid="uid://ci48s3hn14s7o" path="res://scenes/ui/dice.tscn" id="2_dice"]
+[ext_resource type="PackedScene" path="res://scenes/ui/card_reveal.tscn" id="3_card_reveal"]
+[ext_resource type="PackedScene" path="res://scenes/ui/equipment_action_menu.tscn" id="4_equipment_action_menu"]
+[ext_resource type="PackedScene" path="res://scenes/ui/target_selection_panel.tscn" id="5_target_selection_panel"]
+[ext_resource type="PackedScene" uid="uid://bi4lv4fgvqw3s" path="res://scenes/ui/error_message.tscn" id="6_error_message"]
 
 [node name="GameBoard" type="Control"]
 layout_mode = 3
@@ -27,81 +32,232 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/margin_left = 50
-theme_override_constants/margin_top = 30
-theme_override_constants/margin_right = 50
-theme_override_constants/margin_bottom = 30
+theme_override_constants/margin_left = 30
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 30
+theme_override_constants/margin_bottom = 20
 
-[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 30
+
+[node name="LeftPanel" type="VBoxContainer" parent="MarginContainer/HBoxContainer"]
+custom_minimum_size = Vector2(250, 0)
 layout_mode = 2
 theme_override_constants/separation = 20
 
-[node name="HeaderContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+[node name="Title" type="Label" parent="MarginContainer/HBoxContainer/LeftPanel"]
 layout_mode = 2
-
-[node name="Title" type="Label" parent="MarginContainer/VBoxContainer/HeaderContainer"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 36
-text = "Shadow Hunter - Game Board (Placeholder)"
-
-[node name="StatusContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
-layout_mode = 2
-theme_override_constants/separation = 50
-
-[node name="CurrentPlayerLabel" type="Label" parent="MarginContainer/VBoxContainer/StatusContainer"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "Current Player: ..."
-
-[node name="TurnLabel" type="Label" parent="MarginContainer/VBoxContainer/StatusContainer"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "Turn: 1"
-
-[node name="HSeparator" type="HSeparator" parent="MarginContainer/VBoxContainer"]
-layout_mode = 2
-
-[node name="PlayerListContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer"]
-layout_mode = 2
-size_flags_vertical = 3
-
-[node name="PlayersLabel" type="Label" parent="MarginContainer/VBoxContainer/PlayerListContainer"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 20
-text = "Players:"
-
-[node name="PlayerList" type="VBoxContainer" parent="MarginContainer/VBoxContainer/PlayerListContainer"]
-layout_mode = 2
-size_flags_vertical = 3
-theme_override_constants/separation = 10
-
-[node name="HSeparator2" type="HSeparator" parent="MarginContainer/VBoxContainer"]
-layout_mode = 2
-
-[node name="InfoLabel" type="Label" parent="MarginContainer/VBoxContainer"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 16
-theme_override_colors/font_color = Color(0.6, 0.6, 0.6, 1)
-text = "This is a placeholder game board. Full board implementation coming in Story 1.3."
+theme_override_font_sizes/font_size = 28
+text = "Shadow Hunter"
 horizontal_alignment = 1
 
-[node name="ButtonContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+[node name="HSeparator" type="HSeparator" parent="MarginContainer/HBoxContainer/LeftPanel"]
 layout_mode = 2
-alignment = 1
-theme_override_constants/separation = 20
 
-[node name="EndTurnButton" type="Button" parent="MarginContainer/VBoxContainer/ButtonContainer"]
-custom_minimum_size = Vector2(150, 50)
+[node name="GameInfo" type="VBoxContainer" parent="MarginContainer/HBoxContainer/LeftPanel"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="CurrentPlayerLabel" type="Label" parent="MarginContainer/HBoxContainer/LeftPanel/GameInfo"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Current: ..."
+
+[node name="TurnLabel" type="Label" parent="MarginContainer/HBoxContainer/LeftPanel/GameInfo"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Turn: 1"
+
+[node name="PhaseLabel" type="Label" parent="MarginContainer/HBoxContainer/LeftPanel/GameInfo"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(1, 0.8, 0.2, 1)
+text = "Phase: Movement"
+
+[node name="HSeparator2" type="HSeparator" parent="MarginContainer/HBoxContainer/LeftPanel"]
+layout_mode = 2
+
+[node name="DecksLabel" type="Label" parent="MarginContainer/HBoxContainer/LeftPanel"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "Decks"
+
+[node name="DecksContainer" type="VBoxContainer" parent="MarginContainer/HBoxContainer/LeftPanel"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="HermitDeck" type="HBoxContainer" parent="MarginContainer/HBoxContainer/LeftPanel/DecksContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/HBoxContainer/LeftPanel/DecksContainer/HermitDeck"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 16
+text = "Hermit:"
+
+[node name="CountLabel" type="Label" parent="MarginContainer/HBoxContainer/LeftPanel/DecksContainer/HermitDeck"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+theme_override_colors/font_color = Color(0.6, 0.5, 0.3, 1)
+text = "0"
+
+[node name="WhiteDeck" type="HBoxContainer" parent="MarginContainer/HBoxContainer/LeftPanel/DecksContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/HBoxContainer/LeftPanel/DecksContainer/WhiteDeck"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 16
+text = "White:"
+
+[node name="CountLabel" type="Label" parent="MarginContainer/HBoxContainer/LeftPanel/DecksContainer/WhiteDeck"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+theme_override_colors/font_color = Color(0.9, 0.9, 0.9, 1)
+text = "0"
+
+[node name="BlackDeck" type="HBoxContainer" parent="MarginContainer/HBoxContainer/LeftPanel/DecksContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/HBoxContainer/LeftPanel/DecksContainer/BlackDeck"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 16
+text = "Black:"
+
+[node name="CountLabel" type="Label" parent="MarginContainer/HBoxContainer/LeftPanel/DecksContainer/BlackDeck"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+theme_override_colors/font_color = Color(0.2, 0.2, 0.2, 1)
+text = "0"
+
+[node name="HSeparator3" type="HSeparator" parent="MarginContainer/HBoxContainer/LeftPanel"]
+layout_mode = 2
+
+[node name="DiceContainer" type="VBoxContainer" parent="MarginContainer/HBoxContainer/LeftPanel"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="DiceLabel" type="Label" parent="MarginContainer/HBoxContainer/LeftPanel/DiceContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "Dice"
+horizontal_alignment = 1
+
+[node name="Dice" parent="MarginContainer/HBoxContainer/LeftPanel/DiceContainer" instance=ExtResource("2_dice")]
+layout_mode = 2
+
+[node name="RollDiceButton" type="Button" parent="MarginContainer/HBoxContainer/LeftPanel/DiceContainer"]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Roll Dice"
+
+[node name="HSeparator4" type="HSeparator" parent="MarginContainer/HBoxContainer/LeftPanel"]
+layout_mode = 2
+
+[node name="HandLabel" type="Label" parent="MarginContainer/HBoxContainer/LeftPanel"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "Hand"
+
+[node name="HandCardsContainer" type="VBoxContainer" parent="MarginContainer/HBoxContainer/LeftPanel"]
+layout_mode = 2
+theme_override_constants/separation = 5
+
+[node name="HSeparator5" type="HSeparator" parent="MarginContainer/HBoxContainer/LeftPanel"]
+layout_mode = 2
+
+[node name="EquipmentLabel" type="Label" parent="MarginContainer/HBoxContainer/LeftPanel"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "Active Equipment"
+
+[node name="EquipmentContainer" type="VBoxContainer" parent="MarginContainer/HBoxContainer/LeftPanel"]
+layout_mode = 2
+theme_override_constants/separation = 5
+
+[node name="HSeparator6" type="HSeparator" parent="MarginContainer/HBoxContainer/LeftPanel"]
+layout_mode = 2
+
+[node name="Spacer" type="Control" parent="MarginContainer/HBoxContainer/LeftPanel"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ButtonContainer" type="VBoxContainer" parent="MarginContainer/HBoxContainer/LeftPanel"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="DrawCardButton" type="Button" parent="MarginContainer/HBoxContainer/LeftPanel/ButtonContainer"]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+disabled = true
+theme_override_font_sizes/font_size = 18
+text = "Draw Card"
+
+[node name="AttackButton" type="Button" parent="MarginContainer/HBoxContainer/LeftPanel/ButtonContainer"]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+disabled = true
+theme_override_font_sizes/font_size = 18
+text = "Attack"
+
+[node name="EndTurnButton" type="Button" parent="MarginContainer/HBoxContainer/LeftPanel/ButtonContainer"]
+custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "End Turn"
 
-[node name="BackToMenuButton" type="Button" parent="MarginContainer/VBoxContainer/ButtonContainer"]
-custom_minimum_size = Vector2(150, 50)
+[node name="BackToMenuButton" type="Button" parent="MarginContainer/HBoxContainer/LeftPanel/ButtonContainer"]
+custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "Back to Menu"
 
-[connection signal="pressed" from="MarginContainer/VBoxContainer/ButtonContainer/EndTurnButton" to="." method="_on_end_turn_pressed"]
-[connection signal="pressed" from="MarginContainer/VBoxContainer/ButtonContainer/BackToMenuButton" to="." method="_on_back_to_menu_pressed"]
+[node name="BoardArea" type="VBoxContainer" parent="MarginContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 20
+
+[node name="BoardTitle" type="Label" parent="MarginContainer/HBoxContainer/BoardArea"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Game Board"
+horizontal_alignment = 1
+
+[node name="ZonesContainer" type="GridContainer" parent="MarginContainer/HBoxContainer/BoardArea"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/h_separation = 20
+theme_override_constants/v_separation = 20
+columns = 3
+
+[node name="CardRevealLayer" type="CanvasLayer" parent="."]
+layer = 10
+
+[node name="CardReveal" parent="CardRevealLayer" instance=ExtResource("3_card_reveal")]
+
+[node name="EquipmentMenuLayer" type="CanvasLayer" parent="."]
+layer = 11
+
+[node name="EquipmentActionMenu" parent="EquipmentMenuLayer" instance=ExtResource("4_equipment_action_menu")]
+visible = false
+
+[node name="TargetSelectionLayer" type="CanvasLayer" parent="."]
+layer = 12
+
+[node name="TargetSelectionPanel" parent="TargetSelectionLayer" instance=ExtResource("5_target_selection_panel")]
+visible = false
+
+[node name="ErrorMessageLayer" type="CanvasLayer" parent="."]
+layer = 15
+
+[node name="ErrorMessage" parent="ErrorMessageLayer" instance=ExtResource("6_error_message")]
+
+[connection signal="dice_rolled" from="MarginContainer/HBoxContainer/LeftPanel/DiceContainer/Dice" to="." method="_on_dice_rolled"]
+[connection signal="pressed" from="MarginContainer/HBoxContainer/LeftPanel/DiceContainer/RollDiceButton" to="." method="_on_roll_dice_pressed"]
+[connection signal="pressed" from="MarginContainer/HBoxContainer/LeftPanel/ButtonContainer/DrawCardButton" to="." method="_on_draw_card_pressed"]
+[connection signal="pressed" from="MarginContainer/HBoxContainer/LeftPanel/ButtonContainer/AttackButton" to="." method="_on_attack_button_pressed"]
+[connection signal="pressed" from="MarginContainer/HBoxContainer/LeftPanel/ButtonContainer/EndTurnButton" to="." method="_on_end_turn_pressed"]
+[connection signal="pressed" from="MarginContainer/HBoxContainer/LeftPanel/ButtonContainer/BackToMenuButton" to="." method="_on_back_to_menu_pressed"]

@@ -47,9 +47,7 @@ func transition_to(new_mode: GameMode) -> void:
 		GameMode.GAME:
 			get_tree().change_scene_to_file("res://scenes/game/game_board.tscn")
 		GameMode.GAME_OVER:
-			# Game over scene will be created in Story 6.4
-			push_warning("[GameModeStateMachine] Game Over not implemented yet")
-			get_tree().change_scene_to_file("res://scenes/ui/screens/main_menu.tscn")
+			get_tree().change_scene_to_file("res://scenes/ui/game_over.tscn")
 
 
 func get_mode_name() -> String:

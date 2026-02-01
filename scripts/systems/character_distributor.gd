@@ -1,25 +1,20 @@
 ## CharacterDistributor - Handles character distribution for game setup (Autoload)
-## Loads characters from JSON and distributes them according to faction rules.
+## Distributes characters from GameState according to faction rules.
 class_name CharacterDistributorClass
 extends Node
 
 
-# Character data loaded from JSON
-var characters_data: Dictionary = {}
+# Faction distribution rules loaded from JSON
 var faction_distribution: Dictionary = {}
-
-# Cached character lists by faction
-var hunters: Array[Dictionary] = []
-var shadows: Array[Dictionary] = []
-var neutrals: Array[Dictionary] = []
 
 
 func _ready() -> void:
-	_load_characters()
-	print("[CharacterDistributor] Initialized with %d characters" % characters_data.size())
+	_load_faction_distribution()
+	print("[CharacterDistributor] Initialized")
 
 
-func _load_characters() -> void:
+## Load faction distribution rules from JSON
+func _load_faction_distribution() -> void:
 	var file = FileAccess.open("res://data/characters.json", FileAccess.READ)
 	if file == null:
 		push_error("[CharacterDistributor] Failed to load characters.json")
@@ -35,25 +30,13 @@ func _load_characters() -> void:
 		return
 
 	var data = json.data
-	characters_data = data.get("characters", {})
 	faction_distribution = data.get("faction_distribution", {})
 
-	# Cache characters by faction
-	for char_id in characters_data:
-		var char_data = characters_data[char_id]
-		match char_data.get("faction", ""):
-			"hunter":
-				hunters.append(char_data)
-			"shadow":
-				shadows.append(char_data)
-			"neutral":
-				neutrals.append(char_data)
-
-	print("[CharacterDistributor] Loaded: %d hunters, %d shadows, %d neutrals" % [hunters.size(), shadows.size(), neutrals.size()])
+	print("[CharacterDistributor] Loaded faction distribution rules for %d player counts" % faction_distribution.size())
 
 
 ## Distribute characters to players according to faction rules
-func distribute_characters(players: Array, player_count: int) -> void:
+func distribute_characters(players: Array, player_count: int, include_expansion: bool = true) -> void:
 	var distribution = _get_distribution(player_count)
 	if distribution.is_empty():
 		push_error("[CharacterDistributor] No distribution rules for %d players" % player_count)
@@ -63,23 +46,28 @@ func distribute_characters(players: Array, player_count: int) -> void:
 	var shadow_count = distribution.get("shadow", 0)
 	var neutral_count = distribution.get("neutral", 0)
 
-	print("[CharacterDistributor] Distributing for %d players: %d hunters, %d shadows, %d neutrals" % [player_count, hunter_count, shadow_count, neutral_count])
+	print("[CharacterDistributor] Distributing for %d players: %d hunters, %d shadows, %d neutrals (expansion: %s)" % [player_count, hunter_count, shadow_count, neutral_count, "yes" if include_expansion else "no"])
 
 	# Create pool of characters to assign
 	var character_pool: Array[Dictionary] = []
 
+	# Get characters from GameState by faction
+	var available_hunters = GameState.get_characters_by_faction("hunter", include_expansion)
+	var available_shadows = GameState.get_characters_by_faction("shadow", include_expansion)
+	var available_neutrals = GameState.get_characters_by_faction("neutral", include_expansion)
+
 	# Add required number from each faction
-	var shuffled_hunters = hunters.duplicate()
+	var shuffled_hunters = available_hunters.duplicate()
 	shuffled_hunters.shuffle()
 	for i in range(min(hunter_count, shuffled_hunters.size())):
 		character_pool.append(shuffled_hunters[i])
 
-	var shuffled_shadows = shadows.duplicate()
+	var shuffled_shadows = available_shadows.duplicate()
 	shuffled_shadows.shuffle()
 	for i in range(min(shadow_count, shuffled_shadows.size())):
 		character_pool.append(shuffled_shadows[i])
 
-	var shuffled_neutrals = neutrals.duplicate()
+	var shuffled_neutrals = available_neutrals.duplicate()
 	shuffled_neutrals.shuffle()
 	for i in range(min(neutral_count, shuffled_neutrals.size())):
 		character_pool.append(shuffled_neutrals[i])
@@ -90,6 +78,10 @@ func distribute_characters(players: Array, player_count: int) -> void:
 	# Assign to players
 	for i in range(min(players.size(), character_pool.size())):
 		players[i].assign_character(character_pool[i])
+
+	# Register passive abilities after character assignment
+	for player in players:
+		GameState.passive_ability_system.register_player_ability(player)
 
 	print("[CharacterDistributor] Distribution complete")
 
@@ -102,18 +94,11 @@ func _get_distribution(player_count: int) -> Dictionary:
 	return {}
 
 
-## Get a character by ID
+## Get a character by ID (delegates to GameState)
 func get_character(char_id: String) -> Dictionary:
-	return characters_data.get(char_id, {})
+	return GameState.get_character(char_id)
 
 
-## Get all characters of a faction
-func get_characters_by_faction(faction: String) -> Array[Dictionary]:
-	match faction:
-		"hunter":
-			return hunters.duplicate()
-		"shadow":
-			return shadows.duplicate()
-		"neutral":
-			return neutrals.duplicate()
-	return []
+## Get all characters of a faction (delegates to GameState)
+func get_characters_by_faction(faction: String, include_expansion: bool = true) -> Array[Dictionary]:
+	return GameState.get_characters_by_faction(faction, include_expansion)

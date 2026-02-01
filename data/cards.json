@@ -5,17 +5,90 @@
 		"hermit": {
 			"name": "Hermit",
 			"description": "Vision cards from the Hermit's Cabin",
-			"cards": []
+			"cards": [
+				{
+					"id": "hermit_vision_1",
+					"name": "Vision Card 1",
+					"deck": "hermit",
+					"type": "vision",
+					"copies_in_deck": 2,
+					"effect": {
+						"type": "reveal",
+						"description": "Reveal information about a player"
+					}
+				},
+				{
+					"id": "hermit_vision_2",
+					"name": "Vision Card 2",
+					"deck": "hermit",
+					"type": "vision",
+					"copies_in_deck": 2,
+					"effect": {
+						"type": "reveal",
+						"description": "Reveal information about a player"
+					}
+				}
+			]
 		},
 		"white": {
 			"name": "White (Church)",
 			"description": "Beneficial cards from the Church",
-			"cards": []
+			"cards": [
+				{
+					"id": "white_heal_1",
+					"name": "Holy Water",
+					"deck": "white",
+					"type": "instant",
+					"copies_in_deck": 3,
+					"effect": {
+						"type": "heal",
+						"value": 2,
+						"description": "Heal 2 HP"
+					}
+				},
+				{
+					"id": "white_equip_1",
+					"name": "Holy Sword",
+					"deck": "white",
+					"type": "equipment",
+					"copies_in_deck": 2,
+					"effect": {
+						"type": "damage",
+						"value": 2,
+						"description": "Deal 2 damage to target"
+					}
+				}
+			]
 		},
 		"black": {
 			"name": "Black (Cemetery)",
 			"description": "Harmful cards from the Cemetery",
-			"cards": []
+			"cards": [
+				{
+					"id": "black_damage_1",
+					"name": "Dark Curse",
+					"deck": "black",
+					"type": "instant",
+					"copies_in_deck": 3,
+					"effect": {
+						"type": "damage",
+						"value": 2,
+						"description": "Deal 2 damage to target"
+					}
+				},
+				{
+					"id": "black_equip_1",
+					"name": "Cursed Blade",
+					"deck": "black",
+					"type": "equipment",
+					"copies_in_deck": 2,
+					"effect": {
+						"type": "damage",
+						"value": 3,
+						"description": "Deal 3 damage to target"
+					}
+				}
+			]
 		}
 	},
 	"card_template": {

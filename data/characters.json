@@ -1,57 +1,18 @@
 {
 	"version": "1.0",
-	"description": "Shadow Hunter character definitions - Base game characters",
+	"description": "Shadow Hunter character definitions - Base game + Expansion",
 	"characters": {
-		"allie": {
-			"id": "allie",
-			"name": "Allie",
+		"emi": {
+			"id": "emi",
+			"name": "Emi",
 			"faction": "hunter",
 			"hp_max": 8,
 			"is_expansion": false,
 			"ability": {
-				"name": "Teleport",
-				"description": "Once per game, may move to any Area instead of rolling dice.",
+				"name": "Blessed",
+				"description": "When you attack, you may choose to add 1 to your attack damage.",
 				"type": "active",
-				"trigger": "manual"
-			}
-		},
-		"bob": {
-			"id": "bob",
-			"name": "Bob",
-			"faction": "hunter",
-			"hp_max": 10,
-			"is_expansion": false,
-			"ability": {
-				"name": "Defense",
-				"description": "When attacked, can counterattack immediately dealing 1 damage.",
-				"type": "passive",
-				"trigger": "on_attacked"
-			}
-		},
-		"charles": {
-			"id": "charles",
-			"name": "Charles",
-			"faction": "hunter",
-			"hp_max": 11,
-			"is_expansion": false,
-			"ability": {
-				"name": "Diagnosis",
-				"description": "At the start of your turn, you may pick a player and privately learn if they are a Shadow or not.",
-				"type": "active",
-				"trigger": "on_turn_start"
-			}
-		},
-		"ellen": {
-			"id": "ellen",
-			"name": "Ellen",
-			"faction": "hunter",
-			"hp_max": 10,
-			"is_expansion": false,
-			"ability": {
-				"name": "Exorcism",
-				"description": "Once per game, pick a player. If that player is a Shadow, they receive 2 damage.",
-				"type": "active",
-				"trigger": "manual"
+				"trigger": "on_attack"
 			}
 		},
 		"franklin": {
@@ -80,6 +41,19 @@
 				"trigger": "manual"
 			}
 		},
+		"unknown": {
+			"id": "unknown",
+			"name": "Unknown",
+			"faction": "shadow",
+			"hp_max": 11,
+			"is_expansion": false,
+			"ability": {
+				"name": "Copy",
+				"description": "When revealed, you may copy another revealed player's ability.",
+				"type": "passive",
+				"trigger": "on_reveal"
+			}
+		},
 		"vampire": {
 			"id": "vampire",
 			"name": "Vampire",
@@ -106,75 +80,9 @@
 				"trigger": "on_kill"
 			}
 		},
-		"ultra_soul": {
-			"id": "ultra_soul",
-			"name": "Ultra Soul",
-			"faction": "shadow",
-			"hp_max": 11,
-			"is_expansion": false,
-			"ability": {
-				"name": "Soul Steal",
-				"description": "When attacked, the attacker takes 1 damage.",
-				"type": "passive",
-				"trigger": "on_attacked"
-			}
-		},
-		"wight": {
-			"id": "wight",
-			"name": "Wight",
-			"faction": "shadow",
-			"hp_max": 13,
-			"is_expansion": false,
-			"ability": {
-				"name": "Wither",
-				"description": "You may give 1 damage to a player and 1 damage to yourself.",
-				"type": "active",
-				"trigger": "manual"
-			}
-		},
-		"unknown": {
-			"id": "unknown",
-			"name": "Unknown",
-			"faction": "shadow",
-			"hp_max": 11,
-			"is_expansion": false,
-			"ability": {
-				"name": "Copy",
-				"description": "When revealed, you may copy another revealed player's ability.",
-				"type": "passive",
-				"trigger": "on_reveal"
-			}
-		},
-		"valkyrie": {
-			"id": "valkyrie",
-			"name": "Valkyrie",
-			"faction": "shadow",
-			"hp_max": 12,
-			"is_expansion": false,
-			"ability": {
-				"name": "Vengeance",
-				"description": "If you are ever reduced to 0 HP, deal 3 damage to your killer before dying.",
-				"type": "passive",
-				"trigger": "on_death"
-			}
-		},
-		"agnes": {
-			"id": "agnes",
-			"name": "Agnes",
-			"faction": "neutral",
-			"hp_max": 8,
-			"is_expansion": false,
-			"win_condition": "Be the one to kill a 3-letter named character (Bob, Emi).",
-			"ability": {
-				"name": "Vendetta",
-				"description": "Win by killing a 3-letter named character.",
-				"type": "passive",
-				"trigger": "win_condition"
-			}
-		},
-		"allie_n": {
-			"id": "allie_n",
-			"name": "Allie (Neutral)",
+		"allie": {
+			"id": "allie",
+			"name": "Allie",
 			"faction": "neutral",
 			"hp_max": 8,
 			"is_expansion": false,
@@ -186,11 +94,11 @@
 				"trigger": "win_condition"
 			}
 		},
-		"bryan": {
-			"id": "bryan",
-			"name": "Bryan",
+		"bob": {
+			"id": "bob",
+			"name": "Bob",
 			"faction": "neutral",
-			"hp_max": 12,
+			"hp_max": 10,
 			"is_expansion": false,
 			"win_condition": "If no Neutral wins, you must be alive when the game ends.",
 			"ability": {
@@ -200,16 +108,16 @@
 				"trigger": "win_condition"
 			}
 		},
-		"catherine": {
-			"id": "catherine",
-			"name": "Catherine",
+		"charles": {
+			"id": "charles",
+			"name": "Charles",
 			"faction": "neutral",
 			"hp_max": 11,
 			"is_expansion": false,
-			"win_condition": "Be the first player to equip the Holy Robe and Chainsaw.",
+			"win_condition": "At the time you kill another character, the total number of dead characters is 3 or more.",
 			"ability": {
-				"name": "Hoarder",
-				"description": "Win by equipping both Holy Robe and Chainsaw.",
+				"name": "Reaper",
+				"description": "Win by killing a character when 3+ total characters are dead.",
 				"type": "passive",
 				"trigger": "win_condition"
 			}
@@ -228,32 +136,138 @@
 				"trigger": "win_condition"
 			}
 		},
-		"emi": {
-			"id": "emi",
-			"name": "Emi",
-			"faction": "neutral",
-			"hp_max": 8,
-			"is_expansion": false,
-			"win_condition": "Be either dead, or have 5+ HP when the game ends.",
+		"ellen": {
+			"id": "ellen",
+			"name": "Ellen",
+			"faction": "hunter",
+			"hp_max": 10,
+			"is_expansion": true,
 			"ability": {
-				"name": "Blessed",
-				"description": "Win if dead or at 5+ HP when game ends.",
-				"type": "passive",
-				"trigger": "win_condition"
+				"name": "Chain of Forbidden Curse",
+				"description": "Once per game, permanently disable an opponent's special ability.",
+				"type": "active",
+				"trigger": "manual"
 			}
 		},
-		"fu_ka": {
-			"id": "fu_ka",
-			"name": "Fu-ka",
+		"fuka": {
+			"id": "fuka",
+			"name": "Fuka",
+			"faction": "hunter",
+			"hp_max": 10,
+			"is_expansion": true,
+			"ability": {
+				"name": "Dynamite Nurse",
+				"description": "Once per game, set any character's damage to exactly 7 points.",
+				"type": "active",
+				"trigger": "manual"
+			}
+		},
+		"gregor": {
+			"id": "gregor",
+			"name": "Gregor",
+			"faction": "hunter",
+			"hp_max": 12,
+			"is_expansion": true,
+			"ability": {
+				"name": "Ghostly Barrier",
+				"description": "Once per game at turn end, prevent all damage until your next turn.",
+				"type": "active",
+				"trigger": "manual"
+			}
+		},
+		"ultra_soul": {
+			"id": "ultra_soul",
+			"name": "Ultra Soul",
+			"faction": "shadow",
+			"hp_max": 11,
+			"is_expansion": true,
+			"ability": {
+				"name": "Murder Ray",
+				"description": "At turn start, inflict 3 damage to characters at the Underworld Gate.",
+				"type": "active",
+				"trigger": "on_turn_start"
+			}
+		},
+		"valkyrie": {
+			"id": "valkyrie",
+			"name": "Valkyrie",
+			"faction": "shadow",
+			"hp_max": 12,
+			"is_expansion": true,
+			"ability": {
+				"name": "Horn of War Outbreak",
+				"description": "Use only a 4-sided die for attack damage instead of the standard die.",
+				"type": "passive",
+				"trigger": "on_attack"
+			}
+		},
+		"wight": {
+			"id": "wight",
+			"name": "Wight",
+			"faction": "shadow",
+			"hp_max": 13,
+			"is_expansion": true,
+			"ability": {
+				"name": "Multiplication",
+				"description": "Once per game at turn end, gain extra turns equal to current dead character count.",
+				"type": "active",
+				"trigger": "manual"
+			}
+		},
+		"agnes": {
+			"id": "agnes",
+			"name": "Agnes",
+			"faction": "neutral",
+			"hp_max": 8,
+			"is_expansion": true,
+			"win_condition": "When the game is over, if the player to your immediate right wins, you also win.",
+			"ability": {
+				"name": "Capriccio",
+				"description": "Once per game at turn start, change win condition to favor the player on your left instead.",
+				"type": "active",
+				"trigger": "on_turn_start"
+			}
+		},
+		"bryan": {
+			"id": "bryan",
+			"name": "Bryan",
+			"faction": "neutral",
+			"hp_max": 12,
+			"is_expansion": true,
+			"win_condition": "Eliminate a character with 13+ HP through direct attack, or be on the Erstwhile Altar when game ends.",
+			"ability": {
+				"name": "My GOD!!!",
+				"description": "Must reveal identity when killing characters with 12 or fewer health points via attack.",
+				"type": "passive",
+				"trigger": "on_kill"
+			}
+		},
+		"catherine": {
+			"id": "catherine",
+			"name": "Catherine",
+			"faction": "neutral",
+			"hp_max": 11,
+			"is_expansion": true,
+			"win_condition": "Die first, or be one of the last two characters standing.",
+			"ability": {
+				"name": "Stigmata",
+				"description": "Each turn start, heal 1 damage point if applicable.",
+				"type": "passive",
+				"trigger": "on_turn_start"
+			}
+		},
+		"david": {
+			"id": "david",
+			"name": "David",
 			"faction": "neutral",
 			"hp_max": 10,
-			"is_expansion": false,
-			"win_condition": "Your team wins when you are neither the first nor the last to die.",
+			"is_expansion": true,
+			"win_condition": "Equip three or more specific White cards simultaneously: Spear of Longinus, Holy Robe, Silver Rosary, or Talisman.",
 			"ability": {
-				"name": "Ghostly",
-				"description": "Win by not being the first or last to die.",
-				"type": "passive",
-				"trigger": "win_condition"
+				"name": "Grave Digger",
+				"description": "Once per game, obtain any equipment card from discard piles, even outside your turn.",
+				"type": "active",
+				"trigger": "manual"
 			}
 		}
 	},

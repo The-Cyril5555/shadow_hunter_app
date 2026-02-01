@@ -1,0 +1,248 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/demos/audio_demo.gd" id="1"]
+
+[node name="AudioDemo" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 50.0
+offset_top = 50.0
+offset_right = -50.0
+offset_bottom = -50.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 20
+
+[node name="TitleLabel" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "AUDIO SYSTEM DEMO"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="InfoPanel" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 30
+alignment = 1
+
+[node name="ActiveSoundsLabel" type="Label" parent="VBoxContainer/InfoPanel"]
+layout_mode = 2
+text = "Active Sounds: 0"
+
+[node name="PoolSizeLabel" type="Label" parent="VBoxContainer/InfoPanel"]
+layout_mode = 2
+text = "Pool Size: 10"
+
+[node name="VolumeControls" type="VBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="MasterVolume" type="HBoxContainer" parent="VBoxContainer/VolumeControls"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="VBoxContainer/VolumeControls/MasterVolume"]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+text = "Master Volume:"
+
+[node name="Slider" type="HSlider" parent="VBoxContainer/VolumeControls/MasterVolume"]
+custom_minimum_size = Vector2(300, 0)
+layout_mode = 2
+min_value = 0.0
+max_value = 1.0
+step = 0.01
+value = 1.0
+
+[node name="ValueLabel" type="Label" parent="VBoxContainer/VolumeControls/MasterVolume"]
+custom_minimum_size = Vector2(60, 0)
+layout_mode = 2
+text = "100%"
+
+[node name="SFXVolume" type="HBoxContainer" parent="VBoxContainer/VolumeControls"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="VBoxContainer/VolumeControls/SFXVolume"]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+text = "SFX Volume:"
+
+[node name="Slider" type="HSlider" parent="VBoxContainer/VolumeControls/SFXVolume"]
+custom_minimum_size = Vector2(300, 0)
+layout_mode = 2
+min_value = 0.0
+max_value = 1.0
+step = 0.01
+value = 1.0
+
+[node name="ValueLabel" type="Label" parent="VBoxContainer/VolumeControls/SFXVolume"]
+custom_minimum_size = Vector2(60, 0)
+layout_mode = 2
+text = "100%"
+
+[node name="SoundTestPanel" type="ScrollContainer" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="GridContainer" type="GridContainer" parent="VBoxContainer/SoundTestPanel"]
+layout_mode = 2
+theme_override_constants/h_separation = 20
+theme_override_constants/v_separation = 15
+columns = 3
+
+[node name="UISounds" type="VBoxContainer" parent="VBoxContainer/SoundTestPanel"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="VBoxContainer/SoundTestPanel/UISounds"]
+layout_mode = 2
+text = "UI SOUNDS"
+horizontal_alignment = 1
+
+[node name="ButtonClickBtn" type="Button" parent="VBoxContainer/SoundTestPanel/UISounds"]
+layout_mode = 2
+text = "Button Click"
+
+[node name="ButtonHoverBtn" type="Button" parent="VBoxContainer/SoundTestPanel/UISounds"]
+layout_mode = 2
+text = "Button Hover"
+
+[node name="PanelOpenBtn" type="Button" parent="VBoxContainer/SoundTestPanel/UISounds"]
+layout_mode = 2
+text = "Panel Open"
+
+[node name="PanelCloseBtn" type="Button" parent="VBoxContainer/SoundTestPanel/UISounds"]
+layout_mode = 2
+text = "Panel Close"
+
+[node name="CardSounds" type="VBoxContainer" parent="VBoxContainer/SoundTestPanel"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="VBoxContainer/SoundTestPanel/CardSounds"]
+layout_mode = 2
+text = "CARD SOUNDS"
+horizontal_alignment = 1
+
+[node name="CardDrawBtn" type="Button" parent="VBoxContainer/SoundTestPanel/CardSounds"]
+layout_mode = 2
+text = "Card Draw"
+
+[node name="CardPlayBtn" type="Button" parent="VBoxContainer/SoundTestPanel/CardSounds"]
+layout_mode = 2
+text = "Card Play"
+
+[node name="CardShuffleBtn" type="Button" parent="VBoxContainer/SoundTestPanel/CardSounds"]
+layout_mode = 2
+text = "Card Shuffle"
+
+[node name="CombatSounds" type="VBoxContainer" parent="VBoxContainer/SoundTestPanel"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="VBoxContainer/SoundTestPanel/CombatSounds"]
+layout_mode = 2
+text = "COMBAT SOUNDS"
+horizontal_alignment = 1
+
+[node name="AttackSwingBtn" type="Button" parent="VBoxContainer/SoundTestPanel/CombatSounds"]
+layout_mode = 2
+text = "Attack Swing"
+
+[node name="DamageHitBtn" type="Button" parent="VBoxContainer/SoundTestPanel/CombatSounds"]
+layout_mode = 2
+text = "Damage Hit"
+
+[node name="PlayerDeathBtn" type="Button" parent="VBoxContainer/SoundTestPanel/CombatSounds"]
+layout_mode = 2
+text = "Player Death"
+
+[node name="DiceSounds" type="VBoxContainer" parent="VBoxContainer/SoundTestPanel"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="VBoxContainer/SoundTestPanel/DiceSounds"]
+layout_mode = 2
+text = "DICE SOUNDS"
+horizontal_alignment = 1
+
+[node name="DiceRollBtn" type="Button" parent="VBoxContainer/SoundTestPanel/DiceSounds"]
+layout_mode = 2
+text = "Dice Roll"
+
+[node name="DiceLandBtn" type="Button" parent="VBoxContainer/SoundTestPanel/DiceSounds"]
+layout_mode = 2
+text = "Dice Land"
+
+[node name="CharacterSounds" type="VBoxContainer" parent="VBoxContainer/SoundTestPanel"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="VBoxContainer/SoundTestPanel/CharacterSounds"]
+layout_mode = 2
+text = "CHARACTER SOUNDS"
+horizontal_alignment = 1
+
+[node name="RevealBtn" type="Button" parent="VBoxContainer/SoundTestPanel/CharacterSounds"]
+layout_mode = 2
+text = "Reveal Dramatic"
+
+[node name="AbilityBtn" type="Button" parent="VBoxContainer/SoundTestPanel/CharacterSounds"]
+layout_mode = 2
+text = "Ability Use"
+
+[node name="GameEventSounds" type="VBoxContainer" parent="VBoxContainer/SoundTestPanel"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="VBoxContainer/SoundTestPanel/GameEventSounds"]
+layout_mode = 2
+text = "GAME EVENTS"
+horizontal_alignment = 1
+
+[node name="TurnStartBtn" type="Button" parent="VBoxContainer/SoundTestPanel/GameEventSounds"]
+layout_mode = 2
+text = "Turn Start"
+
+[node name="TurnEndBtn" type="Button" parent="VBoxContainer/SoundTestPanel/GameEventSounds"]
+layout_mode = 2
+text = "Turn End"
+
+[node name="WinGameBtn" type="Button" parent="VBoxContainer/SoundTestPanel/GameEventSounds"]
+layout_mode = 2
+text = "Win Game"
+
+[node name="LoseGameBtn" type="Button" parent="VBoxContainer/SoundTestPanel/GameEventSounds"]
+layout_mode = 2
+text = "Lose Game"
+
+[node name="ZoneSounds" type="VBoxContainer" parent="VBoxContainer/SoundTestPanel"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="VBoxContainer/SoundTestPanel/ZoneSounds"]
+layout_mode = 2
+text = "ZONE/MOVEMENT"
+horizontal_alignment = 1
+
+[node name="ZoneHermitBtn" type="Button" parent="VBoxContainer/SoundTestPanel/ZoneSounds"]
+layout_mode = 2
+text = "Zone: Hermit"
+
+[node name="ZoneChurchBtn" type="Button" parent="VBoxContainer/SoundTestPanel/ZoneSounds"]
+layout_mode = 2
+text = "Zone: Church"
+
+[node name="ZoneCemeteryBtn" type="Button" parent="VBoxContainer/SoundTestPanel/ZoneSounds"]
+layout_mode = 2
+text = "Zone: Cemetery"
+
+[node name="MovePlayerBtn" type="Button" parent="VBoxContainer/SoundTestPanel/ZoneSounds"]
+layout_mode = 2
+text = "Move Player"
+
+[node name="BackButton" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+text = "Back to Main Menu"

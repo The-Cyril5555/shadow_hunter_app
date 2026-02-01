@@ -78,6 +78,22 @@ min_value = 1.0
 max_value = 8.0
 value = 1.0
 
+[node name="ExpansionToggleContainer" type="HBoxContainer" parent="CenterContainer/VBoxContainer/SettingsContainer"]
+layout_mode = 2
+alignment = 1
+
+[node name="ExpansionToggleLabel" type="Label" parent="CenterContainer/VBoxContainer/SettingsContainer/ExpansionToggleContainer"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "Include Expansion:"
+
+[node name="ExpansionToggle" type="CheckButton" parent="CenterContainer/VBoxContainer/SettingsContainer/ExpansionToggleContainer"]
+custom_minimum_size = Vector2(100, 44)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+button_pressed = true
+
 [node name="PlayerPreviewContainer" type="VBoxContainer" parent="CenterContainer/VBoxContainer"]
 layout_mode = 2
 
