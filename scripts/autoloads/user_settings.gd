@@ -17,6 +17,9 @@ var master_volume: float = 1.0  # 0.0 to 1.0
 var sfx_volume: float = 1.0     # 0.0 to 1.0
 var music_volume: float = 0.8   # 0.0 to 1.0 (default slightly lower)
 
+# Accessibility settings
+var reduced_motion_enabled: bool = false  # Disable/reduce animations for accessibility
+
 
 func _ready() -> void:
 	load_settings()
@@ -67,7 +70,14 @@ func load_settings() -> void:
 		else:
 			push_warning("[UserSettings] Invalid type for music_volume - using default")
 
-	print("[UserSettings] Loaded settings: include_expansion=%s, volumes=(M:%.2f, SFX:%.2f, Music:%.2f)" % [include_expansion, master_volume, sfx_volume, music_volume])
+	# Validate and load accessibility settings
+	if data.has("reduced_motion_enabled"):
+		if typeof(data.reduced_motion_enabled) == TYPE_BOOL:
+			reduced_motion_enabled = data.reduced_motion_enabled
+		else:
+			push_warning("[UserSettings] Invalid type for reduced_motion_enabled - using default")
+
+	print("[UserSettings] Loaded settings: include_expansion=%s, volumes=(M:%.2f, SFX:%.2f, Music:%.2f), reduced_motion=%s" % [include_expansion, master_volume, sfx_volume, music_volume, reduced_motion_enabled])
 
 
 ## Save settings to user://settings.json
@@ -76,7 +86,8 @@ func save_settings() -> void:
 		"include_expansion": include_expansion,
 		"master_volume": master_volume,
 		"sfx_volume": sfx_volume,
-		"music_volume": music_volume
+		"music_volume": music_volume,
+		"reduced_motion_enabled": reduced_motion_enabled
 	}
 
 	var file = FileAccess.open("user://settings.json", FileAccess.WRITE)
@@ -86,7 +97,7 @@ func save_settings() -> void:
 
 	file.store_string(JSON.stringify(data, "\t"))
 	file.close()
-	print("[UserSettings] Settings saved: include_expansion=%s, volumes=(M:%.2f, SFX:%.2f, Music:%.2f)" % [include_expansion, master_volume, sfx_volume, music_volume])
+	print("[UserSettings] Settings saved: include_expansion=%s, volumes=(M:%.2f, SFX:%.2f, Music:%.2f), reduced_motion=%s" % [include_expansion, master_volume, sfx_volume, music_volume, reduced_motion_enabled])
 
 
 ## Set expansion enabled state (with auto-save and signal emission)
@@ -139,6 +150,17 @@ func set_music_volume(value: float) -> void:
 	print("[UserSettings] Music volume changed: %.2f" % music_volume)
 
 
+## Set reduced motion enabled (with auto-save and signal emission)
+func set_reduced_motion(enabled: bool) -> void:
+	if reduced_motion_enabled == enabled:
+		return  # No change
+
+	reduced_motion_enabled = enabled
+	save_settings()
+	# Note: We could add a reduced_motion_changed signal if needed
+	print("[UserSettings] Reduced motion changed: %s" % enabled)
+
+
 ## Generic getter for settings (for compatibility)
 func get_setting(key: String, default_value):
 	match key:
@@ -150,6 +172,8 @@ func get_setting(key: String, default_value):
 			return music_volume
 		"include_expansion":
 			return include_expansion
+		"reduced_motion_enabled":
+			return reduced_motion_enabled
 		_:
 			push_warning("[UserSettings] Unknown setting key: %s - returning default" % key)
 			return default_value
