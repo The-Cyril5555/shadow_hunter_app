@@ -1,0 +1,178 @@
+[gd_scene load_steps=2 format=3 uid="uid://demo_animation_system_001"]
+
+[ext_resource type="Script" path="res://scripts/demos/animation_demo.gd" id="1_demo"]
+
+[node name="AnimationDemo" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_demo")
+
+[node name="BackgroundPanel" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 40
+theme_override_constants/margin_top = 40
+theme_override_constants/margin_right = 40
+theme_override_constants/margin_bottom = 40
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="TitleLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+text = "Animation System Demo"
+horizontal_alignment = 1
+
+[node name="SubtitleLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Test all AnimationHelper functions with PolishConfig timing"
+horizontal_alignment = 1
+
+[node name="HSeparator" type="HSeparator" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="FPSLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "FPS: 60"
+horizontal_alignment = 1
+
+[node name="HSeparator2" type="HSeparator" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="ButtonsGrid" type="GridContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/h_separation = 20
+theme_override_constants/v_separation = 20
+columns = 3
+
+[node name="FadeInButton" type="Button" parent="MarginContainer/VBoxContainer/ButtonsGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Fade In"
+
+[node name="FadeOutButton" type="Button" parent="MarginContainer/VBoxContainer/ButtonsGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Fade Out"
+
+[node name="ScalePulseButton" type="Button" parent="MarginContainer/VBoxContainer/ButtonsGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Scale Pulse"
+
+[node name="ScalePopButton" type="Button" parent="MarginContainer/VBoxContainer/ButtonsGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Scale Pop"
+
+[node name="SlideInButton" type="Button" parent="MarginContainer/VBoxContainer/ButtonsGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Slide In"
+
+[node name="ShakeButton" type="Button" parent="MarginContainer/VBoxContainer/ButtonsGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Shake"
+
+[node name="FadePopButton" type="Button" parent="MarginContainer/VBoxContainer/ButtonsGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Fade In + Pop"
+
+[node name="FadeShrinkButton" type="Button" parent="MarginContainer/VBoxContainer/ButtonsGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Fade Out + Shrink"
+
+[node name="HSeparator3" type="HSeparator" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="ReducedMotionCheck" type="CheckBox" parent="MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Reduced Motion Mode (Test)"
+
+[node name="SpeedSlider" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="SpeedLabel" type="Label" parent="MarginContainer/VBoxContainer/SpeedSlider"]
+layout_mode = 2
+text = "Animation Speed: "
+
+[node name="SpeedValue" type="Label" parent="MarginContainer/VBoxContainer/SpeedSlider"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "1.0x"
+
+[node name="SpeedHSlider" type="HSlider" parent="MarginContainer/VBoxContainer/SpeedSlider"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = 0.5
+max_value = 2.0
+step = 0.1
+value = 1.0
+
+[node name="HSeparator4" type="HSeparator" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="TestTarget" type="Panel" parent="MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(200, 200)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+
+[node name="TargetLabel" type="Label" parent="MarginContainer/VBoxContainer/TestTarget"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -50.0
+offset_top = -14.0
+offset_right = 50.0
+offset_bottom = 14.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "Test Target"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BackButton" type="Button" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Back to Main Menu"
+
+[connection signal="pressed" from="MarginContainer/VBoxContainer/ButtonsGrid/FadeInButton" to="." method="_on_fade_in_pressed"]
+[connection signal="pressed" from="MarginContainer/VBoxContainer/ButtonsGrid/FadeOutButton" to="." method="_on_fade_out_pressed"]
+[connection signal="pressed" from="MarginContainer/VBoxContainer/ButtonsGrid/ScalePulseButton" to="." method="_on_scale_pulse_pressed"]
+[connection signal="pressed" from="MarginContainer/VBoxContainer/ButtonsGrid/ScalePopButton" to="." method="_on_scale_pop_pressed"]
+[connection signal="pressed" from="MarginContainer/VBoxContainer/ButtonsGrid/SlideInButton" to="." method="_on_slide_in_pressed"]
+[connection signal="pressed" from="MarginContainer/VBoxContainer/ButtonsGrid/ShakeButton" to="." method="_on_shake_pressed"]
+[connection signal="pressed" from="MarginContainer/VBoxContainer/ButtonsGrid/FadePopButton" to="." method="_on_fade_pop_pressed"]
+[connection signal="pressed" from="MarginContainer/VBoxContainer/ButtonsGrid/FadeShrinkButton" to="." method="_on_fade_shrink_pressed"]
+[connection signal="toggled" from="MarginContainer/VBoxContainer/ReducedMotionCheck" to="." method="_on_reduced_motion_toggled"]
+[connection signal="value_changed" from="MarginContainer/VBoxContainer/SpeedSlider/SpeedHSlider" to="." method="_on_speed_changed"]
+[connection signal="pressed" from="MarginContainer/VBoxContainer/BackButton" to="." method="_on_back_pressed"]

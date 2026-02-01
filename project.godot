@@ -26,6 +26,8 @@ buses/default_bus_layout="res://audio_bus_layout.tres"
 GameState="*res://scripts/autoloads/game_state.gd"
 GameModeStateMachine="*res://scripts/autoloads/game_mode_state_machine.gd"
 CharacterDistributor="*res://scripts/systems/character_distributor.gd"
+UserSettings="*res://scripts/autoloads/user_settings.gd"
+PolishConfig="*res://scripts/autoloads/polish_config.gd"
 
 [display]
 
@@ -33,7 +35,6 @@ window/size/viewport_width=1920
 window/size/viewport_height=1080
 window/size/mode=2
 window/stretch/mode="viewport"
-window/stretch/aspect="keep"
 
 [input]
 
@@ -61,6 +62,5 @@ toggle_perf_overlay={
 [rendering]
 
 textures/canvas_textures/default_texture_filter=0
-renderer/rendering_method="forward_plus"
 2d/snap/snap_2d_transforms_to_pixel=true
 2d/snap/snap_2d_vertices_to_pixel=true
