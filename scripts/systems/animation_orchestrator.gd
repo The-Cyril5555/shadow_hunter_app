@@ -72,8 +72,11 @@ static func _stage_buildup(card_node: Node, tree: SceneTree) -> void:
 	if card_node.has("scale"):
 		AnimationHelper.scale_pulse(card_node, 1.05, "reveal_buildup_duration")
 
-	# TODO: Spawn buildup particles (Story 5.4 will implement particles)
-	# For now, just play buildup sound
+	# Spawn buildup particles (ability_glow effect)
+	if card_node.has("global_position"):
+		ParticlePool.spawn_particles("ability_glow", card_node.global_position)
+
+	# Play buildup sound
 	AudioManager.play_sfx("reveal_dramatic", false)  # No pitch variation for dramatic sound
 
 	# Wait for buildup duration
@@ -123,9 +126,12 @@ static func _stage_explosion(card_node: Node, tree: SceneTree) -> void:
 	var duration = PolishConfig.get_duration("reveal_explosion_duration")
 	var shake_intensity = PolishConfig.get_shake_intensity("reveal_shake_intensity")
 
-	# Play explosion sound (reuse dramatic sound or add new one)
-	# Using same sound as buildup but with pitch variation for variety
+	# Play explosion sound
 	AudioManager.play_sfx("reveal_dramatic", true)
+
+	# Spawn explosion particles (explosion_burst effect)
+	if card_node.has("global_position"):
+		ParticlePool.spawn_particles("explosion_burst", card_node.global_position)
 
 	# Screen shake effect
 	if card_node.has("position"):
@@ -134,8 +140,6 @@ static func _stage_explosion(card_node: Node, tree: SceneTree) -> void:
 	# Scale pop animation (1.0 → 1.3 → 1.0)
 	if card_node.has("scale"):
 		AnimationHelper.scale_pop(card_node, 1.3, "reveal_explosion_duration")
-
-	# TODO: Spawn explosion particles (Story 5.4 will implement particles)
 
 	# Wait for explosion duration
 	await tree.create_timer(duration).timeout

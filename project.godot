@@ -29,6 +29,7 @@ CharacterDistributor="*res://scripts/systems/character_distributor.gd"
 UserSettings="*res://scripts/autoloads/user_settings.gd"
 PolishConfig="*res://scripts/autoloads/polish_config.gd"
 AudioManager="*res://scripts/autoloads/audio_manager.gd"
+ParticlePool="*res://scripts/systems/particle_pool.gd"
 
 [display]
 

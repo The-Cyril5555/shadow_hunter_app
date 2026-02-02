@@ -28,6 +28,10 @@ func calculate_attack_damage(attacker: Player, target: Player) -> int:
 func apply_damage(attacker: Player, target: Player, amount: int) -> void:
 	AudioManager.play_sfx("damage_hit")
 
+	# Note: We can't spawn particles here directly because CombatSystem is RefCounted
+	# and doesn't have global_position. Particle spawning should happen in UI layer.
+	# For now, we'll emit the signal and let GameBoard handle particles.
+
 	target.hp -= amount
 	GameState.damage_dealt.emit(attacker, target, amount)
 
