@@ -292,3 +292,144 @@ static func fade_out_with_shrink(node: Node, duration_key: String = "card_play_a
 	tween.tween_property(node, "scale", Vector2(0.5, 0.5), duration)\
 		.set_trans(Tween.TRANS_CUBIC)\
 		.set_ease(Tween.EASE_IN)
+
+
+# =============================================================================
+# MICRO-ANIMATIONS (Story 5.5)
+# =============================================================================
+
+## Hover effect: Scale up on mouse enter
+## @param node: Node to animate (must have scale property)
+static func hover_in(node: Node) -> void:
+	if not is_instance_valid(node) or not node.has("scale"):
+		return
+
+	var scale_amount = PolishConfig.get_value("hover_scale_amount", 1.05)
+	var duration = PolishConfig.get_value("hover_duration", 0.15)
+
+	var tween = node.create_tween()
+	tween.set_ease(Tween.EASE_OUT)
+	tween.set_trans(Tween.TRANS_BACK)
+	tween.tween_property(node, "scale", Vector2.ONE * scale_amount, duration)
+
+
+## Hover effect: Scale back to normal on mouse exit
+## @param node: Node to animate (must have scale property)
+static func hover_out(node: Node) -> void:
+	if not is_instance_valid(node) or not node.has("scale"):
+		return
+
+	var duration = PolishConfig.get_value("hover_duration", 0.15)
+
+	var tween = node.create_tween()
+	tween.set_ease(Tween.EASE_IN)
+	tween.set_trans(Tween.TRANS_QUAD)
+	tween.tween_property(node, "scale", Vector2.ONE, duration)
+
+
+## Button press effect: Quick scale down and back
+## @param node: Node to animate (must have scale property)
+static func press_effect(node: Node) -> void:
+	if not is_instance_valid(node) or not node.has("scale"):
+		return
+
+	var press_scale = PolishConfig.get_value("button_press_scale", 0.95)
+	var press_duration = PolishConfig.get_value("button_press_duration", 0.08)
+
+	var tween = node.create_tween()
+	# Scale down
+	tween.tween_property(node, "scale", Vector2.ONE * press_scale, press_duration)
+	# Scale back
+	tween.tween_property(node, "scale", Vector2.ONE, press_duration * 2.0)
+
+
+## Start breathing animation (looping scale pulse)
+## @param node: Node to animate (must have scale property)
+## @returns: Tween instance (null if reduced motion or invalid node)
+static func start_breathing(node: Node) -> Tween:
+	if not is_instance_valid(node) or not node.has("scale"):
+		return null
+
+	# Check reduced motion
+	if AnimationOrchestrator.is_reduced_motion():
+		return null
+
+	var amplitude = PolishConfig.get_value("idle_breathing_amplitude", 0.03)
+	var duration = PolishConfig.get_value("idle_breathing_duration", 2.5)
+
+	var min_scale = 1.0 - amplitude
+	var max_scale = 1.0 + amplitude
+
+	var tween = node.create_tween()
+	tween.set_loops()
+	tween.set_ease(Tween.EASE_IN_OUT)
+	tween.set_trans(Tween.TRANS_SINE)
+
+	tween.tween_property(node, "scale", Vector2.ONE * max_scale, duration / 2.0)
+	tween.tween_property(node, "scale", Vector2.ONE * min_scale, duration / 2.0)
+
+	return tween
+
+
+## Start floating animation (looping vertical movement)
+## @param node: Node to animate (must have position property)
+## @param start_delay: Optional delay before starting (for staggering)
+## @returns: Tween instance (null if reduced motion or invalid node)
+static func start_floating(node: Node, start_delay: float = 0.0) -> Tween:
+	if not is_instance_valid(node) or not node.has("position"):
+		return null
+
+	# Check reduced motion
+	if AnimationOrchestrator.is_reduced_motion():
+		return null
+
+	var amplitude = PolishConfig.get_value("idle_float_amplitude", 3.0)
+	var duration = PolishConfig.get_value("idle_float_duration", 3.0)
+	var base_y = node.position.y
+
+	var tween = node.create_tween()
+	tween.set_loops()
+	tween.set_ease(Tween.EASE_IN_OUT)
+	tween.set_trans(Tween.TRANS_SINE)
+
+	if start_delay > 0.0:
+		tween.tween_interval(start_delay)
+
+	tween.tween_property(node, "position:y", base_y - amplitude, duration / 2.0)
+	tween.tween_property(node, "position:y", base_y + amplitude, duration / 2.0)
+
+	return tween
+
+
+## Start gentle rotation animation (looping rotation oscillation)
+## @param node: Node to animate (must have rotation_degrees property)
+## @param clockwise: Direction of initial rotation
+## @returns: Tween instance (null if reduced motion or invalid node)
+static func start_gentle_rotation(node: Node, clockwise: bool = true) -> Tween:
+	if not is_instance_valid(node) or not node.has("rotation_degrees"):
+		return null
+
+	# Check reduced motion
+	if AnimationOrchestrator.is_reduced_motion():
+		return null
+
+	var amplitude = PolishConfig.get_value("idle_rotation_amplitude", 1.5)
+	var duration = PolishConfig.get_value("idle_rotation_duration", 4.0)
+	var rotation_degrees = amplitude if clockwise else -amplitude
+
+	var tween = node.create_tween()
+	tween.set_loops()
+	tween.set_ease(Tween.EASE_IN_OUT)
+	tween.set_trans(Tween.TRANS_SINE)
+
+	tween.tween_property(node, "rotation_degrees", rotation_degrees, duration / 2.0)
+	tween.tween_property(node, "rotation_degrees", -rotation_degrees, duration / 2.0)
+
+	return tween
+
+
+## Stop idle animation (kill the tween)
+## @param tween: Tween instance to stop (can be null)
+static func stop_idle_animation(tween: Tween) -> void:
+	if is_instance_valid(tween):
+		tween.kill()

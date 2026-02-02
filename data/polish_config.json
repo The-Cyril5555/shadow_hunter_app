@@ -16,5 +16,19 @@
 	"dice_roll_duration": 1.2,
 
 	"reduced_motion_particle_reduction": 0.7,
-	"reduced_motion_tween_slowdown": 0.3
+	"reduced_motion_tween_slowdown": 0.3,
+
+	"hover_scale_amount": 1.05,
+	"hover_duration": 0.15,
+	"hover_glow_intensity": 0.3,
+
+	"idle_breathing_amplitude": 0.03,
+	"idle_breathing_duration": 2.5,
+	"idle_float_amplitude": 3.0,
+	"idle_float_duration": 3.0,
+	"idle_rotation_amplitude": 1.5,
+	"idle_rotation_duration": 4.0,
+
+	"button_press_scale": 0.95,
+	"button_press_duration": 0.08
 }
