@@ -24,16 +24,31 @@ func calculate_attack_damage(attacker: Player, target: Player) -> int:
 	return total
 
 
-## Apply damage to target
-func apply_damage(attacker: Player, target: Player, amount: int) -> void:
-	AudioManager.play_sfx("damage_hit")
+## Apply damage to target (with defense reduction)
+func apply_damage(attacker: Player, target: Player, attack_damage: int) -> void:
+	# Calculate defense reduction
+	var defense_bonus = target.get_defense_bonus()
+	var final_damage = max(1, attack_damage - defense_bonus)  # Minimum 1 damage
+
+	# Log defense reduction if applicable
+	if defense_bonus > 0:
+		print("[Combat] %s defends: %d attack - %d defense = %d final damage" % [
+			target.display_name,
+			attack_damage,
+			defense_bonus,
+			final_damage
+		])
+		AudioManager.play_sfx("shield_block")
+	else:
+		AudioManager.play_sfx("damage_hit")
 
 	# Note: We can't spawn particles here directly because CombatSystem is RefCounted
 	# and doesn't have global_position. Particle spawning should happen in UI layer.
 	# For now, we'll emit the signal and let GameBoard handle particles.
 
-	target.hp -= amount
-	GameState.damage_dealt.emit(attacker, target, amount)
+	# Apply final damage
+	target.hp -= final_damage
+	GameState.damage_dealt.emit(attacker, target, final_damage)
 
 	# Check for death
 	if target.hp <= 0:
