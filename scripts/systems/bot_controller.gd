@@ -1,11 +1,13 @@
 ## BotController - Handles AI bot turn execution
 ##
-## Provides automated turn execution for bot players
-## MVP: Simple random movement and always draw card
+## Provides automated turn execution for bot players with intelligent decision-making
+## Uses AIDecisionEngine for personality-driven choices
 ##
 ## Features:
 ## - Bot turn detection
 ## - Automated action sequence (roll → move → zone action)
+## - Intelligent decision-making using AIDecisionEngine
+## - Personality-driven behavior (aggressive, prudent, balanced)
 ## - Action delays for human observation
 ## - Signal-based event notifications
 ##
@@ -95,16 +97,41 @@ func bot_roll_dice(bot: Player) -> int:
 	return roll
 
 
-## Bot moves to zone (with GameState signal emission)
+## Bot moves to zone using AIDecisionEngine (with GameState signal emission)
 ## @param bot: Bot player moving
 ## @param roll: Dice roll result (currently unused in MVP)
 ## @returns: String - target zone id
 func bot_move_to_zone(bot: Player, roll: int) -> String:
 	bot_action_started.emit(bot, "move")
 
+	# Build context for decision-making
+	var decision_engine = AIDecisionEngine.new()
+	var context = AIDecisionEngine.build_action_context(bot, GameState.players)
+
+	# Decide between safe and risky movement
+	var movement_actions = [
+		AIDecisionEngine.ACTION_MOVE_SAFE,
+		AIDecisionEngine.ACTION_MOVE_RISKY
+	]
+	var chosen_movement = decision_engine.choose_best_action(bot, movement_actions, context)
+
 	# Get valid adjacent zones
 	var valid_zones = _get_valid_adjacent_zones(bot.position_zone)
-	var target_zone = valid_zones.pick_random() if valid_zones.size() > 0 else bot.position_zone
+
+	# Choose zone based on decision
+	var target_zone = bot.position_zone
+	if valid_zones.size() > 0:
+		if chosen_movement == AIDecisionEngine.ACTION_MOVE_SAFE:
+			# Safe movement: prefer white/hermit zones (beneficial/neutral)
+			var safe_zones = ["white", "hermit"]
+			var available_safe = []
+			for zone in valid_zones:
+				if zone in safe_zones:
+					available_safe.append(zone)
+			target_zone = available_safe.pick_random() if available_safe.size() > 0 else valid_zones.pick_random()
+		else:
+			# Risky movement: prefer black zone (risky cards)
+			target_zone = "black" if "black" in valid_zones else valid_zones.pick_random()
 
 	# Update position
 	var old_zone = bot.position_zone
@@ -114,17 +141,85 @@ func bot_move_to_zone(bot: Player, roll: int) -> String:
 	GameState.player_moved.emit(bot, target_zone)
 
 	bot_action_completed.emit(bot, "move", target_zone)
-	print("[BotController] 🚶 %s moved: %s → %s" % [bot.display_name, old_zone, target_zone])
+	print("[BotController] 🚶 %s moved: %s → %s (%s)" % [bot.display_name, old_zone, target_zone, chosen_movement])
 
 	return target_zone
 
 
-## Bot executes zone action (draw card from real deck)
+## Bot executes zone action using AIDecisionEngine (draw card or attack)
 ## @param bot: Bot player executing action
 ## @param zone: Current zone
 func bot_execute_zone_action(bot: Player, zone: String) -> void:
 	bot_action_started.emit(bot, "zone_action")
 
+	# Build context for decision-making
+	var decision_engine = AIDecisionEngine.new()
+	var context = AIDecisionEngine.build_action_context(bot, GameState.players)
+
+	# Determine available actions
+	var available_actions = [AIDecisionEngine.ACTION_DRAW_CARD]
+
+	# Check if there are enemies to attack
+	var nearby_enemies = context.get("nearby_enemies", [])
+	if nearby_enemies.size() > 0:
+		available_actions.append(AIDecisionEngine.ACTION_ATTACK)
+
+	# Choose best action based on personality and context
+	var chosen_action = decision_engine.choose_best_action(bot, available_actions, context)
+
+	# Execute chosen action
+	match chosen_action:
+		AIDecisionEngine.ACTION_ATTACK:
+			_execute_bot_attack(bot, nearby_enemies)
+		AIDecisionEngine.ACTION_DRAW_CARD:
+			_execute_bot_draw_card(bot, zone)
+		_:
+			push_warning("[BotController] Unknown action chosen: %s" % chosen_action)
+			_execute_bot_draw_card(bot, zone)  # Fallback to draw
+
+
+## Execute bot attack on weakest enemy
+## @param bot: Bot attacking
+## @param enemies: Array of nearby enemies
+func _execute_bot_attack(bot: Player, enemies: Array) -> void:
+	# Choose weakest enemy as target
+	var target: Player = null
+	var lowest_hp = 999
+
+	for enemy in enemies:
+		if enemy.hp < lowest_hp:
+			lowest_hp = enemy.hp
+			target = enemy
+
+	if target == null:
+		push_warning("[BotController] No valid target for attack")
+		bot_action_completed.emit(bot, "zone_action", null)
+		return
+
+	print("[BotController] ⚔️ %s attacking %s (HP: %d)" % [bot.display_name, target.display_name, target.hp])
+
+	# Calculate and apply damage (using base damage + equipment bonuses)
+	var base_damage = 1  # Base attack damage
+	var attack_bonus = bot.get_attack_damage_bonus()
+	var total_damage = base_damage + attack_bonus
+
+	# Use CombatSystem to apply damage
+	CombatSystem.apply_damage(bot, target, total_damage)
+
+	bot_action_completed.emit(bot, "zone_action", {"action": "attack", "target": target, "damage": total_damage})
+	print("[BotController] ✅ %s dealt %d damage to %s (HP: %d → %d)" % [
+		bot.display_name,
+		total_damage,
+		target.display_name,
+		target.hp + total_damage,  # before
+		target.hp  # after
+	])
+
+
+## Execute bot card draw
+## @param bot: Bot drawing card
+## @param zone: Current zone
+func _execute_bot_draw_card(bot: Player, zone: String) -> void:
 	print("[BotController] 🃏 %s drawing card from %s zone" % [bot.display_name, zone])
 
 	# Get the appropriate deck from GameState

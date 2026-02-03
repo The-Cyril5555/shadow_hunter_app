@@ -183,108 +183,130 @@ GameState.player_moved.emit(bot, target_zone)
 4. **Pioche de cartes** - Vrais decks
 5. **Logs clairs** - Console détaillée
 
-### ⚠️ Limitations actuelles:
+### ✅ Améliorations récentes (AIDecisionEngine intégré):
 
-1. **Mouvement**: Choix aléatoire des zones
-   - Ne utilise PAS AIDecisionEngine
-   - Pas d'évaluation stratégique
-   - Juste `pick_random()` parmi zones adjacentes
+1. **Mouvement**: Décisions intelligentes basées sur la personnalité
+   - ✅ Utilise AIDecisionEngine.choose_best_action()
+   - ✅ Évalue MOVE_SAFE vs MOVE_RISKY selon contexte
+   - ✅ Aggressive préfère black zone (risky)
+   - ✅ Prudent préfère white/hermit zones (safe)
 
-2. **Actions**: Toujours pioche de carte
-   - Ne utilise PAS AIDecisionEngine
-   - Pas de décision attack vs draw
-   - Pas d'utilisation d'équipement
+2. **Actions de zone**: Décisions stratégiques
+   - ✅ Utilise AIDecisionEngine pour choisir action
+   - ✅ Décide entre ATTACK et DRAW_CARD
+   - ✅ Attaque si ennemis présents (cible le plus faible)
+   - ✅ Utilise CombatSystem.apply_damage()
+   - ✅ Tient compte des bonus d'équipement
 
-3. **Animations**: Basiques
+3. **Comportements distincts**: Personnalités observables
+   - ✅ Aggressive attaque plus souvent
+   - ✅ Prudent préfère piocher des cartes
+   - ✅ Balanced équilibre les deux stratégies
+
+### ⚠️ Limitations restantes:
+
+1. **Animations**: Basiques
    - Pas d'animation de mouvement du bot
    - GameBoard ne gère pas encore les animations bot
 
-4. **Combat**: Non implémenté
-   - Bots ne attaquent jamais
-   - Pas d'évaluation des cibles
+2. **Actions avancées**: Partiellement implémentées
+   - Pas d'utilisation d'équipement depuis la main
+   - Pas d'utilisation de capacités spéciales de personnage
+   - Action DEFEND non implémentée (nécessiterait utilisation de cartes défensives)
 
 ---
 
 ## 🚀 Prochaines étapes recommandées
 
-### Priorité 1: Intégrer AIDecisionEngine
+### ✅ Priorité 1: Intégrer AIDecisionEngine - TERMINÉ
 
 **Objectif**: Faire utiliser l'IA pour les décisions
 
-**Actions**:
+**Réalisé**:
 1. Dans `bot_move_to_zone()`:
-   - Utiliser `AIDecisionEngine.choose_best_action()`
-   - Évaluer `move_safe` vs `move_risky`
-   - Choisir la meilleure zone selon personnalité
+   - ✅ Utilise `AIDecisionEngine.choose_best_action()`
+   - ✅ Évalue `move_safe` vs `move_risky`
+   - ✅ Choisit la meilleure zone selon personnalité
 
 2. Dans `bot_execute_zone_action()`:
-   - Décider: `draw_card` vs `attack` vs `defend`
-   - Utiliser les poids de personnalité
-   - Aggressive → préfère attaquer
-   - Prudent → préfère piocher
+   - ✅ Décide: `draw_card` vs `attack`
+   - ✅ Utilise les poids de personnalité
+   - ✅ Aggressive → préfère attaquer
+   - ✅ Prudent → préfère piocher
+   - ✅ Attaque le plus faible en priorité
+   - ✅ Utilise CombatSystem.apply_damage()
 
-**Impact**: Comportements distincts selon personnalité
-
----
-
-### Priorité 2: Ajouter le combat bot
-
-**Objectif**: Permettre aux bots d'attaquer
-
-**Actions**:
-1. Évaluer les cibles potentielles
-2. Utiliser `AIDecisionEngine` pour scorer chaque cible
-3. Appeler `CombatSystem.calculate_attack_damage()`
-4. Gérer les animations de combat
-
-**Impact**: Jeu plus complet et intéressant
+**Impact**: Comportements distincts et observables selon personnalité
 
 ---
 
-### Priorité 3: Améliorer les animations
+### Priorité 2: Améliorer les animations
 
 **Objectif**: Rendre les tours de bot visuellement clairs
 
 **Actions**:
 1. Animation de mouvement du token bot
 2. Affichage de la carte piochée (dos de carte)
-3. Indicateur visuel "Bot X is thinking..."
-4. Transitions fluides
+3. Animation des attaques (effet visuel)
+4. Indicateur visuel "Bot X is thinking..."
+5. Transitions fluides
 
 **Impact**: Meilleure UX pour joueurs humains
 
 ---
 
+### Priorité 3: Actions avancées
+
+**Objectif**: Permettre aux bots d'utiliser leurs capacités
+
+**Actions**:
+1. Utilisation d'équipement depuis la main
+2. Utilisation de capacités spéciales de personnage
+3. Action DEFEND avec cartes défensives
+4. Gestion des cartes spéciales (sorts, etc.)
+
+**Impact**: Bots plus stratégiques et compétitifs
+
+---
+
 ## 📈 Métriques
 
-**Fichiers modifiés**: 3
+**Fichiers modifiés**: 4
 - `scripts/game/game_board.gd` (+21 lignes)
 - `scripts/autoloads/game_state.gd` (+7 lignes)
 - `scripts/ui/game_setup.gd` (+4 lignes)
-- `scripts/systems/bot_controller.gd` (+31 lignes, -23 lignes)
+- `scripts/systems/bot_controller.gd` (+110 lignes, -23 lignes)
 
-**Commits**: 2
+**Commits**: 3
 - `feat: integrate bot AI system into game flow`
 - `feat: adapt BotController to use real game systems`
+- `feat: integrate AIDecisionEngine for intelligent bot decisions`
 
-**Systèmes intégrés**: 3
-- BotController
+**Systèmes intégrés**: 5
+- BotController (avec AIDecisionEngine)
 - PersonalityManager
 - HandManager
+- AIDecisionEngine
+- CombatSystem (pour attaques bot)
 
 ---
 
 ## 🎯 Résultat
 
-**Le jeu est maintenant jouable avec des bots!**
+**Le jeu est maintenant jouable avec des bots intelligents!**
 
 - ✅ Les parties avec bots fonctionnent
 - ✅ Les bots jouent automatiquement
-- ✅ Les personnalités sont assignées
+- ✅ Les personnalités sont assignées ET utilisées
 - ✅ Les cartes réelles sont piochées
-- ⚠️ Les décisions sont encore basiques (aléatoires)
+- ✅ Les décisions sont intelligentes (AIDecisionEngine)
+- ✅ Les bots attaquent stratégiquement (ciblent les plus faibles)
+- ✅ Les personnalités ont des comportements distincts observables
+- ✅ Aggressive préfère attaquer et zones risquées (black)
+- ✅ Prudent préfère piocher et zones sûres (white/hermit)
+- ✅ Balanced équilibre les deux stratégies
 
-**Prochaine étape logique**: Intégrer AIDecisionEngine pour des décisions intelligentes basées sur la personnalité.
+**État actuel**: Bots jouables avec décisions stratégiques basées sur leur personnalité. Les tours sont automatiques et les bots interagissent avec tous les systèmes de jeu (combat, cartes, mouvement).
 
 ---
 
