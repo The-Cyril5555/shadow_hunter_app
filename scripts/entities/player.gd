@@ -29,6 +29,10 @@ var hand: Array = []  # Array of Card instances
 var is_alive: bool = true
 var is_revealed: bool = false
 
+# Ability tracking
+var ability_used: bool = false  # For "once per game" abilities
+var ability_disabled: bool = false  # For Ellen's curse effect
+
 # Board position
 var position_zone: String = ""  # Current zone ID
 
@@ -51,7 +55,7 @@ func assign_character(char_data: Dictionary) -> void:
 
 
 ## Take damage, returns true if player died
-func take_damage(amount: int) -> bool:
+func take_damage(amount: int, source: Player = null) -> bool:
 	hp = max(0, hp - amount)
 	if hp <= 0:
 		is_alive = false
@@ -142,6 +146,8 @@ func to_dict() -> Dictionary:
 		"hand": hand_data,
 		"is_alive": is_alive,
 		"is_revealed": is_revealed,
+		"ability_used": ability_used,
+		"ability_disabled": ability_disabled,
 		"position_zone": position_zone
 	}
 
@@ -161,6 +167,8 @@ static func from_dict(data: Dictionary) -> Player:
 	player.hp_max = data.get("hp_max", 0)
 	player.is_alive = data.get("is_alive", true)
 	player.is_revealed = data.get("is_revealed", false)
+	player.ability_used = data.get("ability_used", false)
+	player.ability_disabled = data.get("ability_disabled", false)
 	player.position_zone = data.get("position_zone", "")
 
 	# Deserialize equipment cards
