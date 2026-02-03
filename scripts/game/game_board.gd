@@ -646,15 +646,27 @@ func _on_phase_changed(new_phase: GameState.TurnPhase) -> void:
 			# Reset turn flags for new player
 			has_drawn_this_turn = false
 			has_rolled_this_turn = false
-			# Enable dice roll, disable actions
-			roll_dice_button.disabled = false
-			draw_card_button.disabled = true
-			attack_button.disabled = true
-			end_turn_button.disabled = false
 			# Update displays for new player
 			_update_display()
 			_update_hand_display()
 			_update_equipment_display()
+
+			# Check if current player is a bot
+			var current_player = GameState.get_current_player()
+			if current_player and not current_player.is_human:
+				# Disable all UI for bot turns
+				roll_dice_button.disabled = true
+				draw_card_button.disabled = true
+				attack_button.disabled = true
+				end_turn_button.disabled = true
+				# Execute bot turn
+				_execute_bot_turn()
+			else:
+				# Enable dice roll, disable actions for human players
+				roll_dice_button.disabled = false
+				draw_card_button.disabled = true
+				attack_button.disabled = true
+				end_turn_button.disabled = false
 		GameState.TurnPhase.ACTION:
 			# Disable dice roll
 			roll_dice_button.disabled = true
@@ -669,6 +681,29 @@ func _on_phase_changed(new_phase: GameState.TurnPhase) -> void:
 			draw_card_button.disabled = true
 			attack_button.disabled = true
 			end_turn_button.disabled = true
+
+
+# -----------------------------------------------------------------------------
+# Bot Turn Execution
+# -----------------------------------------------------------------------------
+
+## Execute bot turn automatically
+func _execute_bot_turn() -> void:
+	var bot = GameState.get_current_player()
+	if not bot or bot.is_human:
+		return
+
+	print("[GameBoard] 🤖 Bot turn: %s" % bot.display_name)
+
+	# Create bot controller
+	var bot_controller = BotController.new()
+
+	# Execute bot turn (async)
+	await bot_controller.execute_bot_turn(bot, get_tree())
+
+	# After bot turn completes, end turn
+	print("[GameBoard] 🤖 Bot turn complete, ending turn")
+	_on_end_turn_pressed()
 
 
 # -----------------------------------------------------------------------------

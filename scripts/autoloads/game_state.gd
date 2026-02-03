@@ -126,6 +126,9 @@ func _ready() -> void:
 	# Load card data from JSON
 	_load_cards()
 
+	# Load AI personalities from JSON
+	_load_personalities()
+
 	# Initialize win condition checker
 	win_checker = WinConditionChecker.new()
 
@@ -526,6 +529,15 @@ func _load_cards() -> void:
 			total_cards += 1
 
 	print("[GameState] Loaded %d cards (%d hermit, %d white, %d black)" % [total_cards, hermit_count, white_count, black_count])
+
+
+## Load AI personality data from JSON
+func _load_personalities() -> void:
+	var personalities = PersonalityManager.load_personalities()
+	if personalities.is_empty():
+		push_warning("[GameState] No AI personalities loaded")
+	else:
+		print("[GameState] Loaded %d AI personalities" % personalities.size())
 
 
 ## Validate card data structure

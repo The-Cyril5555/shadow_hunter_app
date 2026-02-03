@@ -100,6 +100,12 @@ func _on_start_game_pressed() -> void:
 	# Initialize players in GameState
 	_initialize_players()
 
+	# Assign AI personalities to bots
+	var personalities = PersonalityManager.load_personalities()
+	if not personalities.is_empty():
+		PersonalityManager.assign_personalities_to_bots(GameState.players, personalities)
+		print("[GameSetup] Assigned AI personalities to bots")
+
 	# Distribute characters (with expansion preference from UserSettings)
 	CharacterDistributor.distribute_characters(GameState.players, total_players, UserSettings.include_expansion)
 
