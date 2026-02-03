@@ -1,0 +1,39 @@
+{
+  "version": "1.0",
+  "description": "AI personality definitions for bot players. Each personality has different decision weights that influence bot behavior.",
+  "personalities": {
+    "aggressive": {
+      "display_name": "Aggressive",
+      "description": "Prefers attacking and risk-taking. High combat aggression, low defense priority.",
+      "color": "#FF4444",
+      "decision_weights": {
+        "attack": 0.4,
+        "defense": 0.1,
+        "risk": 0.4,
+        "card_draw": 0.1
+      }
+    },
+    "prudent": {
+      "display_name": "Prudent",
+      "description": "Prefers defense and information gathering. Avoids combat, prioritizes card collection.",
+      "color": "#4444FF",
+      "decision_weights": {
+        "attack": 0.1,
+        "defense": 0.4,
+        "risk": 0.1,
+        "card_draw": 0.4
+      }
+    },
+    "balanced": {
+      "display_name": "Balanced",
+      "description": "Adapts to game state with moderate approach. No strong preferences.",
+      "color": "#44FF44",
+      "decision_weights": {
+        "attack": 0.25,
+        "defense": 0.25,
+        "risk": 0.25,
+        "card_draw": 0.25
+      }
+    }
+  }
+}
