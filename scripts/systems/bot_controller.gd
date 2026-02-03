@@ -49,7 +49,15 @@ func execute_bot_turn(bot: Player, scene_tree: SceneTree) -> void:
 		push_warning("[BotController] Attempted to execute bot turn for human player: %s" % bot.display_name)
 		return
 
+	# Log bot personality
+	var personality_id = PersonalityManager.get_personality_id(bot)
+	var personality_name = "Unknown"
+	if personality_id != "":
+		var personality_data = bot.get_meta("personality_data", {})
+		personality_name = personality_data.get("display_name", personality_id)
+
 	print("\n[BotController] ========== %s TURN START ==========" % bot.display_name)
+	print("[BotController] Personality: %s" % personality_name)
 
 	# Step 1: Roll dice
 	await _action_delay(scene_tree)
@@ -87,14 +95,14 @@ func bot_roll_dice(bot: Player) -> int:
 	return roll
 
 
-## Bot moves to zone (MVP: random valid adjacent zone)
+## Bot moves to zone (with GameState signal emission)
 ## @param bot: Bot player moving
 ## @param roll: Dice roll result (currently unused in MVP)
 ## @returns: String - target zone id
 func bot_move_to_zone(bot: Player, roll: int) -> String:
 	bot_action_started.emit(bot, "move")
 
-	# MVP: Simple zone selection (random adjacent)
+	# Get valid adjacent zones
 	var valid_zones = _get_valid_adjacent_zones(bot.position_zone)
 	var target_zone = valid_zones.pick_random() if valid_zones.size() > 0 else bot.position_zone
 
@@ -102,40 +110,40 @@ func bot_move_to_zone(bot: Player, roll: int) -> String:
 	var old_zone = bot.position_zone
 	bot.position_zone = target_zone
 
+	# Emit GameState signal for movement (for UI updates, etc.)
+	GameState.player_moved.emit(bot, target_zone)
+
 	bot_action_completed.emit(bot, "move", target_zone)
 	print("[BotController] 🚶 %s moved: %s → %s" % [bot.display_name, old_zone, target_zone])
 
 	return target_zone
 
 
-## Bot executes zone action (MVP: always draw card)
+## Bot executes zone action (draw card from real deck)
 ## @param bot: Bot player executing action
 ## @param zone: Current zone
 func bot_execute_zone_action(bot: Player, zone: String) -> void:
 	bot_action_started.emit(bot, "zone_action")
 
-	# For MVP, simulate drawing a card
-	# In full implementation, this would use DeckManager
 	print("[BotController] 🃏 %s drawing card from %s zone" % [bot.display_name, zone])
 
-	# Simulate card draw by creating a dummy card
-	var card = Card.new()
-	card.from_dict({
-		"id": "bot_card_%d" % randi(),
-		"name": "Card from %s" % zone,
-		"deck": zone,
-		"type": "equipment",
-		"effect": {
-			"type": "damage",
-			"value": 1,
-			"description": "Test card"
-		}
-	})
+	# Get the appropriate deck from GameState
+	var deck: DeckManager = GameState.get_deck_for_zone(zone)
 
-	bot.hand.append(card)
+	if deck == null:
+		push_warning("[BotController] No deck found for zone: %s" % zone)
+		bot_action_completed.emit(bot, "zone_action", null)
+		return
 
-	bot_action_completed.emit(bot, "zone_action", card)
-	print("[BotController] ✅ %s drew: %s (hand: %d cards)" % [bot.display_name, card.name, bot.hand.size()])
+	# Draw card from real deck using HandManager
+	var card = HandManager.draw_to_hand(bot, deck)
+
+	if card != null:
+		bot_action_completed.emit(bot, "zone_action", card)
+		print("[BotController] ✅ %s drew: %s (hand: %d cards)" % [bot.display_name, card.name, bot.hand.size()])
+	else:
+		bot_action_completed.emit(bot, "zone_action", null)
+		print("[BotController] ⚠️ %s couldn't draw (deck exhausted)" % bot.display_name)
 
 
 # =============================================================================
