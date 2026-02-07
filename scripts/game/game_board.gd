@@ -38,6 +38,7 @@ extends Control
 @onready var error_message: ErrorMessage = $ErrorMessageLayer/ErrorMessage
 @onready var end_turn_button: Button = $MarginContainer/HBoxContainer/LeftPanel/ButtonContainer/EndTurnButton
 @onready var dice_roll_popup: DiceRollPopup = $DiceRollPopupLayer/DiceRollPopup
+@onready var action_phase_popup: ActionPhasePopup = $ActionPhasePopupLayer/ActionPhasePopup
 
 
 # -----------------------------------------------------------------------------
@@ -99,6 +100,9 @@ func _ready() -> void:
 
 	# Connect dice roll popup signal
 	dice_roll_popup.zone_selected.connect(_on_popup_zone_selected)
+
+	# Connect action phase popup signal
+	action_phase_popup.action_chosen.connect(_on_action_popup_chosen)
 
 	# Add pause menu
 	var pause_menu = PauseMenu.new()
@@ -492,6 +496,10 @@ func _on_draw_card_pressed() -> void:
 	# Track action for auto-save
 	SaveManager.track_action()
 
+	# Re-show action popup for remaining choices (attack / end turn)
+	if current_player.is_human and GameState.current_phase == GameState.TurnPhase.ACTION:
+		_show_action_phase_popup(current_player)
+
 	print("[GameBoard] Card draw complete. Button disabled for this turn.")
 
 
@@ -757,14 +765,22 @@ func _on_phase_changed(new_phase: GameState.TurnPhase) -> void:
 				_clear_button_highlights()
 				dice_roll_popup.show_for_player(current_player)
 		GameState.TurnPhase.ACTION:
-			# Disable dice roll
+			# Disable all left panel buttons while popup is shown
 			roll_dice_button.disabled = true
-			# Enable draw button only if haven't drawn yet
-			draw_card_button.disabled = has_drawn_this_turn
-			# Enable attack button (targets validated on click)
-			attack_button.disabled = false
-			end_turn_button.disabled = false
-			_update_action_hints()
+			draw_card_button.disabled = true
+			attack_button.disabled = true
+			end_turn_button.disabled = true
+			_clear_button_highlights()
+
+			# Check if current player is human → show action popup
+			var action_player = GameState.get_current_player()
+			if action_player and action_player.is_human:
+				_show_action_phase_popup(action_player)
+			else:
+				# Re-enable for bot logic (handled by bot controller)
+				draw_card_button.disabled = has_drawn_this_turn
+				attack_button.disabled = false
+				end_turn_button.disabled = false
 		GameState.TurnPhase.END:
 			# Disable all action buttons during transition
 			roll_dice_button.disabled = true
@@ -772,6 +788,41 @@ func _on_phase_changed(new_phase: GameState.TurnPhase) -> void:
 			attack_button.disabled = true
 			end_turn_button.disabled = true
 			_clear_button_highlights()
+
+
+# -----------------------------------------------------------------------------
+# Action Phase Popup
+# -----------------------------------------------------------------------------
+
+## Show the action phase popup with context
+func _show_action_phase_popup(player: Player) -> void:
+	var zone_id = player.position_zone
+	var deck = GameState.get_deck_for_zone(zone_id)
+	var can_draw = not has_drawn_this_turn and deck != null and deck.get_card_count() > 0
+	var deck_type = deck.deck_type if deck != null else ""
+	var target_count = get_valid_targets().size()
+	action_phase_popup.show_for_player(player, can_draw, deck_type, target_count)
+
+
+## Handle action popup choice
+func _on_action_popup_chosen(action: String) -> void:
+	match action:
+		"draw":
+			# Re-enable buttons and trigger draw
+			draw_card_button.disabled = has_drawn_this_turn
+			attack_button.disabled = false
+			end_turn_button.disabled = false
+			_update_action_hints()
+			_on_draw_card_pressed()
+		"attack":
+			# Re-enable buttons and trigger attack
+			draw_card_button.disabled = has_drawn_this_turn
+			attack_button.disabled = false
+			end_turn_button.disabled = false
+			_update_action_hints()
+			_on_attack_button_pressed()
+		"end_turn":
+			_on_end_turn_pressed()
 
 
 # -----------------------------------------------------------------------------
