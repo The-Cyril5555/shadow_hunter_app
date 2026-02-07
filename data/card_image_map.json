@@ -21,6 +21,11 @@
 		"hermit_vision_1": "res://images/hermit_cards/hermits_prediction.png",
 		"hermit_vision_2": "res://images/hermit_cards/hermits_spell.png"
 	},
+	"hp_score_cards": {
+		"variant_01": "res://images/hp_score_cards/HP_score_01.png",
+		"variant_02": "res://images/hp_score_cards/HP_Score_02.png",
+		"card_back": "res://images/hp_score_cards/card_back.png"
+	},
 	"character_images": {
 		"agnes": "res://images/character_cards/agnes.png",
 		"allie": "res://images/character_cards/allie.png",
