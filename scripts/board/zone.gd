@@ -52,6 +52,11 @@ func setup(zone_data: Dictionary) -> void:
 	zone_color = zone_data.get("color", Color.WHITE)
 	_apply_zone_style(zone_color)
 
+	# Set tooltip
+	var description = zone_data.get("description", "")
+	tooltip_text = "%s\n%s" % [zone_name, description]
+	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+
 	print("[Zone] Initialized zone: %s (id: %s)" % [zone_name, zone_id])
 
 
@@ -68,6 +73,7 @@ func add_player_token(player: Player) -> void:
 	token.setup(player)
 	token_container.add_child(token)
 
+	_update_tooltip()
 	print("[Zone] Player %s added to zone %s" % [player.display_name, zone_name])
 
 
@@ -85,6 +91,7 @@ func remove_player_token(player: Player) -> void:
 			child.queue_free()
 			break
 
+	_update_tooltip()
 	print("[Zone] Player %s removed from zone %s" % [player.display_name, zone_name])
 
 
@@ -125,6 +132,19 @@ func set_highlight(enabled: bool) -> void:
 # -----------------------------------------------------------------------------
 # Private Methods
 # -----------------------------------------------------------------------------
+
+## Update tooltip with current zone state
+func _update_tooltip() -> void:
+	var text = zone_name
+	if deck_type != "":
+		text += "\nDeck: %s" % deck_type.capitalize()
+	if players_here.size() > 0:
+		text += "\n\nJoueurs (%d):" % players_here.size()
+		for p in players_here:
+			var status = "HP: %d/%d" % [p.hp, p.hp_max] if p.is_alive else "Mort"
+			text += "\n  %s - %s" % [p.display_name, status]
+	tooltip_text = text
+
 
 ## Apply visual styling to zone panel
 func _apply_zone_style(bg_color: Color) -> void:

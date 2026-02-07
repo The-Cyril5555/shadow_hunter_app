@@ -39,6 +39,30 @@ func setup(p: Player) -> void:
 	# Apply styling
 	_apply_token_style()
 
+	# Set tooltip
+	_update_tooltip()
+
+
+## Update tooltip with current player info
+func _update_tooltip() -> void:
+	var type_str = "Humain" if player.is_human else "Bot"
+	var text = "%s (%s)" % [player.display_name, type_str]
+	text += "\nHP: %d/%d" % [player.hp, player.hp_max]
+
+	if player.character_name != "" and player.is_revealed:
+		text += "\nPersonnage: %s" % player.character_name
+		text += "\nFaction: %s" % player.faction.capitalize()
+
+	if player.equipment.size() > 0:
+		text += "\n\nÉquipement:"
+		for card in player.equipment:
+			text += "\n  %s (+%d)" % [card.name, card.get_effect_value()]
+
+	if not player.is_alive:
+		text = "%s (Mort)" % player.display_name
+
+	tooltip_text = text
+
 
 ## Get the player associated with this token
 func get_player() -> Player:

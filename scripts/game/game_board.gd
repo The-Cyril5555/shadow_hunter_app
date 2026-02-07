@@ -98,6 +98,9 @@ func _ready() -> void:
 	# Reset auto-save counter for new game
 	SaveManager.reset_action_counter()
 
+	# Setup button tooltips
+	_setup_tooltips()
+
 	print("[GameBoard] Game started with %d players" % GameState.players.size())
 
 
@@ -886,3 +889,20 @@ func _on_game_over(winning_faction: String) -> void:
 
 	# Transition to Game Over screen
 	GameModeStateMachine.transition_to(GameModeStateMachine.GameMode.GAME_OVER)
+
+
+# -----------------------------------------------------------------------------
+# Tooltips
+# -----------------------------------------------------------------------------
+
+## Setup contextual tooltips on buttons and deck displays
+func _setup_tooltips() -> void:
+	roll_dice_button.tooltip_text = "Lancer les dés pour déterminer votre mouvement"
+	draw_card_button.tooltip_text = "Piocher une carte du deck de la zone actuelle"
+	attack_button.tooltip_text = "Attaquer un joueur présent dans votre zone"
+	end_turn_button.tooltip_text = "Terminer votre tour et passer au joueur suivant"
+
+	# Deck tooltips
+	hermit_count_label.get_parent().tooltip_text = "Deck Hermite — Cartes de vision"
+	white_count_label.get_parent().tooltip_text = "Deck Lumière — Cartes bénéfiques (soin, protection)"
+	black_count_label.get_parent().tooltip_text = "Deck Ténèbres — Cartes offensives (dégâts, malus)"
