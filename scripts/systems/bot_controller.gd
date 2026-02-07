@@ -118,20 +118,25 @@ func bot_move_to_zone(bot: Player, roll: int) -> String:
 	# Get valid adjacent zones
 	var valid_zones = _get_valid_adjacent_zones(bot.position_zone)
 
-	# Choose zone based on decision
+	# Choose zone based on decision using ZoneData deck_type classification
 	var target_zone = bot.position_zone
 	if valid_zones.size() > 0:
 		if chosen_movement == AIDecisionEngine.ACTION_MOVE_SAFE:
-			# Safe movement: prefer white/hermit zones (beneficial/neutral)
-			var safe_zones = ["white", "hermit"]
+			# Safe movement: prefer zones with white/hermit decks (beneficial/vision)
 			var available_safe = []
-			for zone in valid_zones:
-				if zone in safe_zones:
-					available_safe.append(zone)
+			for zone_id in valid_zones:
+				var zone_data = ZoneData.get_zone_by_id(zone_id)
+				if zone_data.get("deck_type", "") in ["white", "hermit"]:
+					available_safe.append(zone_id)
 			target_zone = available_safe.pick_random() if available_safe.size() > 0 else valid_zones.pick_random()
 		else:
-			# Risky movement: prefer black zone (risky cards)
-			target_zone = "black" if "black" in valid_zones else valid_zones.pick_random()
+			# Risky movement: prefer zones with black deck (harmful cards)
+			var risky_zones = []
+			for zone_id in valid_zones:
+				var zone_data = ZoneData.get_zone_by_id(zone_id)
+				if zone_data.get("deck_type", "") == "black":
+					risky_zones.append(zone_id)
+			target_zone = risky_zones.pick_random() if risky_zones.size() > 0 else valid_zones.pick_random()
 
 	# Update position
 	var old_zone = bot.position_zone
@@ -156,13 +161,24 @@ func bot_execute_zone_action(bot: Player, zone: String) -> void:
 	var decision_engine = AIDecisionEngine.new()
 	var context = AIDecisionEngine.build_action_context(bot, GameState.players)
 
-	# Determine available actions
-	var available_actions = [AIDecisionEngine.ACTION_DRAW_CARD]
+	# Determine available actions based on zone and surroundings
+	var available_actions: Array = []
+
+	# Can only draw card if zone has a deck
+	var deck: DeckManager = GameState.get_deck_for_zone(zone)
+	if deck != null and deck.get_card_count() > 0:
+		available_actions.append(AIDecisionEngine.ACTION_DRAW_CARD)
 
 	# Check if there are enemies to attack
 	var nearby_enemies = context.get("nearby_enemies", [])
 	if nearby_enemies.size() > 0:
 		available_actions.append(AIDecisionEngine.ACTION_ATTACK)
+
+	# Fallback: if no actions available, just skip
+	if available_actions.is_empty():
+		print("[BotController] ⚠️ %s has no available actions in zone %s" % [bot.display_name, zone])
+		bot_action_completed.emit(bot, "zone_action", null)
+		return
 
 	# Choose best action based on personality and context
 	var chosen_action = decision_engine.choose_best_action(bot, available_actions, context)
@@ -203,8 +219,9 @@ func _execute_bot_attack(bot: Player, enemies: Array) -> void:
 	var attack_bonus = bot.get_attack_damage_bonus()
 	var total_damage = base_damage + attack_bonus
 
-	# Use CombatSystem to apply damage
-	CombatSystem.apply_damage(bot, target, total_damage)
+	# Use CombatSystem instance to apply damage
+	var combat = CombatSystem.new()
+	combat.apply_damage(bot, target, total_damage)
 
 	bot_action_completed.emit(bot, "zone_action", {"action": "attack", "target": target, "damage": total_damage})
 	print("[BotController] ✅ %s dealt %d damage to %s (HP: %d → %d)" % [
@@ -245,15 +262,14 @@ func _execute_bot_draw_card(bot: Player, zone: String) -> void:
 # PRIVATE METHODS - Helpers
 # =============================================================================
 
-## Get valid adjacent zones for movement
+## Get valid adjacent zones for movement using ZoneData adjacency map
 ## @param current_zone: Current zone id
 ## @returns: Array - list of valid adjacent zone ids
 func _get_valid_adjacent_zones(current_zone: String) -> Array:
-	# MVP: Simple adjacency (all zones are adjacent to each other)
-	# In full implementation, this would use board adjacency data
-	var all_zones = ["hermit", "white", "black"]
-	all_zones.erase(current_zone)  # Can't stay in same zone
-	return all_zones
+	if ZoneData.ZONE_ADJACENCY.has(current_zone):
+		return ZoneData.ZONE_ADJACENCY[current_zone].duplicate()
+	push_warning("[BotController] No adjacency data for zone: %s" % current_zone)
+	return []
 
 
 ## Random delay between actions for readability
