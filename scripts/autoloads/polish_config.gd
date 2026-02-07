@@ -151,7 +151,7 @@ func _is_reduced_motion_enabled() -> bool:
 		return false
 
 	var user_settings = get_node("/root/UserSettings")
-	if not user_settings.has("reduced_motion_enabled"):
+	if not "reduced_motion_enabled" in user_settings:
 		return false
 
 	return user_settings.reduced_motion_enabled
