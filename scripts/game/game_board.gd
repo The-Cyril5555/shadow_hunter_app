@@ -378,6 +378,7 @@ func _on_end_turn_pressed() -> void:
 	_update_display()
 	_update_hand_display()
 	_update_equipment_display()
+	_update_action_hints()
 
 	# Track action for auto-save
 	SaveManager.track_action()
@@ -450,6 +451,9 @@ func _on_draw_card_pressed() -> void:
 	# Mark as drawn this turn and disable button
 	has_drawn_this_turn = true
 	draw_card_button.disabled = true
+
+	# Update action hints after draw
+	_update_action_hints()
 
 	# Track action for auto-save
 	SaveManager.track_action()
@@ -676,6 +680,7 @@ func _on_phase_changed(new_phase: GameState.TurnPhase) -> void:
 				draw_card_button.disabled = true
 				attack_button.disabled = true
 				end_turn_button.disabled = true
+				_clear_button_highlights()
 				# Execute bot turn
 				_execute_bot_turn()
 			else:
@@ -684,6 +689,7 @@ func _on_phase_changed(new_phase: GameState.TurnPhase) -> void:
 				draw_card_button.disabled = true
 				attack_button.disabled = true
 				end_turn_button.disabled = false
+				_update_action_hints()
 		GameState.TurnPhase.ACTION:
 			# Disable dice roll
 			roll_dice_button.disabled = true
@@ -692,12 +698,14 @@ func _on_phase_changed(new_phase: GameState.TurnPhase) -> void:
 			# Enable attack button (targets validated on click)
 			attack_button.disabled = false
 			end_turn_button.disabled = false
+			_update_action_hints()
 		GameState.TurnPhase.END:
 			# Disable all action buttons during transition
 			roll_dice_button.disabled = true
 			draw_card_button.disabled = true
 			attack_button.disabled = true
 			end_turn_button.disabled = true
+			_clear_button_highlights()
 
 
 # -----------------------------------------------------------------------------
@@ -906,3 +914,95 @@ func _setup_tooltips() -> void:
 	hermit_count_label.get_parent().tooltip_text = "Deck Hermite — Cartes de vision"
 	white_count_label.get_parent().tooltip_text = "Deck Lumière — Cartes bénéfiques (soin, protection)"
 	black_count_label.get_parent().tooltip_text = "Deck Ténèbres — Cartes offensives (dégâts, malus)"
+
+
+## Update visual action hints on buttons based on current state
+func _update_action_hints() -> void:
+	var current_player = GameState.get_current_player()
+	if current_player == null:
+		return
+
+	# Skip hints for bot turns
+	if not current_player.is_human:
+		_clear_button_highlights()
+		return
+
+	var phase = GameState.current_phase
+
+	# Roll Dice
+	if phase == GameState.TurnPhase.MOVEMENT and not has_rolled_this_turn:
+		_highlight_button(roll_dice_button, true)
+		roll_dice_button.tooltip_text = "Lancer les dés pour déterminer votre mouvement"
+	else:
+		_highlight_button(roll_dice_button, false)
+		if has_rolled_this_turn:
+			roll_dice_button.tooltip_text = "Dés déjà lancés ce tour"
+		elif phase != GameState.TurnPhase.MOVEMENT:
+			roll_dice_button.tooltip_text = "Disponible uniquement en phase de mouvement"
+
+	# Draw Card
+	if phase == GameState.TurnPhase.ACTION and not has_drawn_this_turn:
+		var zone_id = current_player.position_zone
+		var deck = GameState.get_deck_for_zone(zone_id)
+		if deck != null and deck.get_card_count() > 0:
+			_highlight_button(draw_card_button, true)
+			draw_card_button.tooltip_text = "Piocher une carte du deck %s" % deck.deck_type.capitalize()
+		else:
+			_highlight_button(draw_card_button, false)
+			if deck == null:
+				draw_card_button.tooltip_text = "Aucun deck dans cette zone"
+			else:
+				draw_card_button.tooltip_text = "Le deck est vide"
+	else:
+		_highlight_button(draw_card_button, false)
+		if has_drawn_this_turn:
+			draw_card_button.tooltip_text = "Carte déjà piochée ce tour"
+		elif phase != GameState.TurnPhase.ACTION:
+			draw_card_button.tooltip_text = "Disponible uniquement en phase d'action"
+
+	# Attack
+	if phase == GameState.TurnPhase.ACTION:
+		var targets = get_valid_targets()
+		if targets.size() > 0:
+			_highlight_button(attack_button, true)
+			attack_button.tooltip_text = "Attaquer un joueur (%d cible(s) disponible(s))" % targets.size()
+		else:
+			_highlight_button(attack_button, false)
+			attack_button.tooltip_text = "Aucun joueur à attaquer dans votre zone"
+	else:
+		_highlight_button(attack_button, false)
+		if phase != GameState.TurnPhase.ACTION:
+			attack_button.tooltip_text = "Disponible uniquement en phase d'action"
+
+	# End Turn (always available during human turn)
+	_highlight_button(end_turn_button, false)
+	end_turn_button.tooltip_text = "Terminer votre tour et passer au joueur suivant"
+
+
+## Apply or remove pulse highlight on a button
+func _highlight_button(button: Button, highlight: bool) -> void:
+	if highlight:
+		button.modulate = Color(1.0, 1.0, 1.0, 1.0)
+		# Start pulse animation
+		if not button.has_meta("pulse_tween") or not is_instance_valid(button.get_meta("pulse_tween")):
+			var tween = create_tween().set_loops()
+			tween.tween_property(button, "modulate", Color(1.3, 1.3, 0.9, 1.0), 0.6).set_trans(Tween.TRANS_SINE)
+			tween.tween_property(button, "modulate", Color(1.0, 1.0, 1.0, 1.0), 0.6).set_trans(Tween.TRANS_SINE)
+			button.set_meta("pulse_tween", tween)
+	else:
+		# Stop pulse
+		if button.has_meta("pulse_tween"):
+			var tween = button.get_meta("pulse_tween")
+			if is_instance_valid(tween):
+				tween.kill()
+			button.remove_meta("pulse_tween")
+		if button.disabled:
+			button.modulate = Color(0.5, 0.5, 0.5, 0.8)
+		else:
+			button.modulate = Color(1.0, 1.0, 1.0, 1.0)
+
+
+## Clear all button highlights
+func _clear_button_highlights() -> void:
+	for btn in [roll_dice_button, draw_card_button, attack_button, end_turn_button]:
+		_highlight_button(btn, false)
