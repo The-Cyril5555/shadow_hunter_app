@@ -347,23 +347,59 @@ func reset() -> void:
 	print("[GameState] Reset complete")
 
 
-## Convert state to dictionary for saving
+## Convert full game state to dictionary for saving
 func to_dict() -> Dictionary:
+	# Serialize players
+	var players_data = []
+	for player in players:
+		players_data.append(player.to_dict())
+
+	# Serialize decks
+	var decks_data = {}
+	if hermit_deck:
+		decks_data["hermit"] = hermit_deck.to_dict()
+	if white_deck:
+		decks_data["white"] = white_deck.to_dict()
+	if black_deck:
+		decks_data["black"] = black_deck.to_dict()
+
 	return {
+		"version": 1,
 		"current_player_index": current_player_index,
 		"turn_count": turn_count,
+		"current_phase": current_phase,
 		"game_in_progress": game_in_progress,
 		"game_log": game_log,
-		# Players and decks serialized separately
+		"players": players_data,
+		"decks": decks_data,
 	}
 
 
-## Load state from dictionary
+## Load full game state from dictionary
 func from_dict(data: Dictionary) -> void:
 	current_player_index = data.get("current_player_index", 0)
 	turn_count = data.get("turn_count", 0)
+	current_phase = data.get("current_phase", TurnPhase.MOVEMENT)
 	game_in_progress = data.get("game_in_progress", false)
 	game_log = data.get("game_log", [])
+
+	# Restore players
+	players.clear()
+	for player_data in data.get("players", []):
+		var player = Player.from_dict(player_data)
+		players.append(player)
+
+	# Restore decks
+	var decks_data = data.get("decks", {})
+	if decks_data.has("hermit"):
+		hermit_deck = DeckManager.new()
+		hermit_deck.from_dict(decks_data["hermit"])
+	if decks_data.has("white"):
+		white_deck = DeckManager.new()
+		white_deck.from_dict(decks_data["white"])
+	if decks_data.has("black"):
+		black_deck = DeckManager.new()
+		black_deck.from_dict(decks_data["black"])
 
 
 ## Check win conditions after player death

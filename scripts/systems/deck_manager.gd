@@ -95,3 +95,41 @@ func get_card_count() -> int:
 ## Get discard pile count
 func get_discard_count() -> int:
 	return discard_pile.size()
+
+
+# -----------------------------------------------------------------------------
+# Serialization
+# -----------------------------------------------------------------------------
+
+## Convert deck state to dictionary for saving
+func to_dict() -> Dictionary:
+	var draw_data = []
+	for card in draw_pile:
+		draw_data.append(card.to_dict())
+
+	var discard_data = []
+	for card in discard_pile:
+		discard_data.append(card.to_dict())
+
+	return {
+		"deck_type": deck_type,
+		"draw_pile": draw_data,
+		"discard_pile": discard_data,
+	}
+
+
+## Restore deck state from dictionary
+func from_dict(data: Dictionary) -> void:
+	deck_type = data.get("deck_type", "")
+
+	draw_pile.clear()
+	for card_data in data.get("draw_pile", []):
+		var card = Card.new()
+		card.from_dict(card_data)
+		draw_pile.append(card)
+
+	discard_pile.clear()
+	for card_data in data.get("discard_pile", []):
+		var card = Card.new()
+		card.from_dict(card_data)
+		discard_pile.append(card)

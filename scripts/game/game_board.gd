@@ -368,6 +368,9 @@ func _on_end_turn_pressed() -> void:
 	_update_hand_display()
 	_update_equipment_display()
 
+	# Track action for auto-save
+	SaveManager.track_action()
+
 	var next_player = GameState.get_current_player()
 	print("[GameBoard] Turn ended. Now: %s, Turn %d" % [next_player.display_name, GameState.turn_count])
 
@@ -436,6 +439,9 @@ func _on_draw_card_pressed() -> void:
 	# Mark as drawn this turn and disable button
 	has_drawn_this_turn = true
 	draw_card_button.disabled = true
+
+	# Track action for auto-save
+	SaveManager.track_action()
 
 	print("[GameBoard] Card draw complete. Button disabled for this turn.")
 
@@ -796,6 +802,9 @@ func _on_target_selected(target: Player) -> void:
 		"target_hp_remaining": target.hp,
 		"target_died": not target.is_alive
 	})
+
+	# Track action for auto-save
+	SaveManager.track_action()
 
 	# Advance to END phase
 	GameState.advance_phase()
