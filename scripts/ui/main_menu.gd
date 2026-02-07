@@ -11,6 +11,19 @@ func _ready() -> void:
 	$CenterContainer/VBoxContainer/ButtonContainer/SettingsButton.pressed.connect(_on_settings_pressed)
 	$CenterContainer/VBoxContainer/ButtonContainer/QuitButton.pressed.connect(_on_quit_pressed)
 
+	# Add tutorial button programmatically (before Settings)
+	var btn_container = $CenterContainer/VBoxContainer/ButtonContainer
+	var tutorial_btn = Button.new()
+	tutorial_btn.name = "TutorialButton"
+	tutorial_btn.custom_minimum_size = Vector2(250, 50)
+	tutorial_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	tutorial_btn.theme_override_font_sizes.font_size = 22
+	tutorial_btn.text = "Tutorial"
+	tutorial_btn.pressed.connect(_on_tutorial_pressed)
+	# Insert after LoadGameButton (index 1)
+	btn_container.add_child(tutorial_btn)
+	btn_container.move_child(tutorial_btn, 2)
+
 	# Setup button hover effects
 	_setup_button_hover_effects()
 
@@ -78,6 +91,42 @@ func _on_load_game_pressed() -> void:
 
 	# Show load dialog
 	_show_load_dialog()
+
+
+func _on_tutorial_pressed() -> void:
+	AudioManager.play_sfx("button_click")
+	print("[MainMenu] Tutorial pressed")
+
+	# Setup a minimal game for tutorial: 1 human + 3 bots
+	GameState.reset()
+	var human = Player.new(0, "Vous", true)
+	GameState.players.append(human)
+	for i in range(3):
+		var bot = Player.new(i + 1, "Bot %d" % (i + 1), false)
+		GameState.players.append(bot)
+
+	# Distribute characters
+	CharacterDistributor.distribute_characters(GameState.players, 4, false)
+
+	# Assign personalities to bots
+	var personalities = PersonalityManager.load_personalities()
+	if not personalities.is_empty():
+		PersonalityManager.assign_personalities_to_bots(GameState.players, personalities)
+
+	# Ensure human player is first
+	for i in range(GameState.players.size()):
+		if GameState.players[i].is_human:
+			if i != 0:
+				var temp = GameState.players[0]
+				GameState.players[0] = GameState.players[i]
+				GameState.players[i] = temp
+			break
+
+	# Update IDs
+	for i in range(GameState.players.size()):
+		GameState.players[i].id = i
+
+	GameModeStateMachine.transition_to(GameModeStateMachine.GameMode.TUTORIAL)
 
 
 func _on_settings_pressed() -> void:

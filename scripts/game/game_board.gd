@@ -50,6 +50,9 @@ var has_rolled_this_turn: bool = false  # Track if player has rolled dice this t
 ## Action validator instance
 var validator: ActionValidator = ActionValidator.new()
 
+## Tutorial overlay (null if not in tutorial mode)
+var tutorial: TutorialOverlay = null
+
 
 # -----------------------------------------------------------------------------
 # Lifecycle
@@ -104,6 +107,10 @@ func _ready() -> void:
 	# Add help menu (F1)
 	var help_menu = HelpMenu.new()
 	add_child(help_menu)
+
+	# Start tutorial if in tutorial mode
+	if GameModeStateMachine.current_mode == GameModeStateMachine.GameMode.TUTORIAL:
+		_start_tutorial()
 
 	print("[GameBoard] Game started with %d players" % GameState.players.size())
 
@@ -239,6 +246,9 @@ func _move_player_to_zone(player: Player, target_zone: Zone) -> void:
 	set_process_input(true)
 
 	print("[GameBoard] Moved %s from %s to %s" % [player.display_name, current_zone.zone_name, target_zone.zone_name])
+
+	# Notify tutorial
+	_notify_tutorial("move_to_zone")
 
 	# Advance to ACTION phase after movement completes
 	GameState.advance_phase()
@@ -456,6 +466,9 @@ func _on_draw_card_pressed() -> void:
 	has_drawn_this_turn = true
 	draw_card_button.disabled = true
 
+	# Notify tutorial
+	_notify_tutorial("draw_card")
+
 	# Update action hints after draw
 	_update_action_hints()
 
@@ -620,6 +633,9 @@ func _on_roll_dice_pressed() -> void:
 
 	# Roll the dice
 	dice.roll()
+
+	# Notify tutorial
+	_notify_tutorial("roll_dice")
 
 	print("[GameBoard] Rolling dice...")
 
@@ -1010,3 +1026,28 @@ func _highlight_button(button: Button, highlight: bool) -> void:
 func _clear_button_highlights() -> void:
 	for btn in [roll_dice_button, draw_card_button, attack_button, end_turn_button]:
 		_highlight_button(btn, false)
+
+
+# -----------------------------------------------------------------------------
+# Tutorial
+# -----------------------------------------------------------------------------
+
+## Start the tutorial overlay
+func _start_tutorial() -> void:
+	tutorial = TutorialOverlay.new()
+	tutorial.tutorial_completed.connect(_on_tutorial_finished)
+	tutorial.tutorial_skipped.connect(_on_tutorial_finished)
+	add_child(tutorial)
+	print("[GameBoard] Tutorial started")
+
+
+## Handle tutorial completion or skip
+func _on_tutorial_finished() -> void:
+	tutorial = null
+	GameModeStateMachine.transition_to(GameModeStateMachine.GameMode.MAIN_MENU)
+
+
+## Notify tutorial overlay of an action
+func _notify_tutorial(action: String) -> void:
+	if tutorial != null:
+		tutorial.notify_action(action)

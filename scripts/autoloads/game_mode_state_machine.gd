@@ -41,9 +41,7 @@ func transition_to(new_mode: GameMode) -> void:
 		GameMode.GAME_SETUP:
 			get_tree().change_scene_to_file("res://scenes/ui/screens/game_setup.tscn")
 		GameMode.TUTORIAL:
-			# Tutorial scene will be created in Story 7.1
-			push_warning("[GameModeStateMachine] Tutorial not implemented yet")
-			get_tree().change_scene_to_file("res://scenes/ui/screens/main_menu.tscn")
+			get_tree().change_scene_to_file("res://scenes/game/game_board.tscn")
 		GameMode.GAME:
 			get_tree().change_scene_to_file("res://scenes/game/game_board.tscn")
 		GameMode.GAME_OVER:
