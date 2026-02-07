@@ -2,21 +2,7 @@
 
 [ext_resource type="Script" path="res://scripts/board/player_token.gd" id="1_token"]
 
-[node name="PlayerToken" type="PanelContainer"]
-custom_minimum_size = Vector2(80, 30)
+[node name="PlayerToken" type="Label"]
+theme_override_font_sizes/font_size = 18
+text = "J1"
 script = ExtResource("1_token")
-
-[node name="HBoxContainer" type="HBoxContainer" parent="."]
-layout_mode = 2
-theme_override_constants/separation = 5
-
-[node name="TypeIndicator" type="Label" parent="HBoxContainer"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 12
-text = "[H]"
-
-[node name="NameLabel" type="Label" parent="HBoxContainer"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 12
-text = "Player"

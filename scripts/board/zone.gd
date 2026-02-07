@@ -40,11 +40,13 @@ func setup(zone_data: Dictionary) -> void:
 	zone_name = zone_data.get("name", "Unknown Zone")
 	deck_type = zone_data.get("deck_type", "")
 
-	# Update labels
+	# Update labels (dark text for light card background)
 	name_label.text = zone_name
+	name_label.add_theme_color_override("font_color", Color(0.15, 0.12, 0.1))
 
 	if deck_type != "":
 		deck_label.text = "[%s Deck]" % deck_type.capitalize()
+		deck_label.add_theme_color_override("font_color", Color(0.35, 0.3, 0.25))
 		deck_label.visible = true
 	else:
 		deck_label.visible = false
@@ -54,7 +56,7 @@ func setup(zone_data: Dictionary) -> void:
 	var texture = CardImageMapper.load_texture(img_path)
 	if texture != null:
 		zone_background.texture = texture
-		zone_background.modulate = Color(1, 1, 1, 0.35)
+		zone_background.modulate = Color(1, 1, 1, 0.5)
 		zone_background.visible = true
 	else:
 		zone_background.visible = false
@@ -128,12 +130,16 @@ func set_highlight(enabled: bool) -> void:
 	is_highlighted = enabled
 
 	if enabled:
-		# Add yellow highlight border
+		# Add yellow highlight border (card style)
 		var highlight_style = StyleBoxFlat.new()
-		highlight_style.bg_color = zone_color
+		highlight_style.bg_color = Color(0.95, 0.93, 0.85, 0.95)
 		highlight_style.set_border_width_all(4)
-		highlight_style.border_color = Color(1, 1, 0)  # Yellow highlight
-		highlight_style.set_corner_radius_all(5)
+		highlight_style.border_color = Color(1, 1, 0)
+		highlight_style.set_corner_radius_all(8)
+		highlight_style.content_margin_left = 6
+		highlight_style.content_margin_right = 6
+		highlight_style.content_margin_top = 8
+		highlight_style.content_margin_bottom = 8
 		add_theme_stylebox_override("panel", highlight_style)
 	else:
 		# Remove highlight, restore original
@@ -157,13 +163,17 @@ func _update_tooltip() -> void:
 	tooltip_text = text
 
 
-## Apply visual styling to zone panel
-func _apply_zone_style(bg_color: Color) -> void:
+## Apply visual styling to zone panel (card style)
+func _apply_zone_style(_bg_color: Color) -> void:
 	var style = StyleBoxFlat.new()
-	style.bg_color = bg_color
+	style.bg_color = Color(0.9, 0.88, 0.82, 0.9)
 	style.set_border_width_all(2)
-	style.border_color = Color.BLACK
-	style.set_corner_radius_all(5)
+	style.border_color = Color(0.5, 0.45, 0.35)
+	style.set_corner_radius_all(8)
+	style.content_margin_left = 6
+	style.content_margin_right = 6
+	style.content_margin_top = 8
+	style.content_margin_bottom = 8
 	add_theme_stylebox_override("panel", style)
 
 
