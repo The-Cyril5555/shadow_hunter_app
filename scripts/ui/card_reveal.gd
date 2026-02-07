@@ -15,6 +15,7 @@ signal card_reveal_finished()
 # References @onready
 # -----------------------------------------------------------------------------
 @onready var panel: Panel = $Panel
+@onready var card_image: TextureRect = $Panel/MarginContainer/VBoxContainer/CardImage
 @onready var card_name_label: Label = $Panel/MarginContainer/VBoxContainer/CardNameLabel
 @onready var card_type_label: Label = $Panel/MarginContainer/VBoxContainer/CardTypeLabel
 @onready var effect_label: Label = $Panel/MarginContainer/VBoxContainer/EffectLabel
@@ -39,6 +40,14 @@ func _ready() -> void:
 
 ## Show card with animation sequence using AnimationHelper
 func show_card(card: Card) -> void:
+	# Load card image
+	var texture = CardImageMapper.load_texture(CardImageMapper.get_card_image_path(card))
+	if texture != null:
+		card_image.texture = texture
+		card_image.visible = true
+	else:
+		card_image.visible = false
+
 	# Populate card data
 	card_name_label.text = card.name
 	card_type_label.text = "Type: %s" % card.type.capitalize()

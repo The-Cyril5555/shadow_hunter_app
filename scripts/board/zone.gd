@@ -24,6 +24,7 @@ var zone_color: Color = Color.WHITE
 # -----------------------------------------------------------------------------
 # References @onready
 # -----------------------------------------------------------------------------
+@onready var zone_background: TextureRect = $ZoneBackground
 @onready var name_label: Label = $VBoxContainer/NameLabel
 @onready var deck_label: Label = $VBoxContainer/DeckLabel
 @onready var token_container: HBoxContainer = $VBoxContainer/TokenContainer
@@ -47,6 +48,16 @@ func setup(zone_data: Dictionary) -> void:
 		deck_label.visible = true
 	else:
 		deck_label.visible = false
+
+	# Load zone background image
+	var img_path = CardImageMapper.get_zone_image_path(zone_id)
+	var texture = CardImageMapper.load_texture(img_path)
+	if texture != null:
+		zone_background.texture = texture
+		zone_background.modulate = Color(1, 1, 1, 0.35)
+		zone_background.visible = true
+	else:
+		zone_background.visible = false
 
 	# Apply zone color styling
 	zone_color = zone_data.get("color", Color.WHITE)
