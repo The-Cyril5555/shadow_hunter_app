@@ -1,0 +1,47 @@
+{
+	"zone_images": {
+		"hermit": "res://images/area_cards/hermits_cabin.png",
+		"church": "res://images/area_cards/church.png",
+		"cemetery": "res://images/area_cards/cemetery.png",
+		"weird_woods": "res://images/area_cards/weird_woods.png",
+		"underworld": "res://images/area_cards/underworld_gate.png",
+		"altar": "res://images/area_cards/erstwhile_altar.png"
+	},
+	"card_backs": {
+		"hermit": "res://images/hermit_cards/card_back.png",
+		"white": "res://images/church_cards/card_back.png",
+		"black": "res://images/cemetery_cards/card_back.png",
+		"area": "res://images/area_cards/card_back.png"
+	},
+	"card_images": {
+		"white_heal_1": "res://images/church_cards/holy_water_of_healing_01.png",
+		"white_equip_1": "res://images/church_cards/spear_of_longinus.png",
+		"black_damage_1": "res://images/cemetery_cards/vampire_bat_01.png",
+		"black_equip_1": "res://images/cemetery_cards/cursed_sword_masamune.png",
+		"hermit_vision_1": "res://images/hermit_cards/hermits_prediction.png",
+		"hermit_vision_2": "res://images/hermit_cards/hermits_spell.png"
+	},
+	"character_images": {
+		"agnes": "res://images/character_cards/agnes.png",
+		"allie": "res://images/character_cards/allie.png",
+		"bob": "res://images/character_cards/character_card_bob.png",
+		"bryan": "res://images/character_cards/bryan.png",
+		"catherine": "res://images/character_cards/catherine.png",
+		"charles": "res://images/character_cards/charles.png",
+		"daniel": "res://images/character_cards/daniel.png",
+		"david": "res://images/character_cards/david.png",
+		"ellen": "res://images/character_cards/ellen.png",
+		"emi": "res://images/character_cards/emi.png",
+		"franklin": "res://images/character_cards/franklin.png",
+		"fuka": "res://images/character_cards/fuka.png",
+		"george": "res://images/character_cards/george.png",
+		"gregor": "res://images/character_cards/gregor.png",
+		"ultra_soul": "res://images/character_cards/ultra_soul.png",
+		"unknown": "res://images/character_cards/unknown.png",
+		"valkyrie": "res://images/character_cards/valkyrie.png",
+		"vampire": "res://images/character_cards/vampire.png",
+		"werewolf": "res://images/character_cards/werewolf.png",
+		"wight": "res://images/character_cards/wight.png",
+		"back": "res://images/character_cards/back.png"
+	}
+}
