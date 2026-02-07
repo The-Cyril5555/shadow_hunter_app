@@ -154,7 +154,7 @@ func play_sfx(sound_name: String, pitch_variation: bool = true, custom_pitch: fl
 ## @param music_name: Name of the music file (without extension)
 ## @param loop: Enable looping (default true)
 ## @returns: AudioStreamPlayer if played successfully, null otherwise
-func play_music(music_name: String, loop: bool = true) -> AudioStreamPlayer:
+func play_music(_music_name: String, _loop: bool = true) -> AudioStreamPlayer:
 	# TODO: Implement in future story (5.3 or later)
 	# For now, just return null
 	push_warning("[AudioManager] play_music() not yet implemented (future story)")

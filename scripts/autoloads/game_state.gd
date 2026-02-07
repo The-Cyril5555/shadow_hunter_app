@@ -24,9 +24,6 @@ enum TurnPhase {
 ## Emitted when turn phase changes
 signal phase_changed(new_phase: TurnPhase)
 
-## Emitted when a player plays a card
-signal card_played(player, card, target)
-
 ## Emitted when damage is dealt to a player
 signal damage_dealt(attacker, victim, amount: int)
 

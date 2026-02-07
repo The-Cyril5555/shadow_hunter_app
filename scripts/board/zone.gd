@@ -70,8 +70,8 @@ func add_player_token(player: Player) -> void:
 
 	# Create and add token visual
 	var token = preload("res://scenes/board/player_token.tscn").instantiate()
-	token.setup(player)
 	token_container.add_child(token)
+	token.setup(player)
 
 	_update_tooltip()
 	print("[Zone] Player %s added to zone %s" % [player.display_name, zone_name])
