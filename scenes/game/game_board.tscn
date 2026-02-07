@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://scripts/game/game_board.gd" id="1_game_board"]
 [ext_resource type="PackedScene" uid="uid://ci48s3hn14s7o" path="res://scenes/ui/dice.tscn" id="2_dice"]
@@ -6,6 +6,7 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/equipment_action_menu.tscn" id="4_equipment_action_menu"]
 [ext_resource type="PackedScene" path="res://scenes/ui/target_selection_panel.tscn" id="5_target_selection_panel"]
 [ext_resource type="PackedScene" uid="uid://bi4lv4fgvqw3s" path="res://scenes/ui/error_message.tscn" id="6_error_message"]
+[ext_resource type="PackedScene" path="res://scenes/ui/dice_roll_popup.tscn" id="7_dice_roll_popup"]
 
 [node name="GameBoard" type="Control"]
 layout_mode = 3
@@ -248,6 +249,12 @@ visible = false
 layer = 12
 
 [node name="TargetSelectionPanel" parent="TargetSelectionLayer" instance=ExtResource("5_target_selection_panel")]
+visible = false
+
+[node name="DiceRollPopupLayer" type="CanvasLayer" parent="."]
+layer = 13
+
+[node name="DiceRollPopup" parent="DiceRollPopupLayer" instance=ExtResource("7_dice_roll_popup")]
 visible = false
 
 [node name="ErrorMessageLayer" type="CanvasLayer" parent="."]

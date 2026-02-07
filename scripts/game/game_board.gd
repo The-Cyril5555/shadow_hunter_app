@@ -37,6 +37,7 @@ extends Control
 @onready var target_selection_panel: TargetSelectionPanel = $TargetSelectionLayer/TargetSelectionPanel
 @onready var error_message: ErrorMessage = $ErrorMessageLayer/ErrorMessage
 @onready var end_turn_button: Button = $MarginContainer/HBoxContainer/LeftPanel/ButtonContainer/EndTurnButton
+@onready var dice_roll_popup: DiceRollPopup = $DiceRollPopupLayer/DiceRollPopup
 
 
 # -----------------------------------------------------------------------------
@@ -95,6 +96,9 @@ func _ready() -> void:
 
 	# Connect target selection signal
 	target_selection_panel.target_selected.connect(_on_target_selected)
+
+	# Connect dice roll popup signal
+	dice_roll_popup.zone_selected.connect(_on_popup_zone_selected)
 
 	# Add pause menu
 	var pause_menu = PauseMenu.new()
@@ -690,6 +694,32 @@ func _on_zone_clicked(zone: Zone) -> void:
 	_move_player_to_zone(current_player, zone)
 
 
+## Handler for dice roll popup zone selection
+func _on_popup_zone_selected(zone_id: String) -> void:
+	var current_player = GameState.get_current_player()
+	if current_player == null:
+		return
+
+	var zone = _get_zone_by_id(zone_id)
+	if zone == null:
+		push_error("[GameBoard] Zone not found: %s" % zone_id)
+		return
+
+	# Update left panel dice display to match popup result
+	dice.dice1_label.text = str(dice_roll_popup._dice_result)
+	dice.result_label.text = "Total: %d" % dice_roll_popup._dice_result
+	last_dice_sum = dice_roll_popup._dice_result
+	has_rolled_this_turn = true
+
+	if toast:
+		toast.show_toast("Dés : %d — Déplacement vers %s" % [dice_roll_popup._dice_result, zone.zone_name], Color(0.8, 0.9, 1.0))
+
+	_notify_tutorial("roll_dice")
+
+	# Move player to selected zone
+	_move_player_to_zone(current_player, zone)
+
+
 func _on_phase_changed(new_phase: GameState.TurnPhase) -> void:
 	print("[GameBoard] Phase changed to: %s" % new_phase)
 
@@ -719,12 +749,13 @@ func _on_phase_changed(new_phase: GameState.TurnPhase) -> void:
 				# Execute bot turn
 				_execute_bot_turn()
 			else:
-				# Enable dice roll, disable actions for human players
-				roll_dice_button.disabled = false
+				# Show dice roll popup for human players
+				roll_dice_button.disabled = true
 				draw_card_button.disabled = true
 				attack_button.disabled = true
-				end_turn_button.disabled = false
-				_update_action_hints()
+				end_turn_button.disabled = true
+				_clear_button_highlights()
+				dice_roll_popup.show_for_player(current_player)
 		GameState.TurnPhase.ACTION:
 			# Disable dice roll
 			roll_dice_button.disabled = true
