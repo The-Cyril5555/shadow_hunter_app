@@ -17,7 +17,7 @@ func _ready() -> void:
 	tutorial_btn.name = "TutorialButton"
 	tutorial_btn.custom_minimum_size = Vector2(250, 50)
 	tutorial_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	tutorial_btn.theme_override_font_sizes.font_size = 22
+	tutorial_btn.add_theme_font_size_override("font_size", 22)
 	tutorial_btn.text = "Tutorial"
 	tutorial_btn.pressed.connect(_on_tutorial_pressed)
 	# Insert after LoadGameButton (index 1)
@@ -36,7 +36,7 @@ func _ready() -> void:
 	help_btn.text = "?"
 	help_btn.tooltip_text = "Aide et règles (F1)"
 	help_btn.custom_minimum_size = Vector2(44, 44)
-	help_btn.theme_override_font_sizes.font_size = 24
+	help_btn.add_theme_font_size_override("font_size", 24)
 	help_btn.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
 	help_btn.position = Vector2(-54, -54)
 	help_btn.pressed.connect(func(): help_menu.show_help())
@@ -165,13 +165,13 @@ func _show_load_dialog() -> void:
 	center.add_child(panel)
 
 	var vbox = VBoxContainer.new()
-	vbox.theme_override_constants.separation = 10
+	vbox.add_theme_constant_override("separation", 10)
 	panel.add_child(vbox)
 
 	var title = Label.new()
 	title.text = "CHARGER UNE PARTIE"
-	title.theme_override_font_sizes.font_size = 22
-	title.theme_override_colors.font_color = Color(1.0, 0.9, 0.3)
+	title.add_theme_font_size_override("font_size", 22)
+	title.add_theme_color_override("font_color", Color(1.0, 0.9, 0.3))
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(title)
 
@@ -182,7 +182,7 @@ func _show_load_dialog() -> void:
 
 		var btn = Button.new()
 		btn.custom_minimum_size = Vector2(0, 45)
-		btn.theme_override_font_sizes.font_size = 14
+		btn.add_theme_font_size_override("font_size", 14)
 
 		if info.get("exists", false):
 			btn.text = "%s - Tour %d (%d joueurs) - %s" % [
@@ -202,7 +202,7 @@ func _show_load_dialog() -> void:
 	var back_btn = Button.new()
 	back_btn.text = "Retour"
 	back_btn.custom_minimum_size = Vector2(0, 40)
-	back_btn.theme_override_font_sizes.font_size = 16
+	back_btn.add_theme_font_size_override("font_size", 16)
 	back_btn.pressed.connect(func(): overlay.queue_free())
 	vbox.add_child(back_btn)
 

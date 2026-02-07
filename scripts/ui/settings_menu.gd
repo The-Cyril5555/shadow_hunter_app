@@ -61,7 +61,7 @@ func _build_extra_settings() -> void:
 	var cb_row = HBoxContainer.new()
 	var cb_label = Label.new()
 	cb_label.text = "Mode daltonien :"
-	cb_label.theme_override_font_sizes.font_size = 16
+	cb_label.add_theme_font_size_override("font_size", 16)
 	cb_label.custom_minimum_size = Vector2(200, 0)
 	cb_row.add_child(cb_label)
 
@@ -70,7 +70,7 @@ func _build_extra_settings() -> void:
 	_colorblind_dropdown.add_item("Deutéranopie", 1)
 	_colorblind_dropdown.add_item("Protanopie", 2)
 	_colorblind_dropdown.add_item("Tritanopie", 3)
-	_colorblind_dropdown.theme_override_font_sizes.font_size = 16
+	_colorblind_dropdown.add_theme_font_size_override("font_size", 16)
 	_colorblind_dropdown.custom_minimum_size = Vector2(200, 0)
 	_colorblind_dropdown.item_selected.connect(_on_colorblind_changed)
 	_colorblind_dropdown.tooltip_text = "Ajoute des symboles aux factions pour distinguer sans couleur"
@@ -81,7 +81,7 @@ func _build_extra_settings() -> void:
 	var ts_row = HBoxContainer.new()
 	var ts_label = Label.new()
 	ts_label.text = "Taille du texte :"
-	ts_label.theme_override_font_sizes.font_size = 16
+	ts_label.add_theme_font_size_override("font_size", 16)
 	ts_label.custom_minimum_size = Vector2(200, 0)
 	ts_row.add_child(ts_label)
 
@@ -89,7 +89,7 @@ func _build_extra_settings() -> void:
 	_text_size_dropdown.add_item("Petit (12px)", 0)
 	_text_size_dropdown.add_item("Moyen (16px)", 1)
 	_text_size_dropdown.add_item("Grand (20px)", 2)
-	_text_size_dropdown.theme_override_font_sizes.font_size = 16
+	_text_size_dropdown.add_theme_font_size_override("font_size", 16)
 	_text_size_dropdown.custom_minimum_size = Vector2(200, 0)
 	_text_size_dropdown.item_selected.connect(_on_text_size_changed)
 	_text_size_dropdown.tooltip_text = "Ajuste la taille des textes dans le jeu"
@@ -100,14 +100,14 @@ func _build_extra_settings() -> void:
 	var loc_row = HBoxContainer.new()
 	var loc_label = Label.new()
 	loc_label.text = "Langue :"
-	loc_label.theme_override_font_sizes.font_size = 16
+	loc_label.add_theme_font_size_override("font_size", 16)
 	loc_label.custom_minimum_size = Vector2(200, 0)
 	loc_row.add_child(loc_label)
 
 	_locale_dropdown = OptionButton.new()
 	_locale_dropdown.add_item("Français", 0)
 	_locale_dropdown.add_item("English", 1)
-	_locale_dropdown.theme_override_font_sizes.font_size = 16
+	_locale_dropdown.add_theme_font_size_override("font_size", 16)
 	_locale_dropdown.custom_minimum_size = Vector2(200, 0)
 	_locale_dropdown.item_selected.connect(_on_locale_changed)
 	_locale_dropdown.tooltip_text = "Changer la langue du jeu"

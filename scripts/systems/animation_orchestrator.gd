@@ -86,7 +86,7 @@ static func _stage_buildup(card_node: Node, tree: SceneTree) -> void:
 
 
 ## Stage 2: Card Flip - Rotate card and reveal character
-static func _stage_flip(card_node: Node, player: Player, tree: SceneTree) -> void:
+static func _stage_flip(card_node: Node, _player: Player, tree: SceneTree) -> void:
 	var duration = PolishConfig.get_duration("card_flip_duration")
 
 	if not card_node.has("rotation_degrees"):
@@ -124,8 +124,6 @@ static func _stage_flip(card_node: Node, player: Player, tree: SceneTree) -> voi
 ## Stage 3: Explosion - Dramatic burst with particles and shake
 static func _stage_explosion(card_node: Node, tree: SceneTree) -> void:
 	var duration = PolishConfig.get_duration("reveal_explosion_duration")
-	var shake_intensity = PolishConfig.get_shake_intensity("reveal_shake_intensity")
-
 	# Play explosion sound
 	AudioManager.play_sfx("reveal_dramatic", true)
 

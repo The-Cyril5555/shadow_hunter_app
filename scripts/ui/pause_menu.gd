@@ -91,14 +91,14 @@ func _build_ui() -> void:
 	center.add_child(_panel)
 
 	var vbox = VBoxContainer.new()
-	vbox.theme_override_constants.separation = 10
+	vbox.add_theme_constant_override("separation", 10)
 	_panel.add_child(vbox)
 
 	# Title
 	var title = Label.new()
 	title.text = "PAUSE"
-	title.theme_override_font_sizes.font_size = 28
-	title.theme_override_colors.font_color = Color(1.0, 0.9, 0.3)
+	title.add_theme_font_size_override("font_size", 28)
+	title.add_theme_color_override("font_color", Color(1.0, 0.9, 0.3))
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(title)
 
@@ -108,7 +108,7 @@ func _build_ui() -> void:
 
 	# Main buttons
 	_main_buttons = VBoxContainer.new()
-	_main_buttons.theme_override_constants.separation = 8
+	_main_buttons.add_theme_constant_override("separation", 8)
 	vbox.add_child(_main_buttons)
 
 	_add_button(_main_buttons, "Reprendre", _on_resume_pressed)
@@ -118,18 +118,18 @@ func _build_ui() -> void:
 
 	# Save/Load panel (hidden by default)
 	_save_load_panel = VBoxContainer.new()
-	_save_load_panel.theme_override_constants.separation = 8
+	_save_load_panel.add_theme_constant_override("separation", 8)
 	_save_load_panel.visible = false
 	vbox.add_child(_save_load_panel)
 
 	var slot_title = Label.new()
 	slot_title.name = "SlotTitle"
-	slot_title.theme_override_font_sizes.font_size = 20
+	slot_title.add_theme_font_size_override("font_size", 20)
 	slot_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_save_load_panel.add_child(slot_title)
 
 	_slots_container = VBoxContainer.new()
-	_slots_container.theme_override_constants.separation = 6
+	_slots_container.add_theme_constant_override("separation", 6)
 	_save_load_panel.add_child(_slots_container)
 
 	_add_button(_save_load_panel, "Retour", _on_back_pressed)
@@ -139,7 +139,7 @@ func _add_button(parent: Control, text: String, callback: Callable) -> Button:
 	var btn = Button.new()
 	btn.text = text
 	btn.custom_minimum_size = Vector2(0, 40)
-	btn.theme_override_font_sizes.font_size = 18
+	btn.add_theme_font_size_override("font_size", 18)
 	btn.pressed.connect(callback)
 	parent.add_child(btn)
 	return btn
@@ -197,7 +197,7 @@ func _show_slots(mode: String) -> void:
 			btn.text = "%s - Vide" % info.get("slot_name", "")
 
 		btn.custom_minimum_size = Vector2(0, 45)
-		btn.theme_override_font_sizes.font_size = 14
+		btn.add_theme_font_size_override("font_size", 14)
 		btn.pressed.connect(_on_slot_selected.bind(slot_id))
 		_slots_container.add_child(btn)
 

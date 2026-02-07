@@ -249,7 +249,7 @@ func _get_available_player() -> AudioStreamPlayer:
 
 
 ## Called when a sound finishes playing
-func _on_sound_finished(player: AudioStreamPlayer) -> void:
+func _on_sound_finished(_player: AudioStreamPlayer) -> void:
 	_active_sound_count -= 1
 	# Player is automatically returned to pool (no cleanup needed)
 

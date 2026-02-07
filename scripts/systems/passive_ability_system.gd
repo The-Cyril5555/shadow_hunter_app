@@ -162,14 +162,14 @@ func _execute_catherine_ability(player: Player, context: Dictionary) -> void:
 ## Vampire: "Bloodthirst" - At turn start, damage 1 to any player and heal 1
 ## NOTE: This is actually an ACTIVE ability (once per game), but has on_turn_start trigger
 ## Placeholder implementation - Story 2.4 will handle "once per game" constraint
-func _execute_vampire_ability(player: Player, context: Dictionary) -> void:
+func _execute_vampire_ability(_player: Player, _context: Dictionary) -> void:
 	push_warning("[PassiveAbilitySystem] Vampire 'Bloodthirst' requires targeting - deferred to Story 2.4")
 
 
 ## Valkyrie: "Horn of War Outbreak" - Use 4-sided die for attacks
 ## NOTE: This modifies attack mechanics, not a triggered effect
 ## Story 2.4 or combat system will handle dice modification
-func _execute_valkyrie_ability(player: Player, context: Dictionary) -> void:
+func _execute_valkyrie_ability(_player: Player, _context: Dictionary) -> void:
 	# This ability is passive but affects attack mechanics, not a triggered effect
 	# Implementation deferred to combat system enhancement
 	pass
@@ -188,5 +188,5 @@ func _execute_bryan_ability(player: Player, context: Dictionary) -> void:
 
 ## Unknown: "Copy" - Copy another revealed player's ability on reveal
 ## NOTE: Complex ability requiring UI to select target - deferred to Story 2.4
-func _execute_unknown_ability(player: Player, context: Dictionary) -> void:
+func _execute_unknown_ability(_player: Player, _context: Dictionary) -> void:
 	push_warning("[PassiveAbilitySystem] Unknown 'Copy' requires targeting - deferred to Story 2.4")

@@ -187,7 +187,7 @@ func _build_ui() -> void:
 	margin.add_child(panel)
 
 	var vbox = VBoxContainer.new()
-	vbox.theme_override_constants.separation = 12
+	vbox.add_theme_constant_override("separation", 12)
 	panel.add_child(vbox)
 
 	# Header row
@@ -196,21 +196,21 @@ func _build_ui() -> void:
 
 	var title = Label.new()
 	title.text = "AIDE & RÈGLES"
-	title.theme_override_font_sizes.font_size = 26
-	title.theme_override_colors.font_color = Color(1.0, 0.9, 0.3)
+	title.add_theme_font_size_override("font_size", 26)
+	title.add_theme_color_override("font_color", Color(1.0, 0.9, 0.3))
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(title)
 
 	var close_btn = Button.new()
 	close_btn.text = "Fermer (F1)"
-	close_btn.theme_override_font_sizes.font_size = 16
+	close_btn.add_theme_font_size_override("font_size", 16)
 	close_btn.pressed.connect(hide_help)
 	header.add_child(close_btn)
 
 	# Search field
 	_search_field = LineEdit.new()
 	_search_field.placeholder_text = "Rechercher..."
-	_search_field.theme_override_font_sizes.font_size = 16
+	_search_field.add_theme_font_size_override("font_size", 16)
 	_search_field.text_changed.connect(_filter_sections)
 	vbox.add_child(_search_field)
 
@@ -223,7 +223,7 @@ func _build_ui() -> void:
 	vbox.add_child(scroll)
 
 	_content_container = VBoxContainer.new()
-	_content_container.theme_override_constants.separation = 16
+	_content_container.add_theme_constant_override("separation", 16)
 	_content_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(_content_container)
 
@@ -236,20 +236,20 @@ func _build_ui() -> void:
 
 func _create_section(title_text: String, content_text: String) -> Dictionary:
 	var container = VBoxContainer.new()
-	container.theme_override_constants.separation = 4
+	container.add_theme_constant_override("separation", 4)
 
 	var title_label = Label.new()
 	title_label.text = title_text
-	title_label.theme_override_font_sizes.font_size = 20
-	title_label.theme_override_colors.font_color = Color(0.6, 0.8, 1.0)
+	title_label.add_theme_font_size_override("font_size", 20)
+	title_label.add_theme_color_override("font_color", Color(0.6, 0.8, 1.0))
 	container.add_child(title_label)
 
 	var content_label = RichTextLabel.new()
 	content_label.bbcode_enabled = false
 	content_label.fit_content = true
 	content_label.text = content_text.strip_edges()
-	content_label.theme_override_font_sizes.normal_font_size = 15
-	content_label.theme_override_colors.default_color = Color(0.85, 0.85, 0.9)
+	content_label.add_theme_font_size_override("normal_font_size", 15)
+	content_label.add_theme_color_override("default_color", Color(0.85, 0.85, 0.9))
 	content_label.scroll_active = false
 	container.add_child(content_label)
 

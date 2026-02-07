@@ -33,7 +33,7 @@ func _ready() -> void:
 	add_child(margin)
 
 	_container = VBoxContainer.new()
-	_container.theme_override_constants.separation = 6
+	_container.add_theme_constant_override("separation", 6)
 	_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_container.alignment = BoxContainer.ALIGNMENT_BEGIN
 	margin.add_child(_container)
@@ -52,8 +52,8 @@ func show_toast(message: String, color: Color = Color(1.0, 1.0, 1.0)) -> void:
 
 	var label = Label.new()
 	label.text = message
-	label.theme_override_font_sizes.font_size = 14
-	label.theme_override_colors.font_color = color
+	label.add_theme_font_size_override("font_size", 14)
+	label.add_theme_color_override("font_color", color)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 

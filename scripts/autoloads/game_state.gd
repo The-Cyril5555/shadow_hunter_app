@@ -297,7 +297,6 @@ func advance_phase() -> void:
 				turn_ended.emit(current_player, turn_count)
 
 			# Move to next alive player (skip dead players)
-			var start_index = current_player_index
 			var attempts = 0
 			var found_alive_player = false
 
@@ -403,7 +402,7 @@ func from_dict(data: Dictionary) -> void:
 
 
 ## Check win conditions after player death
-func _on_player_died_check_win(victim: Player, killer: Player) -> void:
+func _on_player_died_check_win(victim: Player, _killer: Player) -> void:
 	print("[GameState] Checking win conditions after %s died" % victim.display_name)
 
 	# Check win conditions

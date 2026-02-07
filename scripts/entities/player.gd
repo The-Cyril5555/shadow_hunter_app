@@ -55,7 +55,7 @@ func assign_character(char_data: Dictionary) -> void:
 
 
 ## Take damage, returns true if player died
-func take_damage(amount: int, source: Player = null) -> bool:
+func take_damage(amount: int, _source: Player = null) -> bool:
 	hp = max(0, hp - amount)
 	if hp <= 0:
 		is_alive = false
@@ -87,7 +87,7 @@ func equip_card(card: Card) -> void:
 
 
 ## Add equipment card (legacy compatibility)
-func add_equipment(card_id: String) -> void:
+func add_equipment(_card_id: String) -> void:
 	# Deprecated - use equip_card instead
 	push_warning("[Player] add_equipment with ID is deprecated, use equip_card with Card instance")
 

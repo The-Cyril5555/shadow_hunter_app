@@ -315,8 +315,8 @@ func _update_hand_display() -> void:
 	for card in current_player.hand:
 		var button = Button.new()
 		button.text = "• %s" % card.name
-		button.theme_override_font_sizes.font_size = 14
-		button.theme_override_colors.font_color = Color(0.8, 0.8, 1.0, 1.0)
+		button.add_theme_font_size_override("font_size", 14)
+		button.add_theme_color_override("font_color", Color(0.8, 0.8, 1.0, 1.0))
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		button.focus_mode = Control.FOCUS_NONE
 
@@ -354,8 +354,8 @@ func _update_equipment_display() -> void:
 	for card in current_player.equipment:
 		var label = Label.new()
 		label.text = "⚔ %s (+%d)" % [card.name, card.get_effect_value()]
-		label.theme_override_font_sizes.font_size = 14
-		label.theme_override_colors.font_color = Color(1.0, 0.9, 0.3, 1.0)  # Gold color
+		label.add_theme_font_size_override("font_size", 14)
+		label.add_theme_color_override("font_color", Color(1.0, 0.9, 0.3, 1.0))  # Gold color
 		equipment_container.add_child(label)
 
 	# Show total bonus
@@ -363,8 +363,8 @@ func _update_equipment_display() -> void:
 		var total_bonus = current_player.get_attack_damage_bonus()
 		var total_label = Label.new()
 		total_label.text = "Total: +%d damage" % total_bonus
-		total_label.theme_override_font_sizes.font_size = 14
-		total_label.theme_override_colors.font_color = Color(0.3, 1.0, 0.3, 1.0)  # Green color
+		total_label.add_theme_font_size_override("font_size", 14)
+		total_label.add_theme_color_override("font_color", Color(0.3, 1.0, 0.3, 1.0))  # Green color
 		equipment_container.add_child(total_label)
 
 	print("[GameBoard] Equipment display updated: %d items" % current_player.equipment.size())

@@ -162,7 +162,7 @@ func _build_ui() -> void:
 	margin.add_child(_panel)
 
 	var vbox = VBoxContainer.new()
-	vbox.theme_override_constants.separation = 10
+	vbox.add_theme_constant_override("separation", 10)
 	_panel.add_child(vbox)
 
 	# Header row
@@ -170,14 +170,14 @@ func _build_ui() -> void:
 	vbox.add_child(header)
 
 	_title_label = Label.new()
-	_title_label.theme_override_font_sizes.font_size = 22
-	_title_label.theme_override_colors.font_color = Color(1.0, 0.9, 0.3)
+	_title_label.add_theme_font_size_override("font_size", 22)
+	_title_label.add_theme_color_override("font_color", Color(1.0, 0.9, 0.3))
 	_title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(_title_label)
 
 	_step_counter = Label.new()
-	_step_counter.theme_override_font_sizes.font_size = 14
-	_step_counter.theme_override_colors.font_color = Color(0.6, 0.6, 0.7)
+	_step_counter.add_theme_font_size_override("font_size", 14)
+	_step_counter.add_theme_color_override("font_color", Color(0.6, 0.6, 0.7))
 	header.add_child(_step_counter)
 
 	# Content
@@ -185,25 +185,25 @@ func _build_ui() -> void:
 	_text_label.bbcode_enabled = false
 	_text_label.fit_content = true
 	_text_label.scroll_active = false
-	_text_label.theme_override_font_sizes.normal_font_size = 16
-	_text_label.theme_override_colors.default_color = Color(0.9, 0.9, 0.95)
+	_text_label.add_theme_font_size_override("normal_font_size", 16)
+	_text_label.add_theme_color_override("default_color", Color(0.9, 0.9, 0.95))
 	vbox.add_child(_text_label)
 
 	# Button row
 	var btn_row = HBoxContainer.new()
 	btn_row.alignment = BoxContainer.ALIGNMENT_END
-	btn_row.theme_override_constants.separation = 12
+	btn_row.add_theme_constant_override("separation", 12)
 	vbox.add_child(btn_row)
 
 	_skip_button = Button.new()
 	_skip_button.text = "Passer le tutoriel"
-	_skip_button.theme_override_font_sizes.font_size = 14
-	_skip_button.theme_override_colors.font_color = Color(0.6, 0.6, 0.7)
+	_skip_button.add_theme_font_size_override("font_size", 14)
+	_skip_button.add_theme_color_override("font_color", Color(0.6, 0.6, 0.7))
 	_skip_button.pressed.connect(_on_skip_pressed)
 	btn_row.add_child(_skip_button)
 
 	_next_button = Button.new()
-	_next_button.theme_override_font_sizes.font_size = 18
+	_next_button.add_theme_font_size_override("font_size", 18)
 	_next_button.custom_minimum_size = Vector2(120, 40)
 	_next_button.pressed.connect(_on_next_pressed)
 	btn_row.add_child(_next_button)

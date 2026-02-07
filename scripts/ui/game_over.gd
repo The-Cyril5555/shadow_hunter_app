@@ -126,15 +126,15 @@ func _create_winner_card(player: Player) -> HBoxContainer:
 	# Player name
 	var name_label = Label.new()
 	name_label.text = player.display_name
-	name_label.theme_override_font_sizes.font_size = 20
-	name_label.theme_override_colors.font_color = Color(1.0, 0.9, 0.3)
+	name_label.add_theme_font_size_override("font_size", 20)
+	name_label.add_theme_color_override("font_color", Color(1.0, 0.9, 0.3))
 	card.add_child(name_label)
 
 	# Character name (revealed)
 	var character_label = Label.new()
 	character_label.text = " - %s (%s)" % [player.character_name, player.faction]
-	character_label.theme_override_font_sizes.font_size = 18
-	character_label.theme_override_colors.font_color = Color(0.8, 0.8, 0.8)
+	character_label.add_theme_font_size_override("font_size", 18)
+	character_label.add_theme_color_override("font_color", Color(0.8, 0.8, 0.8))
 	card.add_child(character_label)
 
 	return card
@@ -155,35 +155,35 @@ func _display_all_players() -> void:
 
 func _create_player_reveal_card(player: Player) -> HBoxContainer:
 	var card = HBoxContainer.new()
-	card.theme_override_constants.separation = 15
+	card.add_theme_constant_override("separation", 15)
 
 	# Status icon
 	var status_label = Label.new()
 	status_label.text = "[✓]" if player.is_alive else "[X]"
-	status_label.theme_override_font_sizes.font_size = 16
-	status_label.theme_override_colors.font_color = Color(0.3, 1.0, 0.3) if player.is_alive else Color(0.5, 0.5, 0.5)
+	status_label.add_theme_font_size_override("font_size", 16)
+	status_label.add_theme_color_override("font_color", Color(0.3, 1.0, 0.3) if player.is_alive else Color(0.5, 0.5, 0.5))
 	card.add_child(status_label)
 
 	# Player name
 	var name_label = Label.new()
 	name_label.text = player.display_name
-	name_label.theme_override_font_sizes.font_size = 16
+	name_label.add_theme_font_size_override("font_size", 16)
 	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	card.add_child(name_label)
 
 	# Character + Faction
 	var character_label = Label.new()
 	character_label.text = "%s (%s)" % [player.character_name, player.faction]
-	character_label.theme_override_font_sizes.font_size = 16
+	character_label.add_theme_font_size_override("font_size", 16)
 	var faction_color = _get_faction_color(player.faction)
-	character_label.theme_override_colors.font_color = faction_color
+	character_label.add_theme_color_override("font_color", faction_color)
 	card.add_child(character_label)
 
 	# HP
 	var hp_label = Label.new()
 	hp_label.text = "HP: %d/%d" % [player.hp, player.hp_max]
-	hp_label.theme_override_font_sizes.font_size = 16
-	hp_label.theme_override_colors.font_color = Color(0.8, 0.8, 0.8)
+	hp_label.add_theme_font_size_override("font_size", 16)
+	hp_label.add_theme_color_override("font_color", Color(0.8, 0.8, 0.8))
 	card.add_child(hp_label)
 
 	return card

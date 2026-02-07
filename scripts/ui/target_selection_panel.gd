@@ -49,7 +49,7 @@ func show_targets(valid_targets: Array) -> void:
 			target.hp,
 			target.hp_max
 		]
-		button.theme_override_font_sizes.font_size = 16
+		button.add_theme_font_size_override("font_size", 16)
 		button.pressed.connect(_on_target_button_pressed.bind(target))
 		targets_container.add_child(button)
 
