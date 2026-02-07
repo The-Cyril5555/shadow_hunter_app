@@ -115,6 +115,9 @@ func _ready() -> void:
 	toast = FeedbackToast.new()
 	add_child(toast)
 
+	# Setup keyboard focus chain
+	_setup_focus_chain()
+
 	# Start tutorial if in tutorial mode
 	if GameModeStateMachine.current_mode == GameModeStateMachine.GameMode.TUTORIAL:
 		_start_tutorial()
@@ -1070,3 +1073,29 @@ func _on_tutorial_finished() -> void:
 func _notify_tutorial(action: String) -> void:
 	if tutorial != null:
 		tutorial.notify_action(action)
+
+
+# -----------------------------------------------------------------------------
+# Keyboard Navigation
+# -----------------------------------------------------------------------------
+
+## Setup focus chain for keyboard navigation (Tab order)
+func _setup_focus_chain() -> void:
+	# Set focus neighbors for main action buttons
+	roll_dice_button.focus_neighbor_bottom = draw_card_button.get_path()
+	draw_card_button.focus_neighbor_top = roll_dice_button.get_path()
+	draw_card_button.focus_neighbor_bottom = attack_button.get_path()
+	attack_button.focus_neighbor_top = draw_card_button.get_path()
+	attack_button.focus_neighbor_bottom = end_turn_button.get_path()
+	end_turn_button.focus_neighbor_top = attack_button.get_path()
+	end_turn_button.focus_neighbor_bottom = roll_dice_button.get_path()
+	roll_dice_button.focus_neighbor_top = end_turn_button.get_path()
+
+	# Set focus mode on all buttons
+	roll_dice_button.focus_mode = Control.FOCUS_ALL
+	draw_card_button.focus_mode = Control.FOCUS_ALL
+	attack_button.focus_mode = Control.FOCUS_ALL
+	end_turn_button.focus_mode = Control.FOCUS_ALL
+
+	# Give initial focus to roll dice button
+	roll_dice_button.grab_focus()
