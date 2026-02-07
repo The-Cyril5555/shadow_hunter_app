@@ -1,0 +1,45 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/board/action_prompt.gd" id="1_prompt"]
+
+[node name="ActionPrompt" type="PanelContainer"]
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+script = ExtResource("1_prompt")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 8
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="PromptLabel" type="Label" parent="MarginContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 16
+text = "Choisissez une action"
+vertical_alignment = 1
+
+[node name="DrawButton" type="Button" parent="MarginContainer/HBoxContainer"]
+custom_minimum_size = Vector2(120, 40)
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "Piocher"
+
+[node name="AttackButton" type="Button" parent="MarginContainer/HBoxContainer"]
+custom_minimum_size = Vector2(120, 40)
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "Attaquer"
+
+[node name="EndTurnButton" type="Button" parent="MarginContainer/HBoxContainer"]
+custom_minimum_size = Vector2(120, 40)
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "Fin de tour"
