@@ -53,6 +53,9 @@ var validator: ActionValidator = ActionValidator.new()
 ## Tutorial overlay (null if not in tutorial mode)
 var tutorial: TutorialOverlay = null
 
+## Feedback toast for multi-channel notifications
+var toast: FeedbackToast = null
+
 
 # -----------------------------------------------------------------------------
 # Lifecycle
@@ -107,6 +110,10 @@ func _ready() -> void:
 	# Add help menu (F1)
 	var help_menu = HelpMenu.new()
 	add_child(help_menu)
+
+	# Add feedback toast
+	toast = FeedbackToast.new()
+	add_child(toast)
 
 	# Start tutorial if in tutorial mode
 	if GameModeStateMachine.current_mode == GameModeStateMachine.GameMode.TUTORIAL:
@@ -245,6 +252,8 @@ func _move_player_to_zone(player: Player, target_zone: Zone) -> void:
 	# Re-enable input
 	set_process_input(true)
 
+	if toast:
+		toast.show_toast("%s se déplace vers %s" % [player.display_name, target_zone.zone_name], Color(0.7, 0.8, 1.0))
 	print("[GameBoard] Moved %s from %s to %s" % [player.display_name, current_zone.zone_name, target_zone.zone_name])
 
 	# Notify tutorial
@@ -434,6 +443,8 @@ func _on_draw_card_pressed() -> void:
 		push_warning("[GameBoard] Failed to draw card from %s deck" % zone_id)
 		return
 
+	if toast:
+		toast.show_toast("%s pioche : %s" % [current_player.display_name, card.name], Color(0.6, 1.0, 0.6))
 	print("[GameBoard] %s drew card '%s' from %s deck" % [current_player.display_name, card.name, deck.deck_type])
 
 	# Update deck displays
@@ -642,6 +653,8 @@ func _on_roll_dice_pressed() -> void:
 
 func _on_dice_rolled(sum: int) -> void:
 	last_dice_sum = sum
+	if toast:
+		toast.show_toast("Dés : %d — Choisissez une zone" % sum, Color(0.8, 0.9, 1.0))
 
 	print("[GameBoard] Dice rolled: %d" % sum)
 
@@ -847,6 +860,12 @@ func _on_target_selected(target: Player) -> void:
 
 	# Advance to END phase
 	GameState.advance_phase()
+
+	if toast:
+		var msg = "%s inflige %d dégâts à %s" % [attacker.display_name, damage, target.display_name]
+		if not target.is_alive:
+			msg += " — Mort !"
+		toast.show_toast(msg, Color(1.0, 0.5, 0.5))
 
 	print("[GameBoard] Attack complete: %s dealt %d damage to %s (HP: %d)" % [
 		attacker.display_name,
