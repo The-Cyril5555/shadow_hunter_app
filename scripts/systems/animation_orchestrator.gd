@@ -69,11 +69,11 @@ static func _stage_buildup(card_node: Node, tree: SceneTree) -> void:
 	var duration = PolishConfig.get_duration("reveal_buildup_duration")
 
 	# Scale pulse animation (1.0 → 1.05 → 1.0)
-	if card_node.has("scale"):
+	if "scale" in card_node:
 		AnimationHelper.scale_pulse(card_node, 1.05, "reveal_buildup_duration")
 
 	# Spawn buildup particles (ability_glow effect)
-	if card_node.has("global_position"):
+	if "global_position" in card_node:
 		ParticlePool.spawn_particles("ability_glow", card_node.global_position)
 
 	# Play buildup sound
@@ -89,7 +89,7 @@ static func _stage_buildup(card_node: Node, tree: SceneTree) -> void:
 static func _stage_flip(card_node: Node, _player: Player, tree: SceneTree) -> void:
 	var duration = PolishConfig.get_duration("card_flip_duration")
 
-	if not card_node.has("rotation_degrees"):
+	if not "rotation_degrees" in card_node:
 		push_warning("[AnimationOrchestrator] Card node doesn't have rotation_degrees property")
 		await tree.create_timer(duration).timeout
 		return
@@ -115,7 +115,7 @@ static func _stage_flip(card_node: Node, _player: Player, tree: SceneTree) -> vo
 	await tree.create_timer(duration * 0.5).timeout
 
 	# Reset rotation to 0
-	if card_node.has("rotation_degrees"):
+	if "rotation_degrees" in card_node:
 		card_node.rotation_degrees = 0.0
 
 	print("[AnimationOrchestrator] Flip stage complete (%.2fs)" % duration)
@@ -128,15 +128,15 @@ static func _stage_explosion(card_node: Node, tree: SceneTree) -> void:
 	AudioManager.play_sfx("reveal_dramatic", true)
 
 	# Spawn explosion particles (explosion_burst effect)
-	if card_node.has("global_position"):
+	if "global_position" in card_node:
 		ParticlePool.spawn_particles("explosion_burst", card_node.global_position)
 
 	# Screen shake effect
-	if card_node.has("position"):
+	if "position" in card_node:
 		AnimationHelper.shake(card_node, "reveal_shake_intensity", duration * 0.3)
 
 	# Scale pop animation (1.0 → 1.3 → 1.0)
-	if card_node.has("scale"):
+	if "scale" in card_node:
 		AnimationHelper.scale_pop(card_node, 1.3, "reveal_explosion_duration")
 
 	# Wait for explosion duration

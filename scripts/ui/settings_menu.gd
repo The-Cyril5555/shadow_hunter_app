@@ -182,8 +182,8 @@ func _on_colorblind_changed(index: int) -> void:
 
 
 func _on_text_size_changed(index: int) -> void:
-	var size = UserSettings.TEXT_SIZES[index]
-	UserSettings.set_text_size(size)
+	var text_size = UserSettings.TEXT_SIZES[index]
+	UserSettings.set_text_size(text_size)
 
 
 func _on_locale_changed(index: int) -> void:

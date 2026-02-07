@@ -160,8 +160,7 @@ func get_deck_for_zone(zone_id: String) -> DeckManager:
 		"cemetery":
 			return black_deck
 		_:
-			push_warning("[GameState] Unknown zone_id: %s" % zone_id)
-			return null
+			return null  # Zones without decks (underworld, weird_woods, altar)
 
 
 ## Get character data by ID (returns defensive copy)

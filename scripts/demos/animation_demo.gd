@@ -110,7 +110,7 @@ func _on_reduced_motion_toggled(toggled_on: bool) -> void:
 
 	# Set reduced motion in UserSettings
 	var user_settings = get_node("/root/UserSettings")
-	if user_settings.has("reduced_motion_enabled"):
+	if "reduced_motion_enabled" in user_settings:
 		user_settings.reduced_motion_enabled = toggled_on
 	else:
 		print("[AnimationDemo] WARNING: UserSettings.reduced_motion_enabled property not found")

@@ -61,7 +61,7 @@ static func scale_pulse(node: Node, target_scale: float = 1.2, duration_key: Str
 		push_error("[AnimationHelper] scale_pulse: Invalid node")
 		return
 
-	if not node.has("scale"):
+	if not "scale" in node:
 		push_error("[AnimationHelper] scale_pulse: Node does not have 'scale' property")
 		return
 
@@ -88,7 +88,7 @@ static func scale_pop(node: Node, target_scale: float = 1.3, duration_key: Strin
 		push_error("[AnimationHelper] scale_pop: Invalid node")
 		return
 
-	if not node.has("scale"):
+	if not "scale" in node:
 		push_error("[AnimationHelper] scale_pop: Node does not have 'scale' property")
 		return
 
@@ -118,7 +118,7 @@ static func slide_in(node: Node, from_offset: Vector2, duration_key: String = "c
 		push_error("[AnimationHelper] slide_in: Invalid node")
 		return
 
-	if not node.has("position"):
+	if not "position" in node:
 		push_error("[AnimationHelper] slide_in: Node does not have 'position' property")
 		return
 
@@ -142,7 +142,7 @@ static func slide_out(node: Node, to_offset: Vector2, duration_key: String = "ca
 		push_error("[AnimationHelper] slide_out: Invalid node")
 		return
 
-	if not node.has("position"):
+	if not "position" in node:
 		push_error("[AnimationHelper] slide_out: Node does not have 'position' property")
 		return
 
@@ -166,7 +166,7 @@ static func shake(node: Node, intensity_key: String = "shake_intensity", duratio
 		push_error("[AnimationHelper] shake: Invalid node")
 		return
 
-	if not node.has("position"):
+	if not "position" in node:
 		push_error("[AnimationHelper] shake: Node does not have 'position' property")
 		return
 
@@ -236,7 +236,7 @@ static func fade_in_with_pop(node: Node, duration_key: String = "card_play_anima
 		push_error("[AnimationHelper] fade_in_with_pop: Node must be CanvasItem")
 		return
 
-	if not node.has("scale"):
+	if not "scale" in node:
 		push_error("[AnimationHelper] fade_in_with_pop: Node does not have 'scale' property")
 		return
 
@@ -273,7 +273,7 @@ static func fade_out_with_shrink(node: Node, duration_key: String = "card_play_a
 		push_error("[AnimationHelper] fade_out_with_shrink: Node must be CanvasItem")
 		return
 
-	if not node.has("scale"):
+	if not "scale" in node:
 		push_error("[AnimationHelper] fade_out_with_shrink: Node does not have 'scale' property")
 		return
 
@@ -301,7 +301,7 @@ static func fade_out_with_shrink(node: Node, duration_key: String = "card_play_a
 ## Hover effect: Scale up on mouse enter
 ## @param node: Node to animate (must have scale property)
 static func hover_in(node: Node) -> void:
-	if not is_instance_valid(node) or not node.has("scale"):
+	if not is_instance_valid(node) or not "scale" in node:
 		return
 
 	var scale_amount = PolishConfig.get_value("hover_scale_amount", 1.05)
@@ -316,7 +316,7 @@ static func hover_in(node: Node) -> void:
 ## Hover effect: Scale back to normal on mouse exit
 ## @param node: Node to animate (must have scale property)
 static func hover_out(node: Node) -> void:
-	if not is_instance_valid(node) or not node.has("scale"):
+	if not is_instance_valid(node) or not "scale" in node:
 		return
 
 	var duration = PolishConfig.get_value("hover_duration", 0.15)
@@ -330,7 +330,7 @@ static func hover_out(node: Node) -> void:
 ## Button press effect: Quick scale down and back
 ## @param node: Node to animate (must have scale property)
 static func press_effect(node: Node) -> void:
-	if not is_instance_valid(node) or not node.has("scale"):
+	if not is_instance_valid(node) or not "scale" in node:
 		return
 
 	var press_scale = PolishConfig.get_value("button_press_scale", 0.95)
@@ -347,7 +347,7 @@ static func press_effect(node: Node) -> void:
 ## @param node: Node to animate (must have scale property)
 ## @returns: Tween instance (null if reduced motion or invalid node)
 static func start_breathing(node: Node) -> Tween:
-	if not is_instance_valid(node) or not node.has("scale"):
+	if not is_instance_valid(node) or not "scale" in node:
 		return null
 
 	# Check reduced motion
@@ -376,7 +376,7 @@ static func start_breathing(node: Node) -> Tween:
 ## @param start_delay: Optional delay before starting (for staggering)
 ## @returns: Tween instance (null if reduced motion or invalid node)
 static func start_floating(node: Node, start_delay: float = 0.0) -> Tween:
-	if not is_instance_valid(node) or not node.has("position"):
+	if not is_instance_valid(node) or not "position" in node:
 		return null
 
 	# Check reduced motion
@@ -406,7 +406,7 @@ static func start_floating(node: Node, start_delay: float = 0.0) -> Tween:
 ## @param clockwise: Direction of initial rotation
 ## @returns: Tween instance (null if reduced motion or invalid node)
 static func start_gentle_rotation(node: Node, clockwise: bool = true) -> Tween:
-	if not is_instance_valid(node) or not node.has("rotation_degrees"):
+	if not is_instance_valid(node) or not "rotation_degrees" in node:
 		return null
 
 	# Check reduced motion
