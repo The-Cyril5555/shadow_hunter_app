@@ -14,6 +14,21 @@ func _ready() -> void:
 	# Setup button hover effects
 	_setup_button_hover_effects()
 
+	# Add help menu (F1)
+	var help_menu = HelpMenu.new()
+	add_child(help_menu)
+
+	# Add "?" button in bottom-right corner
+	var help_btn = Button.new()
+	help_btn.text = "?"
+	help_btn.tooltip_text = "Aide et règles (F1)"
+	help_btn.custom_minimum_size = Vector2(44, 44)
+	help_btn.theme_override_font_sizes.font_size = 24
+	help_btn.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	help_btn.position = Vector2(-54, -54)
+	help_btn.pressed.connect(func(): help_menu.show_help())
+	add_child(help_btn)
+
 	print("[MainMenu] Ready")
 
 

@@ -101,6 +101,10 @@ func _ready() -> void:
 	# Setup button tooltips
 	_setup_tooltips()
 
+	# Add help menu (F1)
+	var help_menu = HelpMenu.new()
+	add_child(help_menu)
+
 	print("[GameBoard] Game started with %d players" % GameState.players.size())
 
 
