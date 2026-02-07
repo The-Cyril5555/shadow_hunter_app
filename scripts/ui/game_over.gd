@@ -69,6 +69,9 @@ func _display_results() -> void:
 	# Display winners
 	_display_winners()
 
+	# Display game statistics
+	_display_statistics()
+
 	# Display all players (scoreboard)
 	_display_all_players()
 
@@ -196,6 +199,32 @@ func _get_faction_color(faction: String) -> Color:
 			return Color(0.7, 0.7, 0.3)  # Yellow
 		_:
 			return Color.WHITE
+
+
+func _display_statistics() -> void:
+	# Use the scoreboard label to display stats
+	var stats = GameState.get_game_statistics()
+
+	var stats_text = "--- STATISTIQUES ---\n"
+	stats_text += "Tours joués: %d\n" % stats.turns_played
+	stats_text += "Attaques: %d | Dégâts totaux: %d\n" % [stats.total_attacks, stats.total_damage]
+	stats_text += "Morts: %d | Équipements: %d\n" % [stats.total_deaths, stats.equipment_equipped]
+
+	# Find MVP (most damage dealt)
+	var mvp_name = ""
+	var mvp_damage = 0
+	for player_name in stats.player_stats:
+		var ps = stats.player_stats[player_name]
+		if ps.damage_dealt > mvp_damage:
+			mvp_damage = ps.damage_dealt
+			mvp_name = player_name
+
+	if mvp_name != "":
+		stats_text += "\nMVP: %s (%d dégâts)" % [mvp_name, mvp_damage]
+
+	scoreboard_label.text = stats_text
+
+	print("[GameOver] Statistics displayed: %d turns, %d attacks" % [stats.turns_played, stats.total_attacks])
 
 
 # =============================================================================

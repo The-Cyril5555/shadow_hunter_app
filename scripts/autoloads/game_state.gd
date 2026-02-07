@@ -234,6 +234,53 @@ func log_action(action_type: String, data: Dictionary = {}) -> void:
 	game_log.append(log_entry)
 
 
+## Compute game statistics from the action log
+func get_game_statistics() -> Dictionary:
+	var stats = {
+		"turns_played": turn_count,
+		"total_attacks": 0,
+		"total_damage": 0,
+		"total_deaths": 0,
+		"cards_drawn": 0,
+		"equipment_equipped": 0,
+		"player_stats": {}  # Per-player stats
+	}
+
+	# Initialize per-player stats
+	for player in players:
+		stats.player_stats[player.display_name] = {
+			"attacks_made": 0,
+			"damage_dealt": 0,
+			"cards_drawn": 0,
+			"kills": 0,
+		}
+
+	# Process game log
+	for entry in game_log:
+		var data = entry.get("data", {})
+		match entry.get("type", ""):
+			"attack_performed":
+				stats.total_attacks += 1
+				stats.total_damage += data.get("damage", 0)
+				var attacker = data.get("attacker", "")
+				if stats.player_stats.has(attacker):
+					stats.player_stats[attacker].attacks_made += 1
+					stats.player_stats[attacker].damage_dealt += data.get("damage", 0)
+					if data.get("target_died", false):
+						stats.player_stats[attacker].kills += 1
+				if data.get("target_died", false):
+					stats.total_deaths += 1
+			"card_effect_applied":
+				stats.cards_drawn += 1
+				var player_name = data.get("player", "")
+				if stats.player_stats.has(player_name):
+					stats.player_stats[player_name].cards_drawn += 1
+			"equipment_equipped":
+				stats.equipment_equipped += 1
+
+	return stats
+
+
 ## Advance to the next turn phase
 func advance_phase() -> void:
 	match current_phase:
