@@ -22,11 +22,11 @@ var is_rolling: bool = false
 # -----------------------------------------------------------------------------
 # References @onready
 # -----------------------------------------------------------------------------
-@onready var dice1_container: Control = $HBoxContainer/Dice1Container
-@onready var dice2_container: Control = $HBoxContainer/Dice2Container
-@onready var dice1_label: Label = $HBoxContainer/Dice1Container/DiceLabel
-@onready var dice2_label: Label = $HBoxContainer/Dice2Container/DiceLabel
-@onready var result_label: Label = $ResultLabel
+@onready var dice1_container: Control = $VBoxContainer/HBoxContainer/Dice1Container
+@onready var dice2_container: Control = $VBoxContainer/HBoxContainer/Dice2Container
+@onready var dice1_label: Label = $VBoxContainer/HBoxContainer/Dice1Container/DiceLabel
+@onready var dice2_label: Label = $VBoxContainer/HBoxContainer/Dice2Container/DiceLabel
+@onready var result_label: Label = $VBoxContainer/ResultLabel
 
 
 # -----------------------------------------------------------------------------

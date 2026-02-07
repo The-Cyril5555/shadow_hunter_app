@@ -19,10 +19,6 @@ extends RefCounted
 # SIGNALS
 # =============================================================================
 
-## Emitted when a player's hand changes (card added or removed)
-signal hand_changed(player: Player, card: Card, action: String)
-
-
 # =============================================================================
 # PUBLIC METHODS - Add to Hand
 # =============================================================================

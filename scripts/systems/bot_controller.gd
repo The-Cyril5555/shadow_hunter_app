@@ -101,7 +101,7 @@ func bot_roll_dice(bot: Player) -> int:
 ## @param bot: Bot player moving
 ## @param roll: Dice roll result (currently unused in MVP)
 ## @returns: String - target zone id
-func bot_move_to_zone(bot: Player, roll: int) -> String:
+func bot_move_to_zone(bot: Player, _roll: int) -> String:
 	bot_action_started.emit(bot, "move")
 
 	# Build context for decision-making

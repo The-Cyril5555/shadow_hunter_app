@@ -221,7 +221,6 @@ func _move_player_to_zone(player: Player, target_zone: Zone) -> void:
 		return
 
 	# Get positions for animation
-	var start_pos = token.global_position
 	var end_pos = target_zone.token_container.global_position
 
 	# Disable input during animation

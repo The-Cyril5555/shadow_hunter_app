@@ -15,7 +15,8 @@ const VALID_TRIGGERS = [
 	"on_kill",
 	"on_reveal",
 	"on_death",
-	"on_attack"
+	"on_attack",
+	"win_condition"
 ]
 
 

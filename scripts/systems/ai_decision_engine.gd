@@ -139,7 +139,7 @@ static func build_action_context(bot: Player, players: Array) -> Dictionary:
 # =============================================================================
 
 ## Calculate attack utility based on game state
-func _calculate_attack_utility(bot: Player, context: Dictionary) -> float:
+func _calculate_attack_utility(_bot: Player, context: Dictionary) -> float:
 	var utility: float = 0.0
 
 	# Check if there are attackable targets
@@ -175,7 +175,7 @@ func _calculate_attack_utility(bot: Player, context: Dictionary) -> float:
 
 
 ## Calculate defense utility based on game state
-func _calculate_defense_utility(bot: Player, context: Dictionary) -> float:
+func _calculate_defense_utility(_bot: Player, context: Dictionary) -> float:
 	var utility: float = 0.0
 
 	# Factors that increase defense utility:
@@ -206,7 +206,7 @@ func _calculate_defense_utility(bot: Player, context: Dictionary) -> float:
 
 
 ## Calculate movement utility
-func _calculate_movement_utility(bot: Player, context: Dictionary, is_risky: bool) -> float:
+func _calculate_movement_utility(_bot: Player, context: Dictionary, is_risky: bool) -> float:
 	var utility: float = 0.5  # Base moderate utility
 
 	# Safe movement: higher utility when threatened
@@ -231,7 +231,7 @@ func _calculate_movement_utility(bot: Player, context: Dictionary, is_risky: boo
 
 
 ## Calculate card draw utility
-func _calculate_card_draw_utility(bot: Player, context: Dictionary) -> float:
+func _calculate_card_draw_utility(_bot: Player, context: Dictionary) -> float:
 	var utility: float = 0.0
 
 	# Factors that increase card draw utility:

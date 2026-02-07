@@ -125,7 +125,7 @@ func notify_action(action: String) -> void:
 
 
 ## Check if tutorial is active and waiting for a specific action
-func is_waiting_for(action: String) -> bool:
+func is_waiting_for(_action: String) -> bool:
 	return _waiting_for_action != "" and visible
 
 
