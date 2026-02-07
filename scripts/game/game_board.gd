@@ -90,6 +90,14 @@ func _ready() -> void:
 	# Connect target selection signal
 	target_selection_panel.target_selected.connect(_on_target_selected)
 
+	# Add pause menu
+	var pause_menu = PauseMenu.new()
+	pause_menu.process_mode = Node.PROCESS_MODE_ALWAYS  # Works even when paused
+	add_child(pause_menu)
+
+	# Reset auto-save counter for new game
+	SaveManager.reset_action_counter()
+
 	print("[GameBoard] Game started with %d players" % GameState.players.size())
 
 

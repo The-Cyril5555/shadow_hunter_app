@@ -48,8 +48,21 @@ func _on_new_game_pressed() -> void:
 
 func _on_load_game_pressed() -> void:
 	AudioManager.play_sfx("button_click")
-	print("[MainMenu] Load Game pressed - Not implemented yet")
-	# TODO: Implement in Story 6.3
+	print("[MainMenu] Load Game pressed")
+
+	# Check if any save exists
+	var has_any_save = false
+	for i in range(0, SaveManager.MAX_SAVE_SLOTS + 1):
+		if SaveManager.has_save(i):
+			has_any_save = true
+			break
+
+	if not has_any_save:
+		print("[MainMenu] No saves found")
+		return
+
+	# Show load dialog
+	_show_load_dialog()
 
 
 func _on_settings_pressed() -> void:
@@ -62,3 +75,84 @@ func _on_quit_pressed() -> void:
 	AudioManager.play_sfx("button_click")
 	print("[MainMenu] Quit pressed")
 	get_tree().quit()
+
+
+## Show load game dialog with available save slots
+func _show_load_dialog() -> void:
+	# Create overlay
+	var overlay = ColorRect.new()
+	overlay.name = "LoadOverlay"
+	overlay.color = Color(0, 0, 0, 0.7)
+	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(overlay)
+
+	var center = CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	overlay.add_child(center)
+
+	var panel = PanelContainer.new()
+	panel.custom_minimum_size = Vector2(450, 300)
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color(0.12, 0.12, 0.18, 0.95)
+	style.set_border_width_all(2)
+	style.border_color = Color(0.4, 0.4, 0.6)
+	style.set_corner_radius_all(10)
+	style.set_content_margin_all(20)
+	panel.add_theme_stylebox_override("panel", style)
+	center.add_child(panel)
+
+	var vbox = VBoxContainer.new()
+	vbox.theme_override_constants.separation = 10
+	panel.add_child(vbox)
+
+	var title = Label.new()
+	title.text = "CHARGER UNE PARTIE"
+	title.theme_override_font_sizes.font_size = 22
+	title.theme_override_colors.font_color = Color(1.0, 0.9, 0.3)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(title)
+
+	# Populate save slots
+	var slots = SaveManager.get_all_slot_info()
+	for info in slots:
+		var slot_id = info.get("slot_id", 0)
+
+		var btn = Button.new()
+		btn.custom_minimum_size = Vector2(0, 45)
+		btn.theme_override_font_sizes.font_size = 14
+
+		if info.get("exists", false):
+			btn.text = "%s - Tour %d (%d joueurs) - %s" % [
+				info.get("slot_name", ""),
+				info.get("turn_count", 0),
+				info.get("player_count", 0),
+				info.get("date_string", ""),
+			]
+			btn.pressed.connect(_on_load_slot_selected.bind(slot_id, overlay))
+		else:
+			btn.text = "%s - Vide" % info.get("slot_name", "")
+			btn.disabled = true
+
+		vbox.add_child(btn)
+
+	# Back button
+	var back_btn = Button.new()
+	back_btn.text = "Retour"
+	back_btn.custom_minimum_size = Vector2(0, 40)
+	back_btn.theme_override_font_sizes.font_size = 16
+	back_btn.pressed.connect(func(): overlay.queue_free())
+	vbox.add_child(back_btn)
+
+
+func _on_load_slot_selected(slot_id: int, overlay: Control) -> void:
+	var success: bool
+	if slot_id == 0:
+		success = SaveManager.load_auto_save()
+	else:
+		success = SaveManager.load_from_slot(slot_id)
+
+	if success:
+		overlay.queue_free()
+		GameModeStateMachine.transition_to(GameModeStateMachine.GameMode.GAME)
+	else:
+		print("[MainMenu] Failed to load slot %d" % slot_id)
