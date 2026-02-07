@@ -7,6 +7,7 @@ extends Node
 enum GameMode {
 	MAIN_MENU,
 	GAME_SETUP,
+	SETTINGS,
 	TUTORIAL,
 	GAME,
 	GAME_OVER
@@ -40,6 +41,8 @@ func transition_to(new_mode: GameMode) -> void:
 			get_tree().change_scene_to_file("res://scenes/ui/screens/main_menu.tscn")
 		GameMode.GAME_SETUP:
 			get_tree().change_scene_to_file("res://scenes/ui/screens/game_setup.tscn")
+		GameMode.SETTINGS:
+			get_tree().change_scene_to_file("res://scenes/ui/screens/settings_menu.tscn")
 		GameMode.TUTORIAL:
 			get_tree().change_scene_to_file("res://scenes/game/game_board.tscn")
 		GameMode.GAME:

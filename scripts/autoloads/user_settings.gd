@@ -7,6 +7,8 @@ class_name UserSettingsClass
 # Signals
 signal expansion_toggle_changed(include_expansion: bool)
 signal volume_changed(volume_type: String, value: float)
+signal accessibility_changed(setting: String, value)
+signal locale_changed(new_locale: String)
 
 
 # Settings properties
@@ -18,7 +20,30 @@ var sfx_volume: float = 1.0     # 0.0 to 1.0
 var music_volume: float = 0.8   # 0.0 to 1.0 (default slightly lower)
 
 # Accessibility settings
-var reduced_motion_enabled: bool = false  # Disable/reduce animations for accessibility
+var reduced_motion_enabled: bool = false  # Disable/reduce animations
+var colorblind_mode: String = "none"  # "none", "deuteranopia", "protanopia", "tritanopia"
+var text_size: String = "medium"  # "small" (12px), "medium" (16px), "large" (20px)
+
+# Localization
+var locale: String = "fr"  # "fr" or "en"
+
+# Text size pixel mappings
+const TEXT_SIZE_MAP: Dictionary = {
+	"small": 12,
+	"medium": 16,
+	"large": 20,
+}
+
+# Colorblind-friendly symbols for factions (Okabe-Ito palette)
+const COLORBLIND_SYMBOLS: Dictionary = {
+	"hunter": "△",
+	"shadow": "◇",
+	"neutral": "○",
+}
+
+const COLORBLIND_MODES: Array[String] = ["none", "deuteranopia", "protanopia", "tritanopia"]
+const TEXT_SIZES: Array[String] = ["small", "medium", "large"]
+const LOCALES: Array[String] = ["fr", "en"]
 
 
 func _ready() -> void:
@@ -77,7 +102,25 @@ func load_settings() -> void:
 		else:
 			push_warning("[UserSettings] Invalid type for reduced_motion_enabled - using default")
 
-	print("[UserSettings] Loaded settings: include_expansion=%s, volumes=(M:%.2f, SFX:%.2f, Music:%.2f), reduced_motion=%s" % [include_expansion, master_volume, sfx_volume, music_volume, reduced_motion_enabled])
+	if data.has("colorblind_mode"):
+		if typeof(data.colorblind_mode) == TYPE_STRING and data.colorblind_mode in COLORBLIND_MODES:
+			colorblind_mode = data.colorblind_mode
+		else:
+			push_warning("[UserSettings] Invalid colorblind_mode - using default")
+
+	if data.has("text_size"):
+		if typeof(data.text_size) == TYPE_STRING and data.text_size in TEXT_SIZES:
+			text_size = data.text_size
+		else:
+			push_warning("[UserSettings] Invalid text_size - using default")
+
+	if data.has("locale"):
+		if typeof(data.locale) == TYPE_STRING and data.locale in LOCALES:
+			locale = data.locale
+		else:
+			push_warning("[UserSettings] Invalid locale - using default")
+
+	print("[UserSettings] Loaded settings: expansion=%s, colorblind=%s, text=%s, locale=%s" % [include_expansion, colorblind_mode, text_size, locale])
 
 
 ## Save settings to user://settings.json
@@ -87,7 +130,10 @@ func save_settings() -> void:
 		"master_volume": master_volume,
 		"sfx_volume": sfx_volume,
 		"music_volume": music_volume,
-		"reduced_motion_enabled": reduced_motion_enabled
+		"reduced_motion_enabled": reduced_motion_enabled,
+		"colorblind_mode": colorblind_mode,
+		"text_size": text_size,
+		"locale": locale,
 	}
 
 	var file = FileAccess.open("user://settings.json", FileAccess.WRITE)
@@ -97,14 +143,12 @@ func save_settings() -> void:
 
 	file.store_string(JSON.stringify(data, "\t"))
 	file.close()
-	print("[UserSettings] Settings saved: include_expansion=%s, volumes=(M:%.2f, SFX:%.2f, Music:%.2f), reduced_motion=%s" % [include_expansion, master_volume, sfx_volume, music_volume, reduced_motion_enabled])
 
 
 ## Set expansion enabled state (with auto-save and signal emission)
 func set_expansion_enabled(enabled: bool) -> void:
 	if include_expansion == enabled:
-		return  # No change - skip save and signal
-
+		return
 	include_expansion = enabled
 	save_settings()
 	expansion_toggle_changed.emit(include_expansion)
@@ -115,65 +159,113 @@ func set_expansion_enabled(enabled: bool) -> void:
 func set_master_volume(value: float) -> void:
 	value = clamp(value, 0.0, 1.0)
 	if abs(master_volume - value) < 0.01:
-		return  # No significant change
-
+		return
 	master_volume = value
 	save_settings()
 	AudioManager.set_master_volume(master_volume)
 	volume_changed.emit("master", master_volume)
-	print("[UserSettings] Master volume changed: %.2f" % master_volume)
 
 
 ## Set SFX volume (with auto-save, signal emission, and AudioManager update)
 func set_sfx_volume(value: float) -> void:
 	value = clamp(value, 0.0, 1.0)
 	if abs(sfx_volume - value) < 0.01:
-		return  # No significant change
-
+		return
 	sfx_volume = value
 	save_settings()
 	AudioManager.set_sfx_volume(sfx_volume)
 	volume_changed.emit("sfx", sfx_volume)
-	print("[UserSettings] SFX volume changed: %.2f" % sfx_volume)
 
 
 ## Set music volume (with auto-save, signal emission, and AudioManager update)
 func set_music_volume(value: float) -> void:
 	value = clamp(value, 0.0, 1.0)
 	if abs(music_volume - value) < 0.01:
-		return  # No significant change
-
+		return
 	music_volume = value
 	save_settings()
 	AudioManager.set_music_volume(music_volume)
 	volume_changed.emit("music", music_volume)
-	print("[UserSettings] Music volume changed: %.2f" % music_volume)
 
 
-## Set reduced motion enabled (with auto-save and signal emission)
+## Set reduced motion enabled
 func set_reduced_motion(enabled: bool) -> void:
 	if reduced_motion_enabled == enabled:
-		return  # No change
-
+		return
 	reduced_motion_enabled = enabled
 	save_settings()
-	# Note: We could add a reduced_motion_changed signal if needed
-	print("[UserSettings] Reduced motion changed: %s" % enabled)
+	accessibility_changed.emit("reduced_motion", enabled)
+	print("[UserSettings] Reduced motion: %s" % enabled)
 
 
-## Generic getter for settings (for compatibility)
+## Set colorblind mode
+func set_colorblind_mode(mode: String) -> void:
+	if mode not in COLORBLIND_MODES:
+		push_warning("[UserSettings] Invalid colorblind mode: %s" % mode)
+		return
+	if colorblind_mode == mode:
+		return
+	colorblind_mode = mode
+	save_settings()
+	accessibility_changed.emit("colorblind_mode", mode)
+	print("[UserSettings] Colorblind mode: %s" % mode)
+
+
+## Set text size
+func set_text_size(size: String) -> void:
+	if size not in TEXT_SIZES:
+		push_warning("[UserSettings] Invalid text size: %s" % size)
+		return
+	if text_size == size:
+		return
+	text_size = size
+	save_settings()
+	accessibility_changed.emit("text_size", size)
+	print("[UserSettings] Text size: %s" % size)
+
+
+## Set locale
+func set_locale(new_locale: String) -> void:
+	if new_locale not in LOCALES:
+		push_warning("[UserSettings] Invalid locale: %s" % new_locale)
+		return
+	if locale == new_locale:
+		return
+	locale = new_locale
+	save_settings()
+	locale_changed.emit(locale)
+	print("[UserSettings] Locale: %s" % locale)
+
+
+## Get the current text size in pixels
+func get_text_size_px() -> int:
+	return TEXT_SIZE_MAP.get(text_size, 16)
+
+
+## Check if colorblind mode is active
+func is_colorblind_active() -> bool:
+	return colorblind_mode != "none"
+
+
+## Get faction display with colorblind symbol if needed
+func get_faction_display(faction: String) -> String:
+	if is_colorblind_active():
+		var symbol = COLORBLIND_SYMBOLS.get(faction, "")
+		return "%s %s" % [symbol, faction.capitalize()]
+	return faction.capitalize()
+
+
+## Generic getter for settings
 func get_setting(key: String, default_value):
 	match key:
-		"master_volume":
-			return master_volume
-		"sfx_volume":
-			return sfx_volume
-		"music_volume":
-			return music_volume
-		"include_expansion":
-			return include_expansion
-		"reduced_motion_enabled":
-			return reduced_motion_enabled
+		"master_volume": return master_volume
+		"sfx_volume": return sfx_volume
+		"music_volume": return music_volume
+		"include_expansion": return include_expansion
+		"reduced_motion_enabled": return reduced_motion_enabled
+		"colorblind_mode": return colorblind_mode
+		"text_size": return text_size
+		"locale": return locale
 		_:
-			push_warning("[UserSettings] Unknown setting key: %s - returning default" % key)
+			push_warning("[UserSettings] Unknown setting key: %s" % key)
 			return default_value

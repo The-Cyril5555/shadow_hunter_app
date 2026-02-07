@@ -131,8 +131,7 @@ func _on_tutorial_pressed() -> void:
 
 func _on_settings_pressed() -> void:
 	AudioManager.play_sfx("button_click")
-	print("[MainMenu] Settings pressed - Not implemented yet")
-	# TODO: Implement settings screen
+	GameModeStateMachine.transition_to(GameModeStateMachine.GameMode.SETTINGS)
 
 
 func _on_quit_pressed() -> void:
