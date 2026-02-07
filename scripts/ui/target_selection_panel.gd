@@ -34,24 +34,55 @@ func show_targets(valid_targets: Array) -> void:
 
 	# Update title
 	if valid_targets.is_empty():
-		title_label.text = "No valid targets"
+		title_label.text = "Aucune cible disponible"
 		cancel_button.visible = true
 		visible = true
 		return
 	else:
-		title_label.text = "Select Attack Target"
+		title_label.text = "Choisissez votre cible"
 
-	# Create button for each valid target
+	# Create rich entry for each valid target
 	for target in valid_targets:
-		var button = Button.new()
-		button.text = "%s (HP: %d/%d)" % [
-			target.display_name,
-			target.hp,
-			target.hp_max
-		]
-		button.add_theme_font_size_override("font_size", 16)
-		button.pressed.connect(_on_target_button_pressed.bind(target))
-		targets_container.add_child(button)
+		var row = HBoxContainer.new()
+		row.add_theme_constant_override("separation", 10)
+
+		# Character portrait
+		var portrait = TextureRect.new()
+		portrait.custom_minimum_size = Vector2(50, 50)
+		portrait.expand_mode = TextureRect.EXPAND_KEEP_ASPECT
+		portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		var char_id = target.character_id if target.is_revealed else "back"
+		var texture = CardImageMapper.load_texture(CardImageMapper.get_character_image_path(char_id))
+		if texture != null:
+			portrait.texture = texture
+		row.add_child(portrait)
+
+		# Player info
+		var info = VBoxContainer.new()
+		info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var name_lbl = Label.new()
+		name_lbl.text = target.display_name
+		if target.is_revealed:
+			name_lbl.text += " (%s)" % target.character_name
+		name_lbl.add_theme_font_size_override("font_size", 16)
+		info.add_child(name_lbl)
+
+		var hp_lbl = Label.new()
+		hp_lbl.text = "HP: %d/%d" % [target.hp, target.hp_max]
+		hp_lbl.add_theme_font_size_override("font_size", 14)
+		hp_lbl.add_theme_color_override("font_color", Color(0.8, 0.3, 0.3))
+		info.add_child(hp_lbl)
+		row.add_child(info)
+
+		# Attack button
+		var btn = Button.new()
+		btn.text = "Attaquer"
+		btn.custom_minimum_size = Vector2(100, 40)
+		btn.add_theme_font_size_override("font_size", 14)
+		btn.pressed.connect(_on_target_button_pressed.bind(target))
+		row.add_child(btn)
+
+		targets_container.add_child(row)
 
 	cancel_button.visible = true
 	visible = true
