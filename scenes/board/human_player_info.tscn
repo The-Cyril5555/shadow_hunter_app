@@ -1,0 +1,62 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/board/human_player_info.gd" id="1_info"]
+
+[node name="HumanPlayerInfo" type="PanelContainer"]
+custom_minimum_size = Vector2(0, 140)
+layout_mode = 2
+script = ExtResource("1_info")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 8
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="PlayerLabel" type="Label" parent="MarginContainer/HBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "J1"
+vertical_alignment = 1
+
+[node name="CharacterImage" type="TextureRect" parent="MarginContainer/HBoxContainer"]
+custom_minimum_size = Vector2(85, 120)
+layout_mode = 2
+expand_mode = 3
+stretch_mode = 5
+
+[node name="InfoVBox" type="VBoxContainer" parent="MarginContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="HPLabel" type="Label" parent="MarginContainer/HBoxContainer/InfoVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "HP: 14/14"
+
+[node name="HandLabel" type="Label" parent="MarginContainer/HBoxContainer/InfoVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
+text = "Main :"
+
+[node name="HandContainer" type="HBoxContainer" parent="MarginContainer/HBoxContainer/InfoVBox"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="EquipLabel" type="Label" parent="MarginContainer/HBoxContainer/InfoVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
+text = "Équipement :"
+
+[node name="EquipmentContainer" type="HBoxContainer" parent="MarginContainer/HBoxContainer/InfoVBox"]
+layout_mode = 2
+theme_override_constants/separation = 6
