@@ -49,7 +49,7 @@ func show_targets(valid_targets: Array) -> void:
 		# Character portrait
 		var portrait = TextureRect.new()
 		portrait.custom_minimum_size = Vector2(50, 50)
-		portrait.expand_mode = TextureRect.EXPAND_KEEP_ASPECT
+		portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		var char_id = target.character_id if target.is_revealed else "back"
 		var texture = CardImageMapper.load_texture(CardImageMapper.get_character_image_path(char_id))

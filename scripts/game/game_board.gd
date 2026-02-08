@@ -117,6 +117,9 @@ func _ready() -> void:
 	if GameModeStateMachine.current_mode == GameModeStateMachine.GameMode.TUTORIAL:
 		_start_tutorial()
 
+	# Trigger initial phase handling (signal was connected after phase was set)
+	_on_phase_changed(GameState.current_phase)
+
 	print("[GameBoard] Game started with %d players" % GameState.players.size())
 
 

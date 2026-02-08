@@ -54,6 +54,9 @@ signal equipment_equipped(player, card: Card)
 ## Emitted when equipment is discarded
 signal equipment_discarded(player, card: Card)
 
+## Emitted when a player moves to a new zone
+signal player_moved(player, zone_id: String)
+
 
 # =============================================================================
 # GAME STATE
