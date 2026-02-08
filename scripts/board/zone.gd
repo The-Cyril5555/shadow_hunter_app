@@ -1,5 +1,5 @@
 ## Zone - Visual zone component for game board
-## Displays zone information, deck indicator, and player tokens
+## Displays zone as a card image with player tokens overlaid.
 class_name Zone
 extends PanelContainer
 
@@ -16,18 +16,17 @@ signal zone_clicked(zone: Zone)
 var zone_id: String = ""
 var zone_name: String = ""
 var deck_type: String = ""
+var dice_range: Array = []
 var players_here: Array = []
 var is_highlighted: bool = false
-var zone_color: Color = Color.WHITE
 
 
 # -----------------------------------------------------------------------------
 # References @onready
 # -----------------------------------------------------------------------------
 @onready var zone_background: TextureRect = $ZoneBackground
-@onready var name_label: Label = $VBoxContainer/NameLabel
-@onready var deck_label: Label = $VBoxContainer/DeckLabel
 @onready var token_container: HBoxContainer = $VBoxContainer/TokenContainer
+@onready var dice_label: Label = $VBoxContainer/DiceLabel
 
 
 # -----------------------------------------------------------------------------
@@ -35,42 +34,41 @@ var zone_color: Color = Color.WHITE
 # -----------------------------------------------------------------------------
 
 ## Initialize zone with zone data from ZoneData
-func setup(zone_data: Dictionary) -> void:
+func setup(zone_data: Dictionary, position_dice_range: Array = []) -> void:
 	zone_id = zone_data.get("id", "")
 	zone_name = zone_data.get("name", "Unknown Zone")
 	deck_type = zone_data.get("deck_type", "")
+	dice_range = position_dice_range
 
-	# Update labels (dark text for light card background)
-	name_label.text = zone_name
-	name_label.add_theme_color_override("font_color", Color(0.15, 0.12, 0.1))
-
-	if deck_type != "":
-		deck_label.text = "[%s Deck]" % deck_type.capitalize()
-		deck_label.add_theme_color_override("font_color", Color(0.35, 0.3, 0.25))
-		deck_label.visible = true
-	else:
-		deck_label.visible = false
-
-	# Load zone background image
+	# Load zone card image as primary visual
 	var img_path = CardImageMapper.get_zone_image_path(zone_id)
 	var texture = CardImageMapper.load_texture(img_path)
 	if texture != null:
 		zone_background.texture = texture
-		zone_background.modulate = Color(1, 1, 1, 0.5)
 		zone_background.visible = true
 	else:
 		zone_background.visible = false
 
-	# Apply zone color styling
-	zone_color = zone_data.get("color", Color.WHITE)
-	_apply_zone_style(zone_color)
+	# Show dice range label
+	if dice_range.size() > 0:
+		dice_label.text = ZoneData.format_dice_range(dice_range)
+		dice_label.visible = true
+	else:
+		dice_label.visible = false
+
+	# Apply card style
+	_apply_zone_style()
 
 	# Set tooltip
-	var description = zone_data.get("description", "")
-	tooltip_text = "%s\n%s" % [zone_name, description]
+	var tip = zone_name
+	if deck_type != "":
+		tip += "\nDeck: %s" % deck_type.capitalize()
+	if dice_range.size() > 0:
+		tip += "\nDés: %s" % ZoneData.format_dice_range(dice_range)
+	tooltip_text = tip
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 
-	print("[Zone] Initialized zone: %s (id: %s)" % [zone_name, zone_id])
+	print("[Zone] Initialized zone: %s (dice: %s)" % [zone_name, ZoneData.format_dice_range(dice_range)])
 
 
 ## Add a player token to this zone
@@ -87,7 +85,6 @@ func add_player_token(player: Player) -> void:
 	token.setup(player)
 
 	_update_tooltip()
-	print("[Zone] Player %s added to zone %s" % [player.display_name, zone_name])
 
 
 ## Remove a player token from this zone
@@ -105,7 +102,6 @@ func remove_player_token(player: Player) -> void:
 			break
 
 	_update_tooltip()
-	print("[Zone] Player %s removed from zone %s" % [player.display_name, zone_name])
 
 
 ## Get all players currently in this zone
@@ -130,20 +126,18 @@ func set_highlight(enabled: bool) -> void:
 	is_highlighted = enabled
 
 	if enabled:
-		# Add yellow highlight border (card style)
 		var highlight_style = StyleBoxFlat.new()
 		highlight_style.bg_color = Color(0.95, 0.93, 0.85, 0.95)
 		highlight_style.set_border_width_all(4)
 		highlight_style.border_color = Color(1, 1, 0)
 		highlight_style.set_corner_radius_all(8)
-		highlight_style.content_margin_left = 6
-		highlight_style.content_margin_right = 6
-		highlight_style.content_margin_top = 8
-		highlight_style.content_margin_bottom = 8
+		highlight_style.content_margin_left = 4
+		highlight_style.content_margin_right = 4
+		highlight_style.content_margin_top = 4
+		highlight_style.content_margin_bottom = 4
 		add_theme_stylebox_override("panel", highlight_style)
 	else:
-		# Remove highlight, restore original
-		_apply_zone_style(zone_color)
+		_apply_zone_style()
 
 
 # -----------------------------------------------------------------------------
@@ -153,6 +147,8 @@ func set_highlight(enabled: bool) -> void:
 ## Update tooltip with current zone state
 func _update_tooltip() -> void:
 	var text = zone_name
+	if dice_range.size() > 0:
+		text += " [%s]" % ZoneData.format_dice_range(dice_range)
 	if deck_type != "":
 		text += "\nDeck: %s" % deck_type.capitalize()
 	if players_here.size() > 0:
@@ -164,16 +160,16 @@ func _update_tooltip() -> void:
 
 
 ## Apply visual styling to zone panel (card style)
-func _apply_zone_style(_bg_color: Color) -> void:
+func _apply_zone_style() -> void:
 	var style = StyleBoxFlat.new()
 	style.bg_color = Color(0.9, 0.88, 0.82, 0.9)
 	style.set_border_width_all(2)
 	style.border_color = Color(0.5, 0.45, 0.35)
 	style.set_corner_radius_all(8)
-	style.content_margin_left = 6
-	style.content_margin_right = 6
-	style.content_margin_top = 8
-	style.content_margin_bottom = 8
+	style.content_margin_left = 4
+	style.content_margin_right = 4
+	style.content_margin_top = 4
+	style.content_margin_bottom = 4
 	add_theme_stylebox_override("panel", style)
 
 
@@ -184,6 +180,4 @@ func _apply_zone_style(_bg_color: Color) -> void:
 func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		if event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-			if is_highlighted:
-				zone_clicked.emit(self)
-				print("[Zone] Zone clicked: %s" % zone_name)
+			zone_clicked.emit(self)
