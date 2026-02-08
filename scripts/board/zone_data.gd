@@ -52,15 +52,15 @@ const ZONES: Array[Dictionary] = [
 	}
 ]
 
-# Zone adjacency map (which zones connect to which)
-const ZONE_ADJACENCY = {
-	"hermit": ["church", "weird_woods"],
-	"church": ["hermit", "cemetery", "altar"],
-	"cemetery": ["church", "underworld", "weird_woods"],
-	"weird_woods": ["hermit", "cemetery", "underworld"],
-	"underworld": ["cemetery", "weird_woods", "altar"],
-	"altar": ["church", "underworld"]
-}
+# Board positions — each has a dice range and belongs to a group (triangle adjacency)
+const BOARD_POSITIONS: Array[Dictionary] = [
+	{"position": 0, "dice_range": [2, 3], "group": 0},
+	{"position": 1, "dice_range": [4, 5], "group": 0},
+	{"position": 2, "dice_range": [6],    "group": 1},
+	{"position": 3, "dice_range": [7],    "group": 1},
+	{"position": 4, "dice_range": [8, 9], "group": 2},
+	{"position": 5, "dice_range": [10],   "group": 2},
+]
 
 
 # -----------------------------------------------------------------------------
@@ -108,60 +108,46 @@ static func get_zone_count() -> int:
 	return ZONES.size()
 
 
-## Get all zones reachable from start_zone within max_distance steps
-## Uses BFS (Breadth-First Search) algorithm
-static func get_reachable_zones(start_zone_id: String, max_distance: int) -> Array[String]:
-	var reachable: Array[String] = []
-	var visited: Dictionary = {}
-	var queue: Array = []
-
-	# Start BFS
-	queue.append({"zone_id": start_zone_id, "distance": 0})
-	visited[start_zone_id] = true
-
-	while queue.size() > 0:
-		var current = queue.pop_front()
-		var current_zone_id = current.zone_id
-		var current_distance = current.distance
-
-		# Add to reachable if within range (excluding start zone itself)
-		if current_distance > 0 and current_distance <= max_distance:
-			reachable.append(current_zone_id)
-
-		# Explore neighbors if we haven't reached max distance
-		if current_distance < max_distance:
-			if ZONE_ADJACENCY.has(current_zone_id):
-				for neighbor_id in ZONE_ADJACENCY[current_zone_id]:
-					if not visited.has(neighbor_id):
-						visited[neighbor_id] = true
-						queue.append({"zone_id": neighbor_id, "distance": current_distance + 1})
-
-	return reachable
+## Shuffle zone IDs into random positions on the board
+## Returns: Array of zone_id strings ordered by board position (0-5)
+static func shuffle_zone_positions() -> Array:
+	var zone_ids: Array = []
+	for zone in ZONES:
+		zone_ids.append(zone.id)
+	zone_ids.shuffle()
+	return zone_ids
 
 
-## Get distance between two zones (returns -1 if not connected)
-static func get_distance_between_zones(from_zone_id: String, to_zone_id: String) -> int:
-	if from_zone_id == to_zone_id:
-		return 0
+## Get the zone ID at the position matching a dice sum
+## zone_positions: ordered Array of zone_id strings (from shuffle_zone_positions)
+## Returns: zone_id string, or "" if no match
+static func get_zone_for_dice_sum(dice_sum: int, zone_positions: Array) -> String:
+	for pos_data in BOARD_POSITIONS:
+		if dice_sum in pos_data.dice_range:
+			var idx: int = pos_data.position
+			if idx < zone_positions.size():
+				return zone_positions[idx]
+	return ""
 
-	var visited: Dictionary = {}
-	var queue: Array = []
 
-	queue.append({"zone_id": from_zone_id, "distance": 0})
-	visited[from_zone_id] = true
+## Get the dice range for a given board position index
+static func get_dice_range_for_position(position: int) -> Array:
+	if position >= 0 and position < BOARD_POSITIONS.size():
+		return BOARD_POSITIONS[position].dice_range
+	return []
 
-	while queue.size() > 0:
-		var current = queue.pop_front()
-		var current_zone_id = current.zone_id
-		var current_distance = current.distance
 
-		if current_zone_id == to_zone_id:
-			return current_distance
+## Get the group index for a given board position
+static func get_group_for_position(position: int) -> int:
+	if position >= 0 and position < BOARD_POSITIONS.size():
+		return BOARD_POSITIONS[position].group
+	return -1
 
-		if ZONE_ADJACENCY.has(current_zone_id):
-			for neighbor_id in ZONE_ADJACENCY[current_zone_id]:
-				if not visited.has(neighbor_id):
-					visited[neighbor_id] = true
-					queue.append({"zone_id": neighbor_id, "distance": current_distance + 1})
 
-	return -1  # Not connected
+## Format dice range as display string (e.g. "2-3", "6", "8-9")
+static func format_dice_range(dice_range: Array) -> String:
+	if dice_range.size() == 0:
+		return ""
+	if dice_range.size() == 1:
+		return str(dice_range[0])
+	return "%d-%d" % [dice_range[0], dice_range[-1]]

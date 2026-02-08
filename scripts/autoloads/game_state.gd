@@ -91,6 +91,9 @@ var white_deck: DeckManager = null
 ## Black (Cemetery) deck manager
 var black_deck: DeckManager = null
 
+## Zone positions — zone_ids ordered by board position (shuffled each game)
+var zone_positions: Array = []
+
 
 # =============================================================================
 # DATA REFERENCES (loaded at startup)
@@ -339,6 +342,7 @@ func reset() -> void:
 	hermit_deck = null
 	white_deck = null
 	black_deck = null
+	zone_positions.clear()
 	print("[GameState] Reset complete")
 
 
@@ -367,6 +371,7 @@ func to_dict() -> Dictionary:
 		"game_log": game_log,
 		"players": players_data,
 		"decks": decks_data,
+		"zone_positions": zone_positions,
 	}
 
 
@@ -377,6 +382,7 @@ func from_dict(data: Dictionary) -> void:
 	current_phase = data.get("current_phase", TurnPhase.MOVEMENT)
 	game_in_progress = data.get("game_in_progress", false)
 	game_log = data.get("game_log", [])
+	zone_positions = data.get("zone_positions", [])
 
 	# Restore players
 	players.clear()
@@ -704,6 +710,12 @@ func get_cards_by_type(card_type: String) -> Array[Dictionary]:
 			result.append(card_data.duplicate(true))
 
 	return result
+
+
+## Shuffle and assign zone positions for this game
+func setup_zone_positions() -> void:
+	zone_positions = ZoneData.shuffle_zone_positions()
+	print("[GameState] Zone positions: %s" % str(zone_positions))
 
 
 ## Initialize card decks from JSON data
