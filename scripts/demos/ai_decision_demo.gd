@@ -69,7 +69,7 @@ func _on_setup_scenario_pressed() -> void:
 		bot.display_name = "Bot (%s)" % personality_id
 		bot.is_human = false
 		bot.hp = 7
-		bot.max_hp = 10
+		bot.hp_max = 10
 		bot.position_zone = "white"
 		bot.hand = []
 
@@ -146,7 +146,7 @@ func _on_test_combat_scenario_pressed() -> void:
 	# Create combat context - vulnerable enemy
 	var enemy = Player.new()
 	enemy.hp = 3
-	enemy.max_hp = 10
+	enemy.hp_max = 10
 
 	var context = {
 		"bot_hp": 9,

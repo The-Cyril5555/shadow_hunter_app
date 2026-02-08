@@ -54,7 +54,7 @@ func _on_init_players_pressed() -> void:
 	attacker = Player.new()
 	attacker.display_name = "Attacker"
 	attacker.hp = 10
-	attacker.max_hp = 10
+	attacker.hp_max = 10
 	attacker.hand = []
 	attacker.equipment = []
 
@@ -62,7 +62,7 @@ func _on_init_players_pressed() -> void:
 	defender = Player.new()
 	defender.display_name = "Defender"
 	defender.hp = 10
-	defender.max_hp = 10
+	defender.hp_max = 10
 	defender.hand = []
 	defender.equipment = []
 
@@ -141,8 +141,8 @@ func _on_init_players_pressed() -> void:
 	combat_log.append("Attacker hand: Holy Sword (+3 damage), Cursed Dagger (+2 damage)")
 	combat_log.append("Defender hand: Holy Shield (+2 defense), Blessed Armor (+3 defense)")
 
-	print("  Created Attacker: HP %d/%d, hand: %d cards" % [attacker.hp, attacker.max_hp, attacker.hand.size()])
-	print("  Created Defender: HP %d/%d, hand: %d cards" % [defender.hp, defender.max_hp, defender.hand.size()])
+	print("  Created Attacker: HP %d/%d, hand: %d cards" % [attacker.hp, attacker.hp_max, attacker.hand.size()])
+	print("  Created Defender: HP %d/%d, hand: %d cards" % [defender.hp, defender.hp_max, defender.hand.size()])
 
 	_update_status_labels()
 
@@ -272,7 +272,7 @@ func _update_status_labels() -> void:
 
 	# Attacker status
 	status_text += "\n🗡️ ATTACKER:"
-	status_text += "\n  HP: %d/%d" % [attacker.hp, attacker.max_hp]
+	status_text += "\n  HP: %d/%d" % [attacker.hp, attacker.hp_max]
 	status_text += "\n  Attack Bonus: +%d" % EquipmentManager.get_total_attack_bonus(attacker)
 	status_text += "\n  Hand: %d cards" % attacker.hand.size()
 	status_text += "\n  Equipment: %d cards" % attacker.equipment.size()
@@ -283,7 +283,7 @@ func _update_status_labels() -> void:
 
 	# Defender status
 	status_text += "\n\n🛡️ DEFENDER:"
-	status_text += "\n  HP: %d/%d" % [defender.hp, defender.max_hp]
+	status_text += "\n  HP: %d/%d" % [defender.hp, defender.hp_max]
 	status_text += "\n  Defense Bonus: +%d" % EquipmentManager.get_total_defense_bonus(defender)
 	status_text += "\n  Hand: %d cards" % defender.hand.size()
 	status_text += "\n  Equipment: %d cards" % defender.equipment.size()

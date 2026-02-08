@@ -107,7 +107,7 @@ static func build_action_context(bot: Player, players: Array) -> Dictionary:
 
 	# Bot state
 	context["bot_hp"] = bot.hp
-	context["bot_hp_max"] = bot.max_hp
+	context["bot_hp_max"] = bot.hp_max
 	context["hand_size"] = bot.hand.size()
 	context["current_zone"] = bot.position_zone
 	context["has_attack_equipment"] = bot.get_attack_damage_bonus() > 0
