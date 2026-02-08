@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://scripts/board/human_player_info.gd" id="1_info"]
 
 [node name="HumanPlayerInfo" type="PanelContainer"]
-custom_minimum_size = Vector2(0, 140)
+custom_minimum_size = Vector2(0, 180)
 layout_mode = 2
 script = ExtResource("1_info")
 
@@ -26,7 +26,7 @@ text = "J1"
 vertical_alignment = 1
 
 [node name="CharacterImage" type="TextureRect" parent="MarginContainer/HBoxContainer"]
-custom_minimum_size = Vector2(85, 120)
+custom_minimum_size = Vector2(120, 170)
 layout_mode = 2
 expand_mode = 3
 stretch_mode = 5

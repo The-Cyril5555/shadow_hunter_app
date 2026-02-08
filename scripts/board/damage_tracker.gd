@@ -29,6 +29,7 @@ var _players: Array = []
 # Lifecycle
 # -----------------------------------------------------------------------------
 func _ready() -> void:
+	_apply_background()
 	_build_rows()
 
 
@@ -80,6 +81,20 @@ func mark_player_dead(player: Player) -> void:
 # -----------------------------------------------------------------------------
 # Private Methods
 # -----------------------------------------------------------------------------
+
+## Apply HP score card background texture
+func _apply_background() -> void:
+	var bg_path = CardImageMapper.get_hp_score_card_path("variant_01")
+	var bg_texture = CardImageMapper.load_texture(bg_path)
+	if bg_texture:
+		var style = StyleBoxTexture.new()
+		style.texture = bg_texture
+		style.content_margin_left = 8
+		style.content_margin_top = 8
+		style.content_margin_right = 8
+		style.content_margin_bottom = 8
+		add_theme_stylebox_override("panel", style)
+
 
 ## Build the row structure
 func _build_rows() -> void:

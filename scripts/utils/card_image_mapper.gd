@@ -56,6 +56,13 @@ static func get_zone_image_path(zone_id: String) -> String:
 	return zone_images.get(zone_id, "")
 
 
+## Get HP score card image path for a variant key
+static func get_hp_score_card_path(variant: String) -> String:
+	_ensure_loaded()
+	var hp_cards: Dictionary = _data.get("hp_score_cards", {})
+	return hp_cards.get(variant, "")
+
+
 ## Get character card image path for a character ID
 static func get_character_image_path(character_id: String) -> String:
 	_ensure_loaded()
