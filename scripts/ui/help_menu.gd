@@ -23,7 +23,7 @@ const RULES: Array[Dictionary] = [
 		"title": "Déroulement d'un tour",
 		"content": """Chaque tour se déroule en 2 phases :
 
-1. MOUVEMENT — Lancez 2 dés (2d6) et déplacez-vous vers une zone accessible selon le résultat
+1. MOUVEMENT — Lancez les dés (d6+d4) et déplacez-vous vers la zone correspondant au résultat
 2. ACTION — Choisissez une action :
    • Piocher une carte du deck de votre zone
    • Attaquer un joueur présent dans votre zone
@@ -40,7 +40,7 @@ const RULES: Array[Dictionary] = [
 • Porte des Enfers — Pas de deck
 • Autel Ancien — Pas de deck
 
-Les zones sont connectées entre elles. Le résultat des dés détermine la distance de déplacement."""
+Chaque zone a une plage de numéros (2-3, 4-5, 6, 7, 8-9, 10). Le résultat des dés détermine directement la zone de destination."""
 	},
 	{
 		"title": "Cartes",

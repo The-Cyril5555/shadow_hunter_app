@@ -1,5 +1,5 @@
 ## Dice - Dice rolling component for Shadow Hunter
-## Displays two D6 dice with roll animation and results
+## Displays a D6 and a D4 dice with roll animation and results
 ## Refactored: Now uses PolishConfig for timing and AnimationHelper for rotations
 class_name Dice
 extends Control
@@ -43,9 +43,9 @@ func roll() -> void:
 	# Play dice roll sound
 	AudioManager.play_sfx("dice_roll")
 
-	# Generate random results (1-6)
+	# Generate random results (D6: 1-6, D4: 1-4)
 	dice1_result = randi() % 6 + 1
-	dice2_result = randi() % 6 + 1
+	dice2_result = randi() % 4 + 1
 
 	# Clear previous results during roll
 	result_label.text = "Rolling..."
