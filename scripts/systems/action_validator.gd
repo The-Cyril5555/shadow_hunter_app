@@ -67,34 +67,6 @@ func can_attack(game_board) -> Dictionary:
 	return {"valid": true, "reason": ""}
 
 
-## Validate if player can move to a zone
-## Returns: Dictionary with {"valid": bool, "reason": String}
-func can_move(game_board, target_zone_id: String) -> Dictionary:
-	# Check if in MOVEMENT phase
-	if GameState.current_phase != GameState.TurnPhase.MOVEMENT:
-		return {"valid": false, "reason": "Peut seulement se déplacer pendant la phase Mouvement"}
-
-	# Check if dice have been rolled
-	if not game_board.has_rolled_this_turn:
-		return {"valid": false, "reason": "Les dés doivent être lancés avant de se déplacer"}
-
-	# Check if target zone is reachable
-	var current_player = GameState.get_current_player()
-	if current_player == null:
-		return {"valid": false, "reason": "Aucun joueur actif"}
-
-	var current_zone = current_player.position_zone
-	var dice_sum = game_board.last_dice_sum
-
-	# Get reachable zones
-	var reachable_zones = ZoneData.get_reachable_zones(current_zone, dice_sum)
-
-	if not reachable_zones.has(target_zone_id):
-		return {"valid": false, "reason": "Zone trop éloignée (distance: %d)" % dice_sum}
-
-	return {"valid": true, "reason": ""}
-
-
 ## Validate if player can end turn (always allowed)
 ## Returns: Dictionary with {"valid": bool, "reason": String}
 func can_end_turn() -> Dictionary:
@@ -116,10 +88,6 @@ func validate_action(action_name: String, game_board, extra_param = null) -> Dic
 			return can_draw_card(game_board)
 		"attack":
 			return can_attack(game_board)
-		"move":
-			if extra_param == null:
-				return {"valid": false, "reason": "Zone cible manquante"}
-			return can_move(game_board, extra_param)
 		"end_turn":
 			return can_end_turn()
 		_:

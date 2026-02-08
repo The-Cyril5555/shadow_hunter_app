@@ -1,5 +1,5 @@
 ## DiceRollPopup - Modal popup for dice rolling during MOVEMENT phase
-## Shows dice, roll button, then zone choices after rolling
+## Shows dice, roll button, then auto-moves to the destination zone.
 class_name DiceRollPopup
 extends Control
 
@@ -20,8 +20,6 @@ signal zone_selected(zone_id: String)
 @onready var dice: Dice = $Panel/MarginContainer/VBoxContainer/DiceContainer/Dice
 @onready var roll_button: Button = $Panel/MarginContainer/VBoxContainer/RollButton
 @onready var result_label: Label = $Panel/MarginContainer/VBoxContainer/ResultLabel
-@onready var zone_choice_container: VBoxContainer = $Panel/MarginContainer/VBoxContainer/ZoneChoiceContainer
-@onready var zones_grid: GridContainer = $Panel/MarginContainer/VBoxContainer/ZoneChoiceContainer/ZonesGrid
 
 
 # -----------------------------------------------------------------------------
@@ -57,8 +55,6 @@ func show_for_player(player: Player) -> void:
 	roll_button.visible = true
 	roll_button.disabled = false
 	result_label.visible = false
-	zone_choice_container.visible = false
-	_clear_zone_choices()
 
 	# Show with fade
 	visible = true
@@ -87,57 +83,17 @@ func _on_roll_pressed() -> void:
 func _on_dice_result(sum: int) -> void:
 	_dice_result = sum
 	roll_button.visible = false
-	result_label.text = "Résultat : %d" % sum
+
+	# Determine destination zone from dice sum
+	var dest_zone_id = ZoneData.get_zone_for_dice_sum(sum, GameState.zone_positions)
+	var zone_data = ZoneData.get_zone_by_id(dest_zone_id) if dest_zone_id != "" else {}
+	var zone_name = zone_data.get("name", "???")
+
+	result_label.text = "Résultat : %d → %s" % [sum, zone_name]
 	result_label.visible = true
 
-	# Populate zone choices
-	_populate_zone_choices(sum)
-
-
-# -----------------------------------------------------------------------------
-# Private Methods
-# -----------------------------------------------------------------------------
-
-func _populate_zone_choices(dice_sum: int) -> void:
-	_clear_zone_choices()
-
-	if _current_player == null:
-		return
-
-	var current_zone_id = _current_player.position_zone
-	var reachable_ids = ZoneData.get_reachable_zones(current_zone_id, dice_sum)
-
-	if reachable_ids.is_empty():
-		var no_zones_label = Label.new()
-		no_zones_label.text = "Aucune zone accessible"
-		no_zones_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		zones_grid.add_child(no_zones_label)
-	else:
-		for zone_id in reachable_ids:
-			var zone_data = ZoneData.get_zone_by_id(zone_id)
-			var btn = Button.new()
-			btn.text = zone_data.get("name", zone_id.capitalize())
-			btn.custom_minimum_size = Vector2(180, 50)
-			btn.add_theme_font_size_override("font_size", 16)
-
-			# Add zone image as icon if available
-			var texture = CardImageMapper.load_texture(CardImageMapper.get_zone_image_path(zone_id))
-			if texture != null:
-				btn.icon = texture
-				btn.expand_icon = true
-				btn.icon_alignment = HORIZONTAL_ALIGNMENT_LEFT
-
-			btn.pressed.connect(_on_zone_choice_pressed.bind(zone_id))
-			zones_grid.add_child(btn)
-
-	zone_choice_container.visible = true
-
-
-func _on_zone_choice_pressed(zone_id: String) -> void:
+	# Auto-close and emit after a short delay
+	await get_tree().create_timer(1.2).timeout
 	hide_popup()
-	zone_selected.emit(zone_id)
-
-
-func _clear_zone_choices() -> void:
-	for child in zones_grid.get_children():
-		child.queue_free()
+	if dest_zone_id != "":
+		zone_selected.emit(dest_zone_id)

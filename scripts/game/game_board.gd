@@ -9,7 +9,7 @@ extends Control
 # -----------------------------------------------------------------------------
 @onready var damage_tracker: DamageTracker = $MainLayout/VBoxContainer/MiddleRow/DamageTracker
 @onready var character_cards_row: CharacterCardsRow = $MainLayout/VBoxContainer/CharacterCardsRow
-@onready var zones_container: GridContainer = $MainLayout/VBoxContainer/MiddleRow/CenterArea/ZonesContainer
+@onready var zones_container: HBoxContainer = $MainLayout/VBoxContainer/MiddleRow/CenterArea/ZonesContainer
 @onready var action_prompt: ActionPrompt = $MainLayout/VBoxContainer/MiddleRow/CenterArea/ActionPrompt
 @onready var human_player_info: HumanPlayerInfo = $MainLayout/VBoxContainer/HumanPlayerInfo
 @onready var turn_info_label: Label = $MainLayout/VBoxContainer/MiddleRow/TurnInfoPanel/TurnLabel
@@ -136,22 +136,34 @@ func _get_local_human_player() -> Player:
 # Zone System
 # -----------------------------------------------------------------------------
 
-## Initialize all 6 zones from ZoneData
+## Initialize all 6 zones in randomized positions with group spacers
 func _initialize_zones() -> void:
 	# Clear any existing zones
 	for child in zones_container.get_children():
 		child.queue_free()
 	zones.clear()
 
-	# Create zones from ZoneData configuration
-	for zone_data in ZoneData.ZONES:
+	# Shuffle zone positions for this game
+	GameState.setup_zone_positions()
+
+	# Create zones in position order with spacers between groups
+	for i in range(GameState.zone_positions.size()):
+		# Add spacer between groups (after position 1 and 3)
+		if i == 2 or i == 4:
+			var spacer = Control.new()
+			spacer.custom_minimum_size = Vector2(30, 0)
+			zones_container.add_child(spacer)
+
+		var zone_id = GameState.zone_positions[i]
+		var zone_data = ZoneData.get_zone_by_id(zone_id)
+		var dice_range = ZoneData.get_dice_range_for_position(i)
+
 		var zone = preload("res://scenes/board/zone.tscn").instantiate()
 		zones_container.add_child(zone)
-		zone.setup(zone_data)
-		zone.zone_clicked.connect(_on_zone_clicked)
+		zone.setup(zone_data, dice_range)
 		zones.append(zone)
 
-	print("[GameBoard] Initialized %d zones" % zones.size())
+	print("[GameBoard] Initialized %d zones in random positions" % zones.size())
 
 
 ## Place all player tokens in their starting zones
@@ -175,31 +187,6 @@ func _get_zone_by_id(zone_id: String) -> Zone:
 		if zone.zone_id == zone_id:
 			return zone
 	return null
-
-
-## Highlight zones reachable with dice sum
-func _highlight_reachable_zones(dice_sum: int) -> void:
-	_clear_zone_highlights()
-
-	var current_player = GameState.get_current_player()
-	if current_player == null:
-		return
-
-	var current_zone_id = current_player.position_zone
-	var reachable_zone_ids = ZoneData.get_reachable_zones(current_zone_id, dice_sum)
-
-	for zone_id in reachable_zone_ids:
-		var zone = _get_zone_by_id(zone_id)
-		if zone:
-			zone.set_highlight(true)
-
-	print("[GameBoard] Highlighted %d reachable zones from %s with distance %d" % [reachable_zone_ids.size(), current_zone_id, dice_sum])
-
-
-## Clear all zone highlights
-func _clear_zone_highlights() -> void:
-	for zone in zones:
-		zone.set_highlight(false)
 
 
 ## Move player token from current zone to target zone with animation
@@ -237,7 +224,6 @@ func _move_player_to_zone(player: Player, target_zone: Zone) -> void:
 	target_zone.add_player_token(player)
 	player.position_zone = target_zone.zone_id
 
-	_clear_zone_highlights()
 	set_process_input(true)
 
 	if toast:
@@ -344,23 +330,6 @@ func _on_action_prompt_chosen(action: String) -> void:
 # -----------------------------------------------------------------------------
 # Dice / Zone Click Handlers
 # -----------------------------------------------------------------------------
-
-func _on_zone_clicked(zone: Zone) -> void:
-	var current_player = GameState.get_current_player()
-	if current_player == null:
-		return
-
-	var validation = validator.can_move(self, zone.zone_id)
-	if not validation.valid:
-		error_message.show_error(validation.reason)
-		return
-
-	if not zone.is_highlighted:
-		error_message.show_error("Cette zone n'est pas accessible")
-		return
-
-	_move_player_to_zone(current_player, zone)
-
 
 ## Handler for dice roll popup zone selection
 func _on_popup_zone_selected(zone_id: String) -> void:

@@ -61,12 +61,11 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 10
 
-[node name="ZonesContainer" type="GridContainer" parent="MainLayout/VBoxContainer/MiddleRow/CenterArea"]
+[node name="ZonesContainer" type="HBoxContainer" parent="MainLayout/VBoxContainer/MiddleRow/CenterArea"]
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_constants/h_separation = 12
-theme_override_constants/v_separation = 12
-columns = 3
+theme_override_constants/separation = 8
+alignment = 1
 
 [node name="ActionPrompt" parent="MainLayout/VBoxContainer/MiddleRow/CenterArea" instance=ExtResource("9_action_prompt")]
 layout_mode = 2
