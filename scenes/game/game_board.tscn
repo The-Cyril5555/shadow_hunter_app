@@ -1,13 +1,15 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://scripts/game/game_board.gd" id="1_game_board"]
-[ext_resource type="PackedScene" uid="uid://ci48s3hn14s7o" path="res://scenes/ui/dice.tscn" id="2_dice"]
-[ext_resource type="PackedScene" path="res://scenes/ui/card_reveal.tscn" id="3_card_reveal"]
-[ext_resource type="PackedScene" path="res://scenes/ui/equipment_action_menu.tscn" id="4_equipment_action_menu"]
-[ext_resource type="PackedScene" path="res://scenes/ui/target_selection_panel.tscn" id="5_target_selection_panel"]
-[ext_resource type="PackedScene" uid="uid://bi4lv4fgvqw3s" path="res://scenes/ui/error_message.tscn" id="6_error_message"]
-[ext_resource type="PackedScene" path="res://scenes/ui/dice_roll_popup.tscn" id="7_dice_roll_popup"]
-[ext_resource type="PackedScene" path="res://scenes/ui/action_phase_popup.tscn" id="8_action_phase_popup"]
+[ext_resource type="PackedScene" path="res://scenes/ui/card_reveal.tscn" id="2_card_reveal"]
+[ext_resource type="PackedScene" path="res://scenes/ui/equipment_action_menu.tscn" id="3_equipment_action_menu"]
+[ext_resource type="PackedScene" path="res://scenes/ui/target_selection_panel.tscn" id="4_target_selection_panel"]
+[ext_resource type="PackedScene" uid="uid://bi4lv4fgvqw3s" path="res://scenes/ui/error_message.tscn" id="5_error_message"]
+[ext_resource type="PackedScene" path="res://scenes/ui/dice_roll_popup.tscn" id="6_dice_roll_popup"]
+[ext_resource type="PackedScene" path="res://scenes/board/damage_tracker.tscn" id="7_damage_tracker"]
+[ext_resource type="PackedScene" path="res://scenes/board/character_cards_row.tscn" id="8_character_cards_row"]
+[ext_resource type="PackedScene" path="res://scenes/board/action_prompt.tscn" id="9_action_prompt"]
+[ext_resource type="PackedScene" path="res://scenes/board/human_player_info.tscn" id="10_human_player_info"]
 
 [node name="GameBoard" type="Control"]
 layout_mode = 3
@@ -25,253 +27,105 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.08, 0.08, 0.12, 1)
+color = Color(0.25, 0.15, 0.35, 1)
 
-[node name="MarginContainer" type="MarginContainer" parent="."]
+[node name="MainLayout" type="MarginContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/margin_left = 30
-theme_override_constants/margin_top = 20
-theme_override_constants/margin_right = 30
-theme_override_constants/margin_bottom = 20
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 15
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 15
 
-[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer"]
-layout_mode = 2
-theme_override_constants/separation = 30
-
-[node name="LeftPanel" type="VBoxContainer" parent="MarginContainer/HBoxContainer"]
-custom_minimum_size = Vector2(250, 0)
-layout_mode = 2
-theme_override_constants/separation = 20
-
-[node name="Title" type="Label" parent="MarginContainer/HBoxContainer/LeftPanel"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 28
-text = "Shadow Hunter"
-horizontal_alignment = 1
-
-[node name="HSeparator" type="HSeparator" parent="MarginContainer/HBoxContainer/LeftPanel"]
-layout_mode = 2
-
-[node name="GameInfo" type="VBoxContainer" parent="MarginContainer/HBoxContainer/LeftPanel"]
+[node name="VBoxContainer" type="VBoxContainer" parent="MainLayout"]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="CurrentPlayerLabel" type="Label" parent="MarginContainer/HBoxContainer/LeftPanel/GameInfo"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 18
-text = "Current: ..."
-
-[node name="TurnLabel" type="Label" parent="MarginContainer/HBoxContainer/LeftPanel/GameInfo"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 18
-text = "Turn: 1"
-
-[node name="PhaseLabel" type="Label" parent="MarginContainer/HBoxContainer/LeftPanel/GameInfo"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 18
-theme_override_colors/font_color = Color(1, 0.8, 0.2, 1)
-text = "Phase: Movement"
-
-[node name="HSeparator2" type="HSeparator" parent="MarginContainer/HBoxContainer/LeftPanel"]
+[node name="CharacterCardsRow" parent="MainLayout/VBoxContainer" instance=ExtResource("8_character_cards_row")]
 layout_mode = 2
 
-[node name="DecksLabel" type="Label" parent="MarginContainer/HBoxContainer/LeftPanel"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 20
-text = "Decks"
-
-[node name="DecksContainer" type="VBoxContainer" parent="MarginContainer/HBoxContainer/LeftPanel"]
-layout_mode = 2
-theme_override_constants/separation = 10
-
-[node name="HermitDeck" type="HBoxContainer" parent="MarginContainer/HBoxContainer/LeftPanel/DecksContainer"]
-layout_mode = 2
-
-[node name="Label" type="Label" parent="MarginContainer/HBoxContainer/LeftPanel/DecksContainer/HermitDeck"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 16
-text = "Hermit:"
-
-[node name="CountLabel" type="Label" parent="MarginContainer/HBoxContainer/LeftPanel/DecksContainer/HermitDeck"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 16
-theme_override_colors/font_color = Color(0.6, 0.5, 0.3, 1)
-text = "0"
-
-[node name="WhiteDeck" type="HBoxContainer" parent="MarginContainer/HBoxContainer/LeftPanel/DecksContainer"]
-layout_mode = 2
-
-[node name="Label" type="Label" parent="MarginContainer/HBoxContainer/LeftPanel/DecksContainer/WhiteDeck"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 16
-text = "White:"
-
-[node name="CountLabel" type="Label" parent="MarginContainer/HBoxContainer/LeftPanel/DecksContainer/WhiteDeck"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 16
-theme_override_colors/font_color = Color(0.9, 0.9, 0.9, 1)
-text = "0"
-
-[node name="BlackDeck" type="HBoxContainer" parent="MarginContainer/HBoxContainer/LeftPanel/DecksContainer"]
-layout_mode = 2
-
-[node name="Label" type="Label" parent="MarginContainer/HBoxContainer/LeftPanel/DecksContainer/BlackDeck"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 16
-text = "Black:"
-
-[node name="CountLabel" type="Label" parent="MarginContainer/HBoxContainer/LeftPanel/DecksContainer/BlackDeck"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 16
-theme_override_colors/font_color = Color(0.2, 0.2, 0.2, 1)
-text = "0"
-
-[node name="HSeparator3" type="HSeparator" parent="MarginContainer/HBoxContainer/LeftPanel"]
-layout_mode = 2
-
-[node name="DiceContainer" type="VBoxContainer" parent="MarginContainer/HBoxContainer/LeftPanel"]
-layout_mode = 2
-theme_override_constants/separation = 10
-
-[node name="DiceLabel" type="Label" parent="MarginContainer/HBoxContainer/LeftPanel/DiceContainer"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 20
-text = "Dice"
-horizontal_alignment = 1
-
-[node name="Dice" parent="MarginContainer/HBoxContainer/LeftPanel/DiceContainer" instance=ExtResource("2_dice")]
-layout_mode = 2
-
-[node name="RollDiceButton" type="Button" parent="MarginContainer/HBoxContainer/LeftPanel/DiceContainer"]
-custom_minimum_size = Vector2(0, 50)
-layout_mode = 2
-theme_override_font_sizes/font_size = 18
-text = "Roll Dice"
-
-[node name="HSeparator4" type="HSeparator" parent="MarginContainer/HBoxContainer/LeftPanel"]
-layout_mode = 2
-
-[node name="HandLabel" type="Label" parent="MarginContainer/HBoxContainer/LeftPanel"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 20
-text = "Hand"
-
-[node name="HandCardsContainer" type="VBoxContainer" parent="MarginContainer/HBoxContainer/LeftPanel"]
-layout_mode = 2
-theme_override_constants/separation = 5
-
-[node name="HSeparator5" type="HSeparator" parent="MarginContainer/HBoxContainer/LeftPanel"]
-layout_mode = 2
-
-[node name="EquipmentLabel" type="Label" parent="MarginContainer/HBoxContainer/LeftPanel"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 20
-text = "Active Equipment"
-
-[node name="EquipmentContainer" type="VBoxContainer" parent="MarginContainer/HBoxContainer/LeftPanel"]
-layout_mode = 2
-theme_override_constants/separation = 5
-
-[node name="HSeparator6" type="HSeparator" parent="MarginContainer/HBoxContainer/LeftPanel"]
-layout_mode = 2
-
-[node name="Spacer" type="Control" parent="MarginContainer/HBoxContainer/LeftPanel"]
+[node name="MiddleRow" type="HBoxContainer" parent="MainLayout/VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
+theme_override_constants/separation = 15
 
-[node name="ButtonContainer" type="VBoxContainer" parent="MarginContainer/HBoxContainer/LeftPanel"]
+[node name="DamageTracker" parent="MainLayout/VBoxContainer/MiddleRow" instance=ExtResource("7_damage_tracker")]
 layout_mode = 2
-theme_override_constants/separation = 10
 
-[node name="DrawCardButton" type="Button" parent="MarginContainer/HBoxContainer/LeftPanel/ButtonContainer"]
-custom_minimum_size = Vector2(0, 50)
-layout_mode = 2
-disabled = true
-theme_override_font_sizes/font_size = 18
-text = "Draw Card"
-
-[node name="AttackButton" type="Button" parent="MarginContainer/HBoxContainer/LeftPanel/ButtonContainer"]
-custom_minimum_size = Vector2(0, 50)
-layout_mode = 2
-disabled = true
-theme_override_font_sizes/font_size = 18
-text = "Attack"
-
-[node name="EndTurnButton" type="Button" parent="MarginContainer/HBoxContainer/LeftPanel/ButtonContainer"]
-custom_minimum_size = Vector2(0, 50)
-layout_mode = 2
-theme_override_font_sizes/font_size = 18
-text = "End Turn"
-
-[node name="BackToMenuButton" type="Button" parent="MarginContainer/HBoxContainer/LeftPanel/ButtonContainer"]
-custom_minimum_size = Vector2(0, 50)
-layout_mode = 2
-theme_override_font_sizes/font_size = 18
-text = "Back to Menu"
-
-[node name="BoardArea" type="VBoxContainer" parent="MarginContainer/HBoxContainer"]
+[node name="CenterArea" type="VBoxContainer" parent="MainLayout/VBoxContainer/MiddleRow"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 20
+theme_override_constants/separation = 10
 
-[node name="BoardTitle" type="Label" parent="MarginContainer/HBoxContainer/BoardArea"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "Game Board"
-horizontal_alignment = 1
-
-[node name="ZonesContainer" type="GridContainer" parent="MarginContainer/HBoxContainer/BoardArea"]
+[node name="ZonesContainer" type="GridContainer" parent="MainLayout/VBoxContainer/MiddleRow/CenterArea"]
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_constants/h_separation = 20
-theme_override_constants/v_separation = 20
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 12
 columns = 3
+
+[node name="ActionPrompt" parent="MainLayout/VBoxContainer/MiddleRow/CenterArea" instance=ExtResource("9_action_prompt")]
+layout_mode = 2
+
+[node name="TurnInfoPanel" type="VBoxContainer" parent="MainLayout/VBoxContainer/MiddleRow"]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+theme_override_constants/separation = 15
+
+[node name="TurnLabel" type="Label" parent="MainLayout/VBoxContainer/MiddleRow/TurnInfoPanel"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(0.9, 0.85, 0.7, 1)
+text = "Tour 1"
+horizontal_alignment = 1
+
+[node name="PhaseLabel" type="Label" parent="MainLayout/VBoxContainer/MiddleRow/TurnInfoPanel"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+theme_override_colors/font_color = Color(1, 0.85, 0.3, 1)
+text = "Mouvement"
+horizontal_alignment = 1
+
+[node name="DeckLabel" type="Label" parent="MainLayout/VBoxContainer/MiddleRow/TurnInfoPanel"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.7, 0.7, 0.8, 1)
+text = "Hermit: 0
+White: 0
+Black: 0"
+horizontal_alignment = 1
+
+[node name="HumanPlayerInfo" parent="MainLayout/VBoxContainer" instance=ExtResource("10_human_player_info")]
+layout_mode = 2
 
 [node name="CardRevealLayer" type="CanvasLayer" parent="."]
 layer = 10
 
-[node name="CardReveal" parent="CardRevealLayer" instance=ExtResource("3_card_reveal")]
+[node name="CardReveal" parent="CardRevealLayer" instance=ExtResource("2_card_reveal")]
 
 [node name="EquipmentMenuLayer" type="CanvasLayer" parent="."]
 layer = 11
 
-[node name="EquipmentActionMenu" parent="EquipmentMenuLayer" instance=ExtResource("4_equipment_action_menu")]
+[node name="EquipmentActionMenu" parent="EquipmentMenuLayer" instance=ExtResource("3_equipment_action_menu")]
 visible = false
 
 [node name="TargetSelectionLayer" type="CanvasLayer" parent="."]
 layer = 12
 
-[node name="TargetSelectionPanel" parent="TargetSelectionLayer" instance=ExtResource("5_target_selection_panel")]
+[node name="TargetSelectionPanel" parent="TargetSelectionLayer" instance=ExtResource("4_target_selection_panel")]
 visible = false
 
 [node name="DiceRollPopupLayer" type="CanvasLayer" parent="."]
 layer = 13
 
-[node name="DiceRollPopup" parent="DiceRollPopupLayer" instance=ExtResource("7_dice_roll_popup")]
-visible = false
-
-[node name="ActionPhasePopupLayer" type="CanvasLayer" parent="."]
-layer = 14
-
-[node name="ActionPhasePopup" parent="ActionPhasePopupLayer" instance=ExtResource("8_action_phase_popup")]
+[node name="DiceRollPopup" parent="DiceRollPopupLayer" instance=ExtResource("6_dice_roll_popup")]
 visible = false
 
 [node name="ErrorMessageLayer" type="CanvasLayer" parent="."]
 layer = 15
 
-[node name="ErrorMessage" parent="ErrorMessageLayer" instance=ExtResource("6_error_message")]
-
-[connection signal="dice_rolled" from="MarginContainer/HBoxContainer/LeftPanel/DiceContainer/Dice" to="." method="_on_dice_rolled"]
-[connection signal="pressed" from="MarginContainer/HBoxContainer/LeftPanel/DiceContainer/RollDiceButton" to="." method="_on_roll_dice_pressed"]
-[connection signal="pressed" from="MarginContainer/HBoxContainer/LeftPanel/ButtonContainer/DrawCardButton" to="." method="_on_draw_card_pressed"]
-[connection signal="pressed" from="MarginContainer/HBoxContainer/LeftPanel/ButtonContainer/AttackButton" to="." method="_on_attack_button_pressed"]
-[connection signal="pressed" from="MarginContainer/HBoxContainer/LeftPanel/ButtonContainer/EndTurnButton" to="." method="_on_end_turn_pressed"]
-[connection signal="pressed" from="MarginContainer/HBoxContainer/LeftPanel/ButtonContainer/BackToMenuButton" to="." method="_on_back_to_menu_pressed"]
+[node name="ErrorMessage" parent="ErrorMessageLayer" instance=ExtResource("5_error_message")]
