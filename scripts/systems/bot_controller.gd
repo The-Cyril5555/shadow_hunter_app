@@ -83,60 +83,35 @@ func execute_bot_turn(bot: Player, scene_tree: SceneTree) -> void:
 # PUBLIC METHODS - Bot Actions
 # =============================================================================
 
-## Bot rolls dice
+## Bot rolls dice (d6 + d4)
 ## @param bot: Bot player rolling
-## @returns: int - dice roll result (1-6)
+## @returns: int - dice roll result (2-10)
 func bot_roll_dice(bot: Player) -> int:
 	bot_action_started.emit(bot, "roll_dice")
 
-	var roll = randi() % 6 + 1  # D6: 1-6
+	var d6 = randi() % 6 + 1
+	var d4 = randi() % 4 + 1
+	var roll = d6 + d4
 
 	bot_action_completed.emit(bot, "roll_dice", roll)
-	print("[BotController] 🎲 %s rolled %d" % [bot.display_name, roll])
+	print("[BotController] %s rolled d6=%d + d4=%d = %d" % [bot.display_name, d6, d4, roll])
 
 	return roll
 
 
-## Bot moves to zone using AIDecisionEngine (with GameState signal emission)
+## Bot moves to zone based on dice roll (direct dice → zone mapping)
 ## @param bot: Bot player moving
-## @param roll: Dice roll result (currently unused in MVP)
+## @param roll: Dice roll result (d6+d4 sum, 2-10)
 ## @returns: String - target zone id
-func bot_move_to_zone(bot: Player, _roll: int) -> String:
+func bot_move_to_zone(bot: Player, roll: int) -> String:
 	bot_action_started.emit(bot, "move")
 
-	# Build context for decision-making
-	var decision_engine = AIDecisionEngine.new()
-	var context = AIDecisionEngine.build_action_context(bot, GameState.players)
+	# Direct dice → zone mapping
+	var target_zone = ZoneData.get_zone_for_dice_sum(roll, GameState.zone_positions)
 
-	# Decide between safe and risky movement
-	var movement_actions = [
-		AIDecisionEngine.ACTION_MOVE_SAFE,
-		AIDecisionEngine.ACTION_MOVE_RISKY
-	]
-	var chosen_movement = decision_engine.choose_best_action(bot, movement_actions, context)
-
-	# Get valid adjacent zones
-	var valid_zones = _get_valid_adjacent_zones(bot.position_zone)
-
-	# Choose zone based on decision using ZoneData deck_type classification
-	var target_zone = bot.position_zone
-	if valid_zones.size() > 0:
-		if chosen_movement == AIDecisionEngine.ACTION_MOVE_SAFE:
-			# Safe movement: prefer zones with white/hermit decks (beneficial/vision)
-			var available_safe = []
-			for zone_id in valid_zones:
-				var zone_data = ZoneData.get_zone_by_id(zone_id)
-				if zone_data.get("deck_type", "") in ["white", "hermit"]:
-					available_safe.append(zone_id)
-			target_zone = available_safe.pick_random() if available_safe.size() > 0 else valid_zones.pick_random()
-		else:
-			# Risky movement: prefer zones with black deck (harmful cards)
-			var risky_zones = []
-			for zone_id in valid_zones:
-				var zone_data = ZoneData.get_zone_by_id(zone_id)
-				if zone_data.get("deck_type", "") == "black":
-					risky_zones.append(zone_id)
-			target_zone = risky_zones.pick_random() if risky_zones.size() > 0 else valid_zones.pick_random()
+	if target_zone == "":
+		push_warning("[BotController] No zone found for dice sum %d" % roll)
+		target_zone = bot.position_zone
 
 	# Update position
 	var old_zone = bot.position_zone
@@ -146,7 +121,7 @@ func bot_move_to_zone(bot: Player, _roll: int) -> String:
 	GameState.player_moved.emit(bot, target_zone)
 
 	bot_action_completed.emit(bot, "move", target_zone)
-	print("[BotController] 🚶 %s moved: %s → %s (%s)" % [bot.display_name, old_zone, target_zone, chosen_movement])
+	print("[BotController] %s moved: %s -> %s (roll: %d)" % [bot.display_name, old_zone, target_zone, roll])
 
 	return target_zone
 
@@ -261,16 +236,6 @@ func _execute_bot_draw_card(bot: Player, zone: String) -> void:
 # =============================================================================
 # PRIVATE METHODS - Helpers
 # =============================================================================
-
-## Get valid adjacent zones for movement using ZoneData adjacency map
-## @param current_zone: Current zone id
-## @returns: Array - list of valid adjacent zone ids
-func _get_valid_adjacent_zones(current_zone: String) -> Array:
-	if ZoneData.ZONE_ADJACENCY.has(current_zone):
-		return ZoneData.ZONE_ADJACENCY[current_zone].duplicate()
-	push_warning("[BotController] No adjacency data for zone: %s" % current_zone)
-	return []
-
 
 ## Random delay between actions for readability
 ## @param scene_tree: SceneTree for timer
