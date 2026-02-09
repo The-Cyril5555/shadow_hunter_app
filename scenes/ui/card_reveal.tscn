@@ -1,12 +1,13 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=2 format=3 uid="uid://b86qiecm7mcqb"]
 
-[ext_resource type="Script" path="res://scripts/ui/card_reveal.gd" id="1_card_reveal"]
+[ext_resource type="Script" uid="uid://dcxigoqt03wcv" path="res://scripts/ui/card_reveal.gd" id="1_card_reveal"]
 
 [node name="CardReveal" type="Control"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_bottom = -388.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
@@ -43,8 +44,8 @@ layout_mode = 2
 theme_override_constants/separation = 10
 
 [node name="CardImage" type="TextureRect" parent="Panel/MarginContainer/VBoxContainer"]
-layout_mode = 2
 custom_minimum_size = Vector2(0, 300)
+layout_mode = 2
 expand_mode = 3
 stretch_mode = 5
 
@@ -77,3 +78,9 @@ theme_override_font_sizes/font_size = 16
 text = "Effect description goes here..."
 horizontal_alignment = 1
 autowrap_mode = 3
+
+[node name="ContinueButton" type="Button" parent="Panel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 40)
+theme_override_font_sizes/font_size = 16
+text = "Continuer"
