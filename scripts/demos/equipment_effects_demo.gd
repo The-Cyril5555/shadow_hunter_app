@@ -160,7 +160,7 @@ func _on_equip_attacker_pressed() -> void:
 	print("\n[Demo] Equipping card for Attacker")
 
 	var card = attacker.hand[0]
-	var success = EquipmentManager.equip_from_hand(attacker, card, decks)
+	var success = EquipmentManager.equip_from_hand(attacker, card)
 
 	if success:
 		combat_log.append("✅ Attacker equipped: %s (+%d %s)" % [card.name, card.get_effect_value(), card.get_effect_type()])
@@ -185,7 +185,7 @@ func _on_equip_defender_pressed() -> void:
 	print("\n[Demo] Equipping card for Defender")
 
 	var card = defender.hand[0]
-	var success = EquipmentManager.equip_from_hand(defender, card, decks)
+	var success = EquipmentManager.equip_from_hand(defender, card)
 
 	if success:
 		combat_log.append("✅ Defender equipped: %s (+%d %s)" % [card.name, card.get_effect_value(), card.get_effect_type()])
