@@ -22,6 +22,7 @@ extends Control
 @onready var target_selection_panel: TargetSelectionPanel = $TargetSelectionLayer/TargetSelectionPanel
 @onready var error_message: ErrorMessage = $ErrorMessageLayer/ErrorMessage
 @onready var dice_roll_popup: DiceRollPopup = $DiceRollPopupLayer/DiceRollPopup
+@onready var zone_effect_popup: ZoneEffectPopup = $ZoneEffectPopupLayer/ZoneEffectPopup
 
 
 # -----------------------------------------------------------------------------
@@ -93,6 +94,9 @@ func _ready() -> void:
 
 	# Connect action prompt signal
 	action_prompt.action_chosen.connect(_on_action_prompt_chosen)
+
+	# Connect zone effect popup signal
+	zone_effect_popup.effect_completed.connect(_on_zone_effect_completed)
 
 	# Connect human player info hand card clicks
 	human_player_info.hand_card_clicked.connect(_on_hand_card_clicked)
@@ -300,6 +304,8 @@ func _on_phase_changed(new_phase: GameState.TurnPhase) -> void:
 				var deck = GameState.get_deck_for_zone(action_player.position_zone)
 				if not has_drawn_this_turn and deck != null and deck.get_card_count() > 0:
 					_auto_draw_card(action_player)
+				elif not has_drawn_this_turn and _zone_has_effect(action_player.position_zone):
+					_show_zone_effect(action_player)
 				else:
 					_show_action_prompt(action_player)
 			else:
@@ -433,6 +439,105 @@ func _auto_draw_card(player: Player) -> void:
 	# Show remaining actions (attack/end turn)
 	var target_count = get_valid_targets().size()
 	action_prompt.update_after_draw(player, target_count)
+
+
+## Check if a zone has a special effect (no deck)
+func _zone_has_effect(zone_id: String) -> bool:
+	var zone_data = ZoneData.get_zone_by_id(zone_id)
+	return zone_data.has("effect") and zone_data.effect != ""
+
+
+## Show zone effect popup for the current player
+func _show_zone_effect(player: Player) -> void:
+	var zone_data = ZoneData.get_zone_by_id(player.position_zone)
+	if toast:
+		toast.show_toast("%s active : %s" % [player.display_name, zone_data.name], Color(0.8, 0.7, 1.0))
+	zone_effect_popup.show_effect(zone_data, player, GameState.players)
+
+
+## Handle zone effect completion
+func _on_zone_effect_completed(result: Dictionary) -> void:
+	var current_player = GameState.get_current_player()
+	if current_player == null:
+		return
+
+	var effect_type = result.get("type", "")
+
+	match effect_type:
+		"damage_or_heal":
+			var target: Player = result.target
+			var action: String = result.action
+			if action == "damage":
+				var died = target.take_damage(2)
+				GameState.damage_dealt.emit(current_player, target, 2)
+				if died:
+					GameState.player_died.emit(target, current_player)
+				if toast:
+					toast.show_toast("%s inflige 2 dégâts à %s" % [current_player.display_name, target.display_name], Color(1.0, 0.5, 0.5))
+			elif action == "heal":
+				target.heal(1)
+				if toast:
+					toast.show_toast("%s soigne %s de 1 HP" % [current_player.display_name, target.display_name], Color(0.5, 1.0, 0.5))
+			_update_display()
+
+		"choose_deck":
+			var deck_type: String = result.deck_type
+			var deck = _get_deck_by_type(deck_type)
+			if deck and deck.get_card_count() > 0:
+				var card = deck.draw_card()
+				if card:
+					_update_deck_displays()
+					card_reveal.show_card(card)
+					await card_reveal.card_reveal_finished
+					if card.type == "instant":
+						_apply_instant_card_effect(card, current_player)
+						deck.discard_card(card)
+						_update_deck_displays()
+					elif card.type == "equipment":
+						current_player.hand.append(card)
+						human_player_info.update_display()
+					elif card.type == "vision":
+						pass  # TODO: vision card handling
+			else:
+				if toast:
+					toast.show_toast("Deck vide !", Color(1.0, 0.6, 0.3))
+
+		"steal_equipment":
+			var target: Player = result.target
+			var card: Card = result.card
+			# Remove from target's equipment
+			var idx = target.equipment.find(card)
+			if idx >= 0:
+				target.equipment.remove_at(idx)
+			# Add to current player's equipment
+			current_player.equipment.append(card)
+			GameState.equipment_equipped.emit(current_player, card)
+			if toast:
+				toast.show_toast("%s vole %s à %s" % [current_player.display_name, card.name, target.display_name], Color(1.0, 0.7, 0.2))
+			_update_display()
+
+		"cancelled":
+			pass  # Player cancelled, just show action prompt
+
+	has_drawn_this_turn = true
+	SaveManager.track_action()
+
+	# Show remaining actions (attack/end turn)
+	if current_player.is_human:
+		var target_count = get_valid_targets().size()
+		action_prompt.update_after_draw(current_player, target_count)
+
+
+## Get deck by type name (hermit/white/black)
+func _get_deck_by_type(deck_type: String) -> DeckManager:
+	match deck_type:
+		"hermit":
+			return GameState.hermit_deck
+		"white":
+			return GameState.white_deck
+		"black":
+			return GameState.black_deck
+	return null
 
 
 func _on_draw_card_pressed() -> void:

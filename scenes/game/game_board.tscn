@@ -1,7 +1,7 @@
-[gd_scene load_steps=11 format=3]
+[gd_scene load_steps=12 format=3 uid="uid://yjhv3prk4kl2"]
 
-[ext_resource type="Script" path="res://scripts/game/game_board.gd" id="1_game_board"]
-[ext_resource type="PackedScene" path="res://scenes/ui/card_reveal.tscn" id="2_card_reveal"]
+[ext_resource type="Script" uid="uid://ohu15oidcil" path="res://scripts/game/game_board.gd" id="1_game_board"]
+[ext_resource type="PackedScene" uid="uid://b86qiecm7mcqb" path="res://scenes/ui/card_reveal.tscn" id="2_card_reveal"]
 [ext_resource type="PackedScene" path="res://scenes/ui/equipment_action_menu.tscn" id="3_equipment_action_menu"]
 [ext_resource type="PackedScene" path="res://scenes/ui/target_selection_panel.tscn" id="4_target_selection_panel"]
 [ext_resource type="PackedScene" uid="uid://bi4lv4fgvqw3s" path="res://scenes/ui/error_message.tscn" id="5_error_message"]
@@ -10,6 +10,7 @@
 [ext_resource type="PackedScene" path="res://scenes/board/character_cards_row.tscn" id="8_character_cards_row"]
 [ext_resource type="PackedScene" path="res://scenes/board/action_prompt.tscn" id="9_action_prompt"]
 [ext_resource type="PackedScene" path="res://scenes/board/human_player_info.tscn" id="10_human_player_info"]
+[ext_resource type="PackedScene" path="res://scenes/ui/zone_effect_popup.tscn" id="11_zone_effect_popup"]
 
 [node name="GameBoard" type="Control"]
 layout_mode = 3
@@ -46,7 +47,6 @@ layout_mode = 2
 theme_override_constants/separation = 10
 
 [node name="CharacterCardsRow" parent="MainLayout/VBoxContainer" instance=ExtResource("8_character_cards_row")]
-layout_mode = 2
 
 [node name="MiddleRow" type="HBoxContainer" parent="MainLayout/VBoxContainer"]
 layout_mode = 2
@@ -68,7 +68,6 @@ theme_override_constants/separation = 8
 alignment = 1
 
 [node name="ActionPrompt" parent="MainLayout/VBoxContainer/MiddleRow/CenterArea" instance=ExtResource("9_action_prompt")]
-layout_mode = 2
 
 [node name="TurnInfoPanel" type="VBoxContainer" parent="MainLayout/VBoxContainer/MiddleRow"]
 custom_minimum_size = Vector2(150, 0)
@@ -77,34 +76,34 @@ theme_override_constants/separation = 15
 
 [node name="TurnLabel" type="Label" parent="MainLayout/VBoxContainer/MiddleRow/TurnInfoPanel"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
 theme_override_colors/font_color = Color(0.9, 0.85, 0.7, 1)
+theme_override_font_sizes/font_size = 20
 text = "Tour 1"
 horizontal_alignment = 1
 
 [node name="PhaseLabel" type="Label" parent="MainLayout/VBoxContainer/MiddleRow/TurnInfoPanel"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 16
 theme_override_colors/font_color = Color(1, 0.85, 0.3, 1)
+theme_override_font_sizes/font_size = 16
 text = "Mouvement"
 horizontal_alignment = 1
 
 [node name="DeckLabel" type="Label" parent="MainLayout/VBoxContainer/MiddleRow/TurnInfoPanel"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 14
 theme_override_colors/font_color = Color(0.7, 0.7, 0.8, 1)
+theme_override_font_sizes/font_size = 14
 text = "Hermit: 0
 White: 0
 Black: 0"
 horizontal_alignment = 1
 
 [node name="HumanPlayerInfo" parent="MainLayout/VBoxContainer" instance=ExtResource("10_human_player_info")]
-layout_mode = 2
 
 [node name="CardRevealLayer" type="CanvasLayer" parent="."]
 layer = 10
 
 [node name="CardReveal" parent="CardRevealLayer" instance=ExtResource("2_card_reveal")]
+offset_top = 225.0
 
 [node name="EquipmentMenuLayer" type="CanvasLayer" parent="."]
 layer = 11
@@ -122,6 +121,12 @@ visible = false
 layer = 13
 
 [node name="DiceRollPopup" parent="DiceRollPopupLayer" instance=ExtResource("6_dice_roll_popup")]
+visible = false
+
+[node name="ZoneEffectPopupLayer" type="CanvasLayer" parent="."]
+layer = 14
+
+[node name="ZoneEffectPopup" parent="ZoneEffectPopupLayer" instance=ExtResource("11_zone_effect_popup")]
 visible = false
 
 [node name="ErrorMessageLayer" type="CanvasLayer" parent="."]

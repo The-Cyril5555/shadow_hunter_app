@@ -34,21 +34,24 @@ const ZONES: Array[Dictionary] = [
 		"name": "Weird Woods",
 		"deck_type": "",
 		"color": Color(0.2, 0.5, 0.2),
-		"description": "No deck available"
+		"effect": "damage_or_heal",
+		"description": "Choose a player: deal 2 damage OR heal 1 HP"
 	},
 	{
 		"id": "underworld",
 		"name": "Underworld Gate",
 		"deck_type": "",
 		"color": Color(0.5, 0.2, 0.5),
-		"description": "No deck available"
+		"effect": "choose_deck",
+		"description": "Choose any deck (Hermit, White, Black) to draw from"
 	},
 	{
 		"id": "altar",
 		"name": "Erstwhile Altar",
 		"deck_type": "",
 		"color": Color(0.7, 0.6, 0.4),
-		"description": "No deck available"
+		"effect": "steal_equipment",
+		"description": "Steal an equipment card from any player"
 	}
 ]
 
