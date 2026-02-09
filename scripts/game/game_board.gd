@@ -32,6 +32,9 @@ var zones: Array = []  # Array of Zone instances
 var last_dice_sum: int = 0  # Last dice roll result
 var has_drawn_this_turn: bool = false  # Track if player has drawn a card this turn
 var has_rolled_this_turn: bool = false  # Track if player has rolled dice this turn
+var _vision_pending: bool = false  # True when waiting for vision card target selection
+var _vision_card: Card = null  # Vision card being resolved
+var _vision_deck: DeckManager = null  # Deck to discard vision card to
 
 ## Action validator instance
 var validator: ActionValidator = ActionValidator.new()
@@ -430,7 +433,8 @@ func _auto_draw_card(player: Player) -> void:
 		player.hand.append(card)
 		human_player_info.update_display()
 	elif card.type == "vision":
-		pass  # TODO: vision card handling
+		_start_vision_card(player, card, deck)
+		return  # Vision flow handles has_drawn + action prompt
 
 	has_drawn_this_turn = true
 	_notify_tutorial("draw_card")
@@ -497,7 +501,8 @@ func _on_zone_effect_completed(result: Dictionary) -> void:
 						current_player.hand.append(card)
 						human_player_info.update_display()
 					elif card.type == "vision":
-						pass  # TODO: vision card handling
+						_start_vision_card(current_player, card, deck)
+						return  # Vision flow handles the rest
 			else:
 				if toast:
 					toast.show_toast("Deck vide !", Color(1.0, 0.6, 0.3))
@@ -582,7 +587,8 @@ func _on_draw_card_pressed() -> void:
 		print("[GameBoard] Equipment card '%s' added to %s's hand" % [card.name, current_player.display_name])
 		human_player_info.update_display()
 	elif card.type == "vision":
-		print("[GameBoard] Vision card - handling (TODO)")
+		_start_vision_card(current_player, card, deck)
+		return  # Vision flow handles has_drawn + action prompt
 
 	has_drawn_this_turn = true
 	_notify_tutorial("draw_card")
@@ -688,6 +694,63 @@ func _apply_instant_card_effect(card: Card, player: Player) -> void:
 
 
 # -----------------------------------------------------------------------------
+# Vision Card System
+# -----------------------------------------------------------------------------
+
+## Start vision card flow: choose a player to reveal their identity
+func _start_vision_card(player: Player, card: Card, deck: DeckManager) -> void:
+	_vision_pending = true
+	_vision_card = card
+	_vision_deck = deck
+
+	# Get all alive players except current
+	var targets: Array = []
+	for p in GameState.players:
+		if p != player and p.is_alive:
+			targets.append(p)
+
+	if targets.is_empty():
+		_finish_vision_card(player)
+		return
+
+	target_selection_panel.show_targets(targets, "Carte Vision — Choisissez un joueur", "Révéler")
+
+
+## Handle vision card reveal after target is selected
+func _resolve_vision_card(target: Player) -> void:
+	var current_player = GameState.get_current_player()
+
+	# Show the target's secret identity
+	var info = "%s est %s (%s)" % [target.display_name, target.character_name, target.faction.capitalize()]
+	if toast:
+		toast.show_toast(info, Color(0.8, 0.6, 1.0))
+
+	print("[GameBoard] Vision reveal: %s" % info)
+	_finish_vision_card(current_player)
+
+
+## Clean up vision card state and continue turn
+func _finish_vision_card(player: Player) -> void:
+	# Discard the vision card
+	if _vision_card and _vision_deck:
+		_vision_deck.discard_card(_vision_card)
+		_update_deck_displays()
+
+	_vision_pending = false
+	_vision_card = null
+	_vision_deck = null
+
+	has_drawn_this_turn = true
+	_notify_tutorial("draw_card")
+	SaveManager.track_action()
+
+	# Show remaining actions
+	if player.is_human:
+		var target_count = get_valid_targets().size()
+		action_prompt.update_after_draw(player, target_count)
+
+
+# -----------------------------------------------------------------------------
 # Signal Handlers — Visual component updates
 # -----------------------------------------------------------------------------
 
@@ -762,6 +825,11 @@ func _on_attack_button_pressed() -> void:
 
 ## Handle target selection
 func _on_target_selected(target: Player) -> void:
+	# Vision card mode: reveal target instead of attacking
+	if _vision_pending:
+		_resolve_vision_card(target)
+		return
+
 	var attacker = GameState.get_current_player()
 	if attacker == null:
 		push_error("[GameBoard] No current player found")

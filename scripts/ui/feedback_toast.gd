@@ -21,13 +21,13 @@ const MAX_TOASTS: int = 20
 func _ready() -> void:
 	layer = 90
 
-	# Container anchored to top-right
+	# Container anchored to top-left
 	var margin = MarginContainer.new()
-	margin.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	margin.anchor_left = 0.65
+	margin.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	margin.anchor_right = 0.35
 	margin.anchor_bottom = 0.5
 	margin.add_theme_constant_override("margin_top", 20)
-	margin.add_theme_constant_override("margin_right", 20)
+	margin.add_theme_constant_override("margin_left", 20)
 	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(margin)
 
@@ -60,7 +60,7 @@ func show_toast(message: String, color: Color = Color(1.0, 1.0, 1.0)) -> void:
 	label.text = message
 	label.add_theme_font_size_override("font_size", 13)
 	label.add_theme_color_override("font_color", color)
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	# Background style

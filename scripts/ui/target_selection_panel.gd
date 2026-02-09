@@ -27,7 +27,7 @@ func _ready() -> void:
 # -----------------------------------------------------------------------------
 
 ## Show target selection panel with valid targets
-func show_targets(valid_targets: Array) -> void:
+func show_targets(valid_targets: Array, title: String = "", button_text: String = "Attaquer") -> void:
 	# Clear previous targets
 	for child in targets_container.get_children():
 		child.queue_free()
@@ -39,7 +39,7 @@ func show_targets(valid_targets: Array) -> void:
 		visible = true
 		return
 	else:
-		title_label.text = "Choisissez votre cible"
+		title_label.text = title if title != "" else "Choisissez votre cible"
 
 	# Create rich entry for each valid target
 	for target in valid_targets:
@@ -74,9 +74,9 @@ func show_targets(valid_targets: Array) -> void:
 		info.add_child(hp_lbl)
 		row.add_child(info)
 
-		# Attack button
+		# Action button
 		var btn = Button.new()
-		btn.text = "Attaquer"
+		btn.text = button_text
 		btn.custom_minimum_size = Vector2(100, 40)
 		btn.add_theme_font_size_override("font_size", 14)
 		btn.pressed.connect(_on_target_button_pressed.bind(target))
