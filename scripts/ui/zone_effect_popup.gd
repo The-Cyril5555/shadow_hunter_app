@@ -97,7 +97,10 @@ func _build_ui() -> void:
 	style.border_color = Color(0.6, 0.5, 0.3)
 	style.set_border_width_all(2)
 	style.set_corner_radius_all(8)
-	style.set_content_margin_all(20)
+	style.content_margin_left = 20
+	style.content_margin_top = 20
+	style.content_margin_right = 20
+	style.content_margin_bottom = 20
 	add_theme_stylebox_override("panel", style)
 
 	var vbox = VBoxContainer.new()
