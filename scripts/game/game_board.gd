@@ -297,7 +297,11 @@ func _on_phase_changed(new_phase: GameState.TurnPhase) -> void:
 		GameState.TurnPhase.ACTION:
 			var action_player = GameState.get_current_player()
 			if action_player and action_player.is_human:
-				_show_action_prompt(action_player)
+				var deck = GameState.get_deck_for_zone(action_player.position_zone)
+				if not has_drawn_this_turn and deck != null and deck.get_card_count() > 0:
+					_auto_draw_card(action_player)
+				else:
+					_show_action_prompt(action_player)
 			else:
 				action_prompt.show_waiting_prompt(action_player.display_name if action_player else "")
 
@@ -388,6 +392,47 @@ func _on_end_turn_pressed() -> void:
 func _on_back_to_menu_pressed() -> void:
 	GameState.reset()
 	GameModeStateMachine.transition_to(GameModeStateMachine.GameMode.MAIN_MENU)
+
+
+## Auto-draw card when arriving on a zone with a deck (mandatory in Shadow Hunter)
+func _auto_draw_card(player: Player) -> void:
+	var zone_id = player.position_zone
+	var deck = GameState.get_deck_for_zone(zone_id)
+	if deck == null:
+		_show_action_prompt(player)
+		return
+
+	var card = deck.draw_card()
+	if card == null:
+		_show_action_prompt(player)
+		return
+
+	if toast:
+		toast.show_toast("%s pioche : %s" % [player.display_name, card.name], Color(0.6, 1.0, 0.6))
+	print("[GameBoard] Auto-draw: %s drew '%s' from %s deck" % [player.display_name, card.name, deck.deck_type])
+
+	_update_deck_displays()
+
+	card_reveal.show_card(card)
+	await card_reveal.card_reveal_finished
+
+	if card.type == "instant":
+		_apply_instant_card_effect(card, player)
+		deck.discard_card(card)
+		_update_deck_displays()
+	elif card.type == "equipment":
+		player.hand.append(card)
+		human_player_info.update_display()
+	elif card.type == "vision":
+		pass  # TODO: vision card handling
+
+	has_drawn_this_turn = true
+	_notify_tutorial("draw_card")
+	SaveManager.track_action()
+
+	# Show remaining actions (attack/end turn)
+	var target_count = get_valid_targets().size()
+	action_prompt.update_after_draw(player, target_count)
 
 
 func _on_draw_card_pressed() -> void:

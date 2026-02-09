@@ -43,9 +43,8 @@ func show_action_prompt(player: Player, can_draw: bool, deck_type: String, targe
 		prompt_label.text = "Tour de %s — Choisissez une action" % PlayerColors.get_label(player)
 	prompt_label.add_theme_color_override("font_color", PlayerColors.get_color(player.id))
 
-	# Button states
-	draw_button.visible = true
-	draw_button.disabled = not can_draw
+	# Draw is automatic on zone arrival, hide button
+	draw_button.visible = false
 	attack_button.visible = true
 	attack_button.disabled = target_count == 0
 	attack_button.text = "Attaquer (%d)" % target_count if target_count > 0 else "Attaquer"
