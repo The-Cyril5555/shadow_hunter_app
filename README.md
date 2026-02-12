@@ -1,6 +1,6 @@
 # Shadow Hunter
 
-> A premium digital adaptation of the **Shadow Hunter** board game — featuring hidden identities, strategic deduction, intelligent bot opponents, and Balatro-inspired visual polish.
+> Adaptation digitale du jeu de plateau **Shadow Hunter** — identités cachées, déduction stratégique, adversaires bots intelligents et rendu visuel inspiré de Balatro.
 
 ![Godot 4.5](https://img.shields.io/badge/Godot-4.5-478CBF?logo=godotengine&logoColor=white)
 ![GDScript](https://img.shields.io/badge/GDScript-Language-478CBF)
@@ -9,177 +9,177 @@
 
 ---
 
-## About
+## Presentation
 
-Shadow Hunter is a turn-based social deduction game for **4 to 8 players** (any mix of humans and bots). Each player is secretly assigned a character from one of three factions — **Hunters**, **Shadows**, or **Neutrals** — each with conflicting win conditions. Players move across 6 zones, draw cards, attack opponents, and use deduction to figure out who's who before it's too late.
+Shadow Hunter est un jeu de déduction sociale au tour par tour pour **4 à 8 joueurs** (humains et/ou bots). Chaque joueur reçoit secrètement un personnage appartenant à l'une des trois factions — **Hunters**, **Shadows** ou **Neutres** — avec des conditions de victoire opposées. Les joueurs se déplacent entre 6 zones, piochent des cartes, attaquent leurs adversaires et utilisent la déduction pour identifier les rôles de chacun.
 
-**Key numbers:** 20 unique characters | 60+ cards across 3 decks | 6 board zones | 3 bot personality types
+**En chiffres :** 20 personnages uniques | 60+ cartes réparties en 3 paquets | 6 zones de jeu | 3 types de personnalité bot
 
 ---
 
-## Features
+## Fonctionnalites
 
 ### Gameplay
-- **20 Unique Characters** — 10 base + 10 expansion, each with active or passive special abilities
-- **3 Factions** — Hunters (eliminate Shadows), Shadows (eliminate Hunters), Neutrals (personal objectives)
-- **60+ Cards** — Vision cards for deduction, equipment for combat bonuses, instant effects
-- **6 Board Zones** — 3 with card decks, 3 with special effects (heal/damage, steal equipment, choose any deck)
-- **D6 + D4 Dice System** — Dice roll determines zone movement, combat uses D6 + equipment bonuses
+- **20 Personnages uniques** — 10 de base + 10 extension, chacun avec une capacité active ou passive
+- **3 Factions** — Hunters (éliminer les Shadows), Shadows (éliminer les Hunters), Neutres (objectif personnel)
+- **60+ Cartes** — Cartes vision pour la déduction, équipements pour les bonus de combat, effets instantanés
+- **6 Zones de jeu** — 3 avec paquets de cartes, 3 avec effets spéciaux (soin/dégâts, vol d'équipement, choix de paquet)
+- **Système de dés D6 + D4** — Le lancer détermine le déplacement, le combat utilise D6 + bonus d'équipement
 
-### Bot System
-- **3 Personality Types** — Aggressive, Prudent, Balanced — each with distinct strategic tendencies
-- **Multi-Factor Decision Engine** — Zone scoring, threat assessment, target prioritization, risk/reward evaluation
-- **Adaptive Behavior** — Bots react to revealed identities, HP thresholds, and faction knowledge
+### Systeme de bots
+- **3 Types de personnalité** — Agressif, Prudent, Équilibré — chacun avec des tendances stratégiques distinctes
+- **Moteur de décision multi-facteurs** — Scoring de zones, évaluation des menaces, priorisation de cibles, analyse risque/récompense
+- **Comportement adaptatif** — Les bots réagissent aux identités révélées, aux seuils de PV et à la connaissance des factions
 
-### Polish & UX
-- **Balatro-Inspired Visuals** — Custom animated background shader, 3D card tilt on hover, particle effects
-- **22 Sound Effects** — Combat, cards, dice, UI interactions, zone-specific ambiance
-- **Tween-Based Animations** — Smooth movement, damage feedback, card reveals, dramatic ability activations
-- **Tutorial System** — Step-by-step overlay guiding new players through their first game
-- **Save/Load** — Auto-save every 5 actions + 3 manual save slots with metadata
+### Polish et UX
+- **Visuels inspirés de Balatro** — Shader de fond animé, effet 3D au survol des cartes, particules
+- **22 Effets sonores** — Combat, cartes, dés, interactions UI, ambiance par zone
+- **Animations Tween** — Déplacements fluides, feedback de dégâts, révélations de cartes, activations de capacités
+- **Système de tutoriel** — Overlay pas-à-pas guidant les nouveaux joueurs
+- **Sauvegarde/Chargement** — Auto-save toutes les 5 actions + 3 emplacements manuels avec métadonnées
 
-### Accessibility
-- **4 Colorblind Modes** — Deuteranopia, Protanopia, Tritanopia + symbol-based faction indicators
-- **Adjustable Text Size** — Small / Medium / Large
-- **Reduced Motion** — 70% particle reduction, 30% animation slowdown
-- **Localization** — French and English
+### Accessibilite
+- **4 Modes daltonien** — Deutéranopie, Protanopie, Tritanopie + indicateurs de faction par symboles
+- **Taille de texte ajustable** — Petit / Moyen / Grand
+- **Mouvements réduits** — Réduction de 70% des particules, ralentissement de 30% des animations
+- **Localisation** — Français et anglais
 
 ---
 
-## Technical Highlights
+## Points techniques
 
 ### Architecture
 
-The codebase follows an **event-driven architecture** where 16+ systems communicate exclusively through **signals** — no direct cross-references. This keeps systems decoupled, testable, and easy to extend.
+Le code suit une **architecture événementielle** où 16+ systèmes communiquent exclusivement par **signaux** — aucune référence croisée directe. Cela maintient les systèmes découplés, testables et faciles à étendre.
 
-**Design patterns used:**
+**Design patterns utilisés :**
 
-| Pattern | Usage |
+| Pattern | Utilisation |
 |---|---|
 | **Singleton** | 6 autoloads (GameState, AudioManager, UserSettings, etc.) |
-| **State Machine** | Game mode transitions, turn phase management |
-| **Strategy** | Bot personalities with swappable decision weights |
-| **Observer** | Signal-based UI updates and inter-system events |
-| **Object Pool** | Particle effect recycling for stable frame rate |
-| **Serialization** | `to_dict()` / `from_dict()` on all entities for save/load |
-| **Data-Driven** | All game content defined in JSON — zero hardcoded data |
+| **State Machine** | Transitions de mode de jeu, gestion des phases de tour |
+| **Strategy** | Personnalités bot avec poids de décision interchangeables |
+| **Observer** | Mises à jour UI par signaux et événements inter-systèmes |
+| **Object Pool** | Recyclage des effets de particules pour un framerate stable |
+| **Serialization** | `to_dict()` / `from_dict()` sur toutes les entités pour la sauvegarde |
+| **Data-Driven** | Tout le contenu de jeu défini en JSON — zéro donnée en dur |
 
-### Bot Intelligence
+### Intelligence des bots
 
-The bot system is split into three layers:
+Le système de bots est divisé en trois couches :
 
 ```
-PersonalityManager          → Defines decision weights (aggression, defense, risk, card draw)
+PersonalityManager          → Définit les poids de décision (agression, défense, risque, pioche)
     ↓
-AIDecisionEngine            → Scores zones, evaluates targets, calculates risk/reward
+AIDecisionEngine            → Score les zones, évalue les cibles, calcule le risque/récompense
     ↓
-BotController               → Executes actions with human-readable delays for observability
+BotController               → Exécute les actions avec des délais lisibles pour l'observation humaine
 ```
 
-Each personality produces measurably different play patterns — aggressive bots attack early and often, prudent bots prioritize healing and card advantage, balanced bots adapt to the game state.
+Chaque personnalité produit des patterns de jeu mesurables et distincts — les bots agressifs attaquent tôt et souvent, les prudents privilégient le soin et l'avantage en cartes, les équilibrés s'adaptent à l'état de la partie.
 
-### Custom Shaders (GLSL)
+### Shaders custom (GLSL)
 
-- **`balatro_bg.gdshader`** — Procedural animated gradient background
-- **`card_3d_tilt.gdshader`** — Mouse-reactive perspective tilt on card hover
-- **`pixel_art_3d.gdshader`** — Retro pixel art depth effect
+- **`balatro_bg.gdshader`** — Fond animé avec gradient procédural
+- **`card_3d_tilt.gdshader`** — Effet de perspective 3D réactif au survol de la souris
+- **`pixel_art_3d.gdshader`** — Effet rétro pixel art avec profondeur
 
-### Save System
+### Systeme de sauvegarde
 
-Full game state serialization with version checking:
-- Player data (HP, equipment, hand, character, faction knowledge)
-- Deck states (draw pile, discard pile, card order)
-- Board state (zone positions, turn counter, phase)
-- Game log for replay
+Sérialisation complète de l'état de jeu avec vérification de version :
+- Données joueur (PV, équipement, main, personnage, connaissance des factions)
+- États des paquets (pioche, défausse, ordre des cartes)
+- État du plateau (positions dans les zones, compteur de tours, phase)
+- Journal de partie pour le replay
 
 ---
 
-## Project Structure
+## Structure du projet
 
 ```
 shadow_hunter_app/
 ├── scripts/
 │   ├── autoloads/          # 6 singletons (GameState, AudioManager, UserSettings...)
-│   ├── systems/            # 16 game systems (Combat, AI, Decks, Save, Abilities...)
-│   ├── entities/           # Data models (Player, Card)
-│   ├── game/               # Main orchestrator (game_board.gd)
-│   ├── board/              # Board components (Zone, PlayerToken, DamageTracker)
-│   ├── ui/                 # 16 UI controllers (menus, popups, HUD)
-│   └── utils/              # Helpers (AnimationHelper, PlayerColors)
+│   ├── systems/            # 16 systèmes de jeu (Combat, IA, Paquets, Sauvegarde, Capacités...)
+│   ├── entities/           # Modèles de données (Player, Card)
+│   ├── game/               # Orchestrateur principal (game_board.gd)
+│   ├── board/              # Composants du plateau (Zone, PlayerToken, DamageTracker)
+│   ├── ui/                 # 16 contrôleurs UI (menus, popups, HUD)
+│   └── utils/              # Utilitaires (AnimationHelper, PlayerColors)
 ├── scenes/
-│   ├── ui/screens/         # Main menu, game setup, settings, game over
-│   ├── ui/components/      # Reusable UI components
-│   ├── game/               # Main game board scene
-│   ├── board/              # Board-specific component scenes
-│   └── cards/              # Card display scenes
+│   ├── ui/screens/         # Menu principal, configuration, paramètres, fin de partie
+│   ├── ui/components/      # Composants UI réutilisables
+│   ├── game/               # Scène du plateau de jeu
+│   ├── board/              # Scènes des composants du plateau
+│   └── cards/              # Scènes d'affichage des cartes
 ├── data/
-│   ├── characters.json     # 20 characters with abilities and stats
-│   ├── cards.json          # 60+ cards across 3 decks
-│   ├── ai_personalities.json   # Bot personality definitions
-│   └── polish_config.json  # Animation and VFX tuning
+│   ├── characters.json     # 20 personnages avec capacités et stats
+│   ├── cards.json          # 60+ cartes réparties en 3 paquets
+│   ├── ai_personalities.json   # Définitions des personnalités bot
+│   └── polish_config.json  # Paramètres d'animation et VFX
 ├── assets/
-│   ├── audio/sfx/          # 22 sound effects (.wav)
-│   ├── shaders/            # 3 custom GLSL shaders
-│   ├── sprites/            # Game sprites and icons
-│   └── fonts/              # UI typography
-└── images/                 # Card artwork (characters, zones, decks)
+│   ├── audio/sfx/          # 22 effets sonores (.wav)
+│   ├── shaders/            # 3 shaders GLSL custom
+│   ├── sprites/            # Sprites et icônes du jeu
+│   └── fonts/              # Typographie UI
+└── images/                 # Illustrations des cartes (personnages, zones, paquets)
 ```
 
-**50+ GDScript files** across 16 interconnected systems, with strict typing, standardized file organization, and consistent naming conventions.
+**50+ fichiers GDScript** répartis sur 16 systèmes interconnectés, avec typage strict, organisation standardisée et conventions de nommage cohérentes.
 
 ---
 
-## Tech Stack
+## Stack technique
 
-| Category | Technology |
+| Catégorie | Technologie |
 |---|---|
-| Engine | Godot 4.5 |
-| Language | GDScript (statically typed) |
+| Moteur | Godot 4.5 |
+| Langage | GDScript (typage statique) |
 | Shaders | GLSL (Godot Shading Language) |
-| Data | JSON configuration files |
-| Audio | WAV + bus-based mixing |
+| Données | Fichiers de configuration JSON |
+| Audio | WAV + mixage par bus |
 | VCS | Git |
 
 ---
 
-## Getting Started
+## Demarrage rapide
 
-### Prerequisites
-- [Godot 4.5](https://godotengine.org/download/) or later
+### Prérequis
+- [Godot 4.5](https://godotengine.org/download/) ou supérieur
 
-### Run
-1. Clone the repository
+### Lancement
+1. Cloner le dépôt
    ```bash
-   git clone https://github.com/your-username/shadow-hunter-app.git
+   git clone https://github.com/The-Cyril5555/shadow_hunter_app.git
    ```
-2. Open the project in Godot (`project.godot`)
-3. Press **F5** to run — the main scene is `res://scenes/ui/screens/main_menu.tscn`
+2. Ouvrir le projet dans Godot (`project.godot`)
+3. Appuyer sur **F5** pour lancer — la scène principale est `res://scenes/ui/screens/main_menu.tscn`
 
 ---
 
-## Game Rules (Summary)
+## Regles du jeu (resume)
 
 | Phase | Description |
 |---|---|
-| **Setup** | Each player receives a secret character card (Hunter, Shadow, or Neutral) |
-| **Movement** | Roll D6 + D4, move to the zone matching the dice sum |
-| **Action** | Draw a card from the zone's deck OR attack a player in your zone group |
-| **Special Zones** | Weird Woods (damage/heal), Underworld Gate (pick any deck), Altar (steal equipment) |
-| **Combat** | Roll D6 + equipment bonuses − target's defense = damage dealt |
-| **Victory** | Hunters win when all Shadows are dead (and vice versa). Neutrals have personal objectives. |
+| **Mise en place** | Chaque joueur reçoit une carte personnage secrète (Hunter, Shadow ou Neutre) |
+| **Déplacement** | Lancer D6 + D4, se déplacer vers la zone correspondant à la somme |
+| **Action** | Piocher une carte du paquet de la zone OU attaquer un joueur dans le même groupe de zones |
+| **Zones spéciales** | Weird Woods (dégâts/soin), Underworld Gate (choisir n'importe quel paquet), Altar (voler un équipement) |
+| **Combat** | Lancer D6 + bonus d'équipement − défense de la cible = dégâts infligés |
+| **Victoire** | Les Hunters gagnent quand tous les Shadows sont morts (et inversement). Les Neutres ont des objectifs personnels. |
 
-Characters are revealed on death or voluntarily — revealing unlocks your special ability.
+Les personnages sont révélés à leur mort ou volontairement — la révélation débloque la capacité spéciale.
 
 ---
 
 ## Credits
 
-Based on the **Shadow Hunters** board game by Yasutaka Ikeda (published by Game Republic / Z-Man Games).
+Basé sur le jeu de plateau **Shadow Hunters** de Yasutaka Ikeda (édité par Game Republic / Z-Man Games).
 
-All game mechanics faithfully adapted. Card artwork sourced from the original game.
+Mécaniques de jeu fidèlement adaptées. Illustrations des cartes issues du jeu original.
 
 ---
 
-## License
+## Licence
 
-This project is a fan-made digital adaptation for personal and educational use.
+Ce projet est une adaptation digitale fan-made à usage personnel et éducatif.
