@@ -122,9 +122,11 @@ func _on_tutorial_pressed() -> void:
 				GameState.players[i] = temp
 			break
 
-	# Update IDs
+	# Update IDs and display names to match new order
 	for i in range(GameState.players.size()):
 		GameState.players[i].id = i
+		if not GameState.players[i].is_human:
+			GameState.players[i].display_name = "Bot %d" % (i + 1)
 
 	GameModeStateMachine.transition_to(GameModeStateMachine.GameMode.TUTORIAL)
 

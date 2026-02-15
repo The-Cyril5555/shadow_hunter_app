@@ -113,6 +113,10 @@ func _on_start_game_pressed() -> void:
 	GameState.players.shuffle()
 	for i in range(GameState.players.size()):
 		GameState.players[i].id = i
+		if GameState.players[i].is_human:
+			GameState.players[i].display_name = "Player %d" % (i + 1)
+		else:
+			GameState.players[i].display_name = "Bot %d" % (i + 1)
 
 	# Transition to game
 	GameModeStateMachine.transition_to(GameModeStateMachine.GameMode.GAME)
@@ -125,7 +129,7 @@ func _initialize_players() -> void:
 		var is_human = i < human_players
 		var player_name = "Player %d" % (i + 1)
 		if not is_human:
-			player_name = "Bot %d" % (i - human_players + 1)
+			player_name = "Bot %d" % (i + 1)
 
 		var player = Player.new(i, player_name, is_human)
 		GameState.players.append(player)

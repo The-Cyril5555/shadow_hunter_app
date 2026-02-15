@@ -114,8 +114,14 @@ var ai_personalities: Dictionary = {}
 ## Win condition checker instance
 var win_checker: WinConditionChecker = null
 
+## Stored win result (preserved for game over screen)
+var last_win_result: Dictionary = {}
+
 ## Passive ability system instance
 var passive_ability_system: PassiveAbilitySystem = null
+
+## Active ability system instance
+var active_ability_system: ActiveAbilitySystem = null
 
 
 # =============================================================================
@@ -135,12 +141,17 @@ func _ready() -> void:
 	# Initialize win condition checker
 	win_checker = WinConditionChecker.new()
 
-	# Connect to player_died signal for win detection
+	# Connect to signals for win detection
 	player_died.connect(_on_player_died_check_win)
+	equipment_equipped.connect(_on_equipment_check_win)
 
 	# Initialize passive ability system
 	passive_ability_system = PassiveAbilitySystem.new()
 	add_child(passive_ability_system)  # Add as child for signal access
+
+	# Initialize active ability system
+	active_ability_system = ActiveAbilitySystem.new()
+	add_child(active_ability_system)
 
 	print("[GameState] Initialized")
 
@@ -285,6 +296,8 @@ func get_game_statistics() -> Dictionary:
 
 ## Advance to the next turn phase
 func advance_phase() -> void:
+	if not game_in_progress:
+		return
 	match current_phase:
 		TurnPhase.MOVEMENT:
 			current_phase = TurnPhase.ACTION
@@ -297,6 +310,16 @@ func advance_phase() -> void:
 			var current_player = get_current_player()
 			if current_player:
 				turn_ended.emit(current_player, turn_count)
+
+			# Wight "Multiplication" — replay turn if extra turns remaining
+			if current_player and current_player.get_meta("extra_turns", 0) > 0:
+				var remaining = current_player.get_meta("extra_turns") - 1
+				current_player.set_meta("extra_turns", remaining)
+				current_phase = TurnPhase.MOVEMENT
+				print("[GameState] Wight extra turn (%d remaining) for %s" % [remaining, current_player.display_name])
+				turn_started.emit(current_player, turn_count)
+				phase_changed.emit(current_phase)
+				return
 
 			# Move to next alive player (skip dead players)
 			var attempts = 0
@@ -346,6 +369,9 @@ func reset() -> void:
 	white_deck = null
 	black_deck = null
 	zone_positions.clear()
+	last_win_result = {}
+	if win_checker:
+		win_checker.reset()
 	print("[GameState] Reset complete")
 
 
@@ -407,11 +433,27 @@ func from_dict(data: Dictionary) -> void:
 
 
 ## Check win conditions after player death
-func _on_player_died_check_win(victim: Player, _killer: Player) -> void:
+func _on_player_died_check_win(victim: Player, killer: Player) -> void:
 	print("[GameState] Checking win conditions after %s died" % victim.display_name)
 
-	# Check win conditions
-	var result = win_checker.check_win_conditions()
+	# Register the kill for tracking (first kill, first death, kill order)
+	win_checker.register_kill(killer, victim)
+
+	# Check with kill context
+	var context = {"event": "kill", "killer": killer, "victim": victim}
+	check_all_win_conditions(context)
+
+
+## Check win conditions after equipment change
+func _on_equipment_check_win(player: Player, _card: Card) -> void:
+	print("[GameState] Checking win conditions after %s equipment change" % player.display_name)
+	var context = {"event": "equipment_change", "player": player}
+	check_all_win_conditions(context)
+
+
+## Generic win condition check — called from multiple triggers
+func check_all_win_conditions(context: Dictionary = {}) -> void:
+	var result = win_checker.check_win_conditions(context)
 
 	if result.has_winner:
 		print("[GameState] Winner detected! Faction: %s, Players: %d" % [result.winning_faction, result.winning_players.size()])
@@ -426,8 +468,10 @@ func _on_player_died_check_win(victim: Player, _killer: Player) -> void:
 			"turn": turn_count
 		})
 
-		# If game is over (faction victory), emit game_over signal
+		# If game is over, store result and emit signal
 		if result.game_over:
+			last_win_result = result
+			game_in_progress = false
 			print("[GameState] Game Over! %s faction wins!" % result.winning_faction)
 			game_over.emit(result.winning_faction)
 

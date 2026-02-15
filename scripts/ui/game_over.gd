@@ -54,14 +54,19 @@ func _display_results() -> void:
 	winning_players = win_result.winning_players
 
 	# Set title
-	if not winning_faction.is_empty():
+	if not winning_players.is_empty():
 		title_label.text = "VICTOIRE!"
 	else:
 		title_label.text = "PARTIE TERMINÉE"
 
 	# Set faction banner
 	if not winning_faction.is_empty():
-		faction_label.text = "%s gagnent!" % _get_faction_name_plural(winning_faction)
+		# Check if there are also neutral winners alongside faction
+		var has_neutral_winners = winning_players.any(func(p): return p.faction == "neutral")
+		if has_neutral_winners and winning_faction != "neutral":
+			faction_label.text = "%s gagnent! (+ Neutres)" % _get_faction_name_plural(winning_faction)
+		else:
+			faction_label.text = "%s gagnent!" % _get_faction_name_plural(winning_faction)
 		_set_faction_banner_color(winning_faction)
 	else:
 		faction_banner.visible = false
@@ -77,31 +82,33 @@ func _display_results() -> void:
 
 
 func _determine_winner() -> Dictionary:
-	# Use WinConditionChecker to determine winner
-	var checker = WinConditionChecker.new()
-	return checker.check_win_conditions()
+	# Use stored result from when the game actually ended (preserves event context)
+	if not GameState.last_win_result.is_empty():
+		return GameState.last_win_result
+	# Fallback: re-calculate (only works for faction victories and passive neutrals)
+	return GameState.win_checker.check_win_conditions({"event": "game_ending"})
 
 
 func _get_faction_name_plural(faction: String) -> String:
 	match faction:
-		"Hunter":
+		"hunter":
 			return "Les Hunters"
-		"Shadow":
+		"shadow":
 			return "Les Shadows"
-		"Neutral":
+		"neutral":
 			return "Les Neutres"
 		_:
-			return faction
+			return faction.capitalize()
 
 
 func _set_faction_banner_color(faction: String) -> void:
 	var color = Color.WHITE
 	match faction:
-		"Hunter":
+		"hunter":
 			color = Color(0.3, 0.7, 1.0)  # Blue
-		"Shadow":
+		"shadow":
 			color = Color(0.8, 0.2, 0.2)  # Red
-		"Neutral":
+		"neutral":
 			color = Color(0.7, 0.7, 0.3)  # Yellow
 
 	faction_label.add_theme_color_override("font_color", color)
@@ -186,16 +193,24 @@ func _create_player_reveal_card(player: Player) -> HBoxContainer:
 	hp_label.add_theme_color_override("font_color", Color(0.8, 0.8, 0.8))
 	card.add_child(hp_label)
 
+	# Winner badge
+	if player in winning_players:
+		var badge = Label.new()
+		badge.text = "GAGNANT"
+		badge.add_theme_font_size_override("font_size", 14)
+		badge.add_theme_color_override("font_color", Color(1.0, 0.85, 0.0))
+		card.add_child(badge)
+
 	return card
 
 
 func _get_faction_color(faction: String) -> Color:
 	match faction:
-		"Hunter":
+		"hunter":
 			return Color(0.3, 0.7, 1.0)  # Blue
-		"Shadow":
+		"shadow":
 			return Color(0.8, 0.2, 0.2)  # Red
-		"Neutral":
+		"neutral":
 			return Color(0.7, 0.7, 0.3)  # Yellow
 		_:
 			return Color.WHITE

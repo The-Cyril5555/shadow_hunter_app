@@ -57,6 +57,11 @@ func show_card(card: Card) -> void:
 	continue_button.visible = true
 	AnimationHelper.fade_in_with_pop(self, "card_play_animation_duration")
 
+	# Start gentle floating on the card image
+	card_image.pivot_offset = card_image.size / 2.0
+	AnimationHelper.start_floating(card_image)
+	AnimationHelper.start_gentle_rotation(card_image)
+
 	# Wait for player to click Continue
 	await card_reveal_finished
 

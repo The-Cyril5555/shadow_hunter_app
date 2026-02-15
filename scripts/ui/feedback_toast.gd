@@ -1,4 +1,4 @@
-## FeedbackToast - Persistent game log in the top-right corner
+## FeedbackToast - Persistent game log in the top-right corner.
 ##
 ## Shows text messages that stay visible as a scrolling log.
 class_name FeedbackToast
@@ -21,13 +21,18 @@ const MAX_TOASTS: int = 20
 func _ready() -> void:
 	layer = 90
 
-	# Container anchored to top-left
+	# Container anchored to top-right corner
 	var margin = MarginContainer.new()
-	margin.set_anchors_preset(Control.PRESET_TOP_LEFT)
-	margin.anchor_right = 0.35
+	margin.anchor_left = 0.80
+	margin.anchor_top = 0.0
+	margin.anchor_right = 1.0
 	margin.anchor_bottom = 0.5
+	margin.offset_left = 0
+	margin.offset_top = 0
+	margin.offset_right = -20
+	margin.offset_bottom = 0
 	margin.add_theme_constant_override("margin_top", 20)
-	margin.add_theme_constant_override("margin_left", 20)
+	margin.add_theme_constant_override("margin_right", 0)
 	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(margin)
 
@@ -60,7 +65,7 @@ func show_toast(message: String, color: Color = Color(1.0, 1.0, 1.0)) -> void:
 	label.text = message
 	label.add_theme_font_size_override("font_size", 13)
 	label.add_theme_color_override("font_color", color)
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	# Background style

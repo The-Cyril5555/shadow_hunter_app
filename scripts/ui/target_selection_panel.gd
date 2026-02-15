@@ -61,17 +61,14 @@ func show_targets(valid_targets: Array, title: String = "", button_text: String 
 		var info = VBoxContainer.new()
 		info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		var name_lbl = Label.new()
-		name_lbl.text = target.display_name
+		var label_tag = PlayerColors.get_label(target)
+		name_lbl.text = "%s — %s" % [label_tag, target.display_name]
 		if target.is_revealed:
 			name_lbl.text += " (%s)" % target.character_name
 		name_lbl.add_theme_font_size_override("font_size", 16)
+		name_lbl.add_theme_color_override("font_color", PlayerColors.get_color(target.id))
 		info.add_child(name_lbl)
 
-		var hp_lbl = Label.new()
-		hp_lbl.text = "HP: %d/%d" % [target.hp, target.hp_max]
-		hp_lbl.add_theme_font_size_override("font_size", 14)
-		hp_lbl.add_theme_color_override("font_color", Color(0.8, 0.3, 0.3))
-		info.add_child(hp_lbl)
 		row.add_child(info)
 
 		# Action button

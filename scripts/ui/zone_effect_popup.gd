@@ -296,12 +296,6 @@ func _create_player_row(player: Player) -> HBoxContainer:
 	name_lbl.add_theme_color_override("font_color", PlayerColors.get_color(player.id))
 	info.add_child(name_lbl)
 
-	var hp_lbl = Label.new()
-	hp_lbl.text = "HP: %d/%d" % [player.hp, player.hp_max]
-	hp_lbl.add_theme_font_size_override("font_size", 12)
-	hp_lbl.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
-	info.add_child(hp_lbl)
-
 	row.add_child(info)
 	return row
 
