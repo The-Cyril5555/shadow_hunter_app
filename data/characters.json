@@ -1,5 +1,5 @@
 {
-	"version": "1.0",
+	"version": "1.1",
 	"description": "Shadow Hunter character definitions - Base game + Expansion",
 	"characters": {
 		"emi": {
@@ -9,23 +9,24 @@
 			"hp_max": 8,
 			"is_expansion": false,
 			"ability": {
-				"name": "Blessed",
-				"description": "When you attack, you may choose to add 1 to your attack damage.",
-				"type": "active",
-				"trigger": "on_attack"
+				"name": "Teleport",
+				"description": "When moving, you may choose to move to the area card paired with your current one, instead of rolling the dice.",
+				"type": "passive",
+				"trigger": "on_movement"
 			}
 		},
 		"franklin": {
 			"id": "franklin",
 			"name": "Franklin",
 			"faction": "hunter",
-			"hp_max": 11,
+			"hp_max": 12,
 			"is_expansion": false,
 			"ability": {
-				"name": "Leadership",
-				"description": "Once per game after moving, you may pick any one player and move them to your Area.",
+				"name": "Lightning",
+				"description": "Once per game, when your turn starts, you can pick a player and damage them for the roll of a 6-sided die.",
 				"type": "active",
-				"trigger": "manual"
+				"trigger": "on_turn_start",
+				"usage": "once"
 			}
 		},
 		"george": {
@@ -35,10 +36,11 @@
 			"hp_max": 14,
 			"is_expansion": false,
 			"ability": {
-				"name": "Demolition",
-				"description": "You can use the Demolition ability: pick a player in the same Area and give 3 damage, but receive 2 damage yourself.",
+				"name": "Demolish",
+				"description": "Once per game, when your turn starts, you can pick a player and damage them for the roll of a 4-sided die.",
 				"type": "active",
-				"trigger": "manual"
+				"trigger": "on_turn_start",
+				"usage": "once"
 			}
 		},
 		"unknown": {
@@ -48,10 +50,10 @@
 			"hp_max": 11,
 			"is_expansion": false,
 			"ability": {
-				"name": "Copy",
-				"description": "When revealed, you may copy another revealed player's ability.",
+				"name": "Deceit",
+				"description": "When given a Hermit Card, you may lie about your identity. You do not have to reveal your identity to use this.",
 				"type": "passive",
-				"trigger": "on_reveal"
+				"trigger": "on_hermit_card"
 			}
 		},
 		"vampire": {
@@ -61,10 +63,10 @@
 			"hp_max": 13,
 			"is_expansion": false,
 			"ability": {
-				"name": "Bloodthirst",
-				"description": "Once per game, at the start of your turn, you may give 1 damage to any player and heal 1 damage.",
-				"type": "active",
-				"trigger": "on_turn_start"
+				"name": "Suck Blood",
+				"description": "If you attack a player and inflict damage, you heal 2 points of your own damage.",
+				"type": "passive",
+				"trigger": "on_attack_hit"
 			}
 		},
 		"werewolf": {
@@ -74,10 +76,10 @@
 			"hp_max": 14,
 			"is_expansion": false,
 			"ability": {
-				"name": "Unearthly Speed",
-				"description": "After attacking, if you killed a Hunter or Neutral, heal 2 damage.",
+				"name": "Counterattack",
+				"description": "After you are attacked by a player, you can counterattack them immediately.",
 				"type": "passive",
-				"trigger": "on_kill"
+				"trigger": "on_attacked"
 			}
 		},
 		"allie": {
@@ -86,12 +88,13 @@
 			"faction": "neutral",
 			"hp_max": 8,
 			"is_expansion": false,
-			"win_condition": "Kill another player or be killed by another player.",
+			"win_condition": "You're not dead when the game is over.",
 			"ability": {
-				"name": "Lover",
-				"description": "Win by killing or being killed by another player.",
-				"type": "passive",
-				"trigger": "win_condition"
+				"name": "Mother's Love",
+				"description": "Once per game, you may fully heal your damage.",
+				"type": "active",
+				"trigger": "manual",
+				"usage": "once"
 			}
 		},
 		"bob": {
@@ -100,12 +103,12 @@
 			"faction": "neutral",
 			"hp_max": 10,
 			"is_expansion": false,
-			"win_condition": "If no Neutral wins, you must be alive when the game ends.",
+			"win_condition": "You have 5 or more equipment cards.",
 			"ability": {
-				"name": "Survivalist",
-				"description": "Win by surviving to the end if no other Neutral wins.",
+				"name": "Robbery",
+				"description": "If your attack inflicts 2 or more damage, you may steal an Equipment card instead of giving damage. (7-8 players: take all equipment from killed target.)",
 				"type": "passive",
-				"trigger": "win_condition"
+				"trigger": "on_attack_hit"
 			}
 		},
 		"charles": {
@@ -116,10 +119,10 @@
 			"is_expansion": false,
 			"win_condition": "At the time you kill another character, the total number of dead characters is 3 or more.",
 			"ability": {
-				"name": "Reaper",
-				"description": "Win by killing a character when 3+ total characters are dead.",
+				"name": "Bloody Feast",
+				"description": "After you attack a character, you can attack the same character again by giving yourself 2 points of damage.",
 				"type": "passive",
-				"trigger": "win_condition"
+				"trigger": "on_attack"
 			}
 		},
 		"daniel": {
@@ -130,10 +133,10 @@
 			"is_expansion": false,
 			"win_condition": "You must be the first player to kill, or be killed.",
 			"ability": {
-				"name": "Stalker",
-				"description": "Win by being the first to kill or be killed.",
+				"name": "Scream",
+				"description": "You must reveal your identity when another character dies. You cannot reveal your identity at any other time.",
 				"type": "passive",
-				"trigger": "win_condition"
+				"trigger": "on_character_death"
 			}
 		},
 		"ellen": {
@@ -144,22 +147,24 @@
 			"is_expansion": true,
 			"ability": {
 				"name": "Chain of Forbidden Curse",
-				"description": "Once per game, permanently disable an opponent's special ability.",
+				"description": "Once per game, when your turn starts, you can choose a player and permanently void their special ability.",
 				"type": "active",
-				"trigger": "manual"
+				"trigger": "on_turn_start",
+				"usage": "once"
 			}
 		},
 		"fuka": {
 			"id": "fuka",
 			"name": "Fuka",
 			"faction": "hunter",
-			"hp_max": 10,
+			"hp_max": 12,
 			"is_expansion": true,
 			"ability": {
 				"name": "Dynamite Nurse",
-				"description": "Once per game, set any character's damage to exactly 7 points.",
+				"description": "Once per game, when your turn starts, you can set the damage of any player to 7.",
 				"type": "active",
-				"trigger": "manual"
+				"trigger": "on_turn_start",
+				"usage": "once"
 			}
 		},
 		"gregor": {
@@ -170,9 +175,10 @@
 			"is_expansion": true,
 			"ability": {
 				"name": "Ghostly Barrier",
-				"description": "Once per game at turn end, prevent all damage until your next turn.",
+				"description": "Once per game, prevent all damage until your next turn.",
 				"type": "active",
-				"trigger": "manual"
+				"trigger": "manual",
+				"usage": "once"
 			}
 		},
 		"ultra_soul": {
@@ -183,7 +189,7 @@
 			"is_expansion": true,
 			"ability": {
 				"name": "Murder Ray",
-				"description": "At turn start, inflict 3 damage to characters at the Underworld Gate.",
+				"description": "When your turn starts, you can give 3 damage to one player who is at the Underworld Gate.",
 				"type": "active",
 				"trigger": "on_turn_start"
 			}
@@ -192,11 +198,11 @@
 			"id": "valkyrie",
 			"name": "Valkyrie",
 			"faction": "shadow",
-			"hp_max": 12,
+			"hp_max": 13,
 			"is_expansion": true,
 			"ability": {
 				"name": "Horn of War Outbreak",
-				"description": "Use only a 4-sided die for attack damage instead of the standard die.",
+				"description": "When you attack, you only roll the 4-sided die and inflict the amount of damage rolled.",
 				"type": "passive",
 				"trigger": "on_attack"
 			}
@@ -211,7 +217,8 @@
 				"name": "Multiplication",
 				"description": "Once per game at turn end, gain extra turns equal to current dead character count.",
 				"type": "active",
-				"trigger": "manual"
+				"trigger": "manual",
+				"usage": "once"
 			}
 		},
 		"agnes": {
@@ -225,7 +232,8 @@
 				"name": "Capriccio",
 				"description": "Once per game at turn start, change win condition to favor the player on your left instead.",
 				"type": "active",
-				"trigger": "on_turn_start"
+				"trigger": "on_turn_start",
+				"usage": "once"
 			}
 		},
 		"bryan": {
@@ -267,7 +275,8 @@
 				"name": "Grave Digger",
 				"description": "Once per game, obtain any equipment card from discard piles, even outside your turn.",
 				"type": "active",
-				"trigger": "manual"
+				"trigger": "manual",
+				"usage": "once"
 			}
 		}
 	},

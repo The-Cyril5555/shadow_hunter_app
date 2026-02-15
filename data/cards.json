@@ -7,25 +7,87 @@
 			"description": "Vision cards from the Hermit's Cabin",
 			"cards": [
 				{
-					"id": "hermit_vision_1",
-					"name": "Vision Card 1",
+					"id": "hermit_telepathy",
+					"name": "Télépathie",
 					"deck": "hermit",
 					"type": "vision",
-					"copies_in_deck": 2,
+					"copies_in_deck": 1,
 					"effect": {
-						"type": "reveal",
-						"description": "Reveal information about a player"
+						"type": "vision_condition",
+						"condition_factions": ["shadow", "hunter"],
+						"action": "damage_target",
+						"value": 1,
+						"description": "Je parie que tu es Shadow... ou Hunter. Si c'est le cas, reçois 1 dégât."
 					}
 				},
 				{
-					"id": "hermit_vision_2",
-					"name": "Vision Card 2",
+					"id": "hermit_clairvoyance",
+					"name": "Clairvoyance",
 					"deck": "hermit",
 					"type": "vision",
-					"copies_in_deck": 2,
+					"copies_in_deck": 1,
 					"effect": {
-						"type": "reveal",
-						"description": "Reveal information about a player"
+						"type": "vision_condition",
+						"condition_factions": ["shadow", "neutral"],
+						"action": "heal_drawer",
+						"value": 1,
+						"description": "Je parie que tu es Shadow... ou Neutre. Si c'est le cas, je me soigne 1 HP."
+					}
+				},
+				{
+					"id": "hermit_greed",
+					"name": "Vision Cupide",
+					"deck": "hermit",
+					"type": "vision",
+					"copies_in_deck": 1,
+					"effect": {
+						"type": "vision_condition",
+						"condition_factions": ["neutral"],
+						"action": "steal_equipment",
+						"value": 0,
+						"description": "Je parie que tu es Neutre. Si c'est le cas, donne-moi un de tes équipements."
+					}
+				},
+				{
+					"id": "hermit_stealth",
+					"name": "Vision Furtive",
+					"deck": "hermit",
+					"type": "vision",
+					"copies_in_deck": 1,
+					"effect": {
+						"type": "vision_condition",
+						"condition_factions": ["hunter", "neutral"],
+						"action": "damage_target",
+						"value": 1,
+						"description": "Je parie que tu es Hunter... ou Neutre. Si c'est le cas, reçois 1 dégât."
+					}
+				},
+				{
+					"id": "hermit_supreme",
+					"name": "Vision Suprême",
+					"deck": "hermit",
+					"type": "vision",
+					"copies_in_deck": 1,
+					"effect": {
+						"type": "vision_condition",
+						"condition_factions": ["hunter"],
+						"action": "damage_target",
+						"value": 2,
+						"description": "Je parie que tu es Hunter. Si c'est le cas, reçois 2 dégâts."
+					}
+				},
+				{
+					"id": "hermit_lightning",
+					"name": "Vision Foudroyante",
+					"deck": "hermit",
+					"type": "vision",
+					"copies_in_deck": 1,
+					"effect": {
+						"type": "vision_condition",
+						"condition_factions": ["shadow"],
+						"action": "damage_target",
+						"value": 1,
+						"description": "Je parie que tu es Shadow. Si c'est le cas, reçois 1 dégât."
 					}
 				}
 			]
