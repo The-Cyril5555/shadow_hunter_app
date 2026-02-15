@@ -5,50 +5,80 @@ class_name CombatSystem
 extends RefCounted
 
 
-## Calculate total attack damage (D6 + equipment bonuses)
-func calculate_attack_damage(attacker: Player, target: Player) -> int:
-	AudioManager.play_sfx("attack_swing")
+## Calculate attack damage using Shadow Hunters rules: |D6 - D4|
+## If both dice are equal, the attack misses (0 damage).
+## Valkyrie uses d4 only (no miss possible).
+## Used by bots who don't go through the visual dice popup.
+func calculate_attack_damage(attacker: Player, target: Player) -> Dictionary:
+	var d6 = randi() % 6 + 1
+	var d4 = randi() % 4 + 1
 
-	var base_damage = roll_d6()
-	var equipment_bonus = attacker.get_attack_damage_bonus()
-	var total = base_damage + equipment_bonus
+	# Valkyrie "Horn of War Outbreak" — uses d4 only, no miss
+	var is_valkyrie = attacker.character_id == "valkyrie" \
+		and attacker.is_revealed and not attacker.ability_disabled
 
-	print("[Combat] %s attacks %s: %d (base) + %d (equipment) = %d damage" % [
-		attacker.display_name,
-		target.display_name,
-		base_damage,
-		equipment_bonus,
-		total
-	])
-
-	return total
-
-
-## Apply damage to target (with defense reduction)
-func apply_damage(attacker: Player, target: Player, attack_damage: int) -> void:
-	# Calculate defense reduction
-	var defense_bonus = target.get_defense_bonus()
-	var final_damage = max(1, attack_damage - defense_bonus)  # Minimum 1 damage
-
-	# Log defense reduction if applicable
-	if defense_bonus > 0:
-		print("[Combat] %s defends: %d attack - %d defense = %d final damage" % [
-			target.display_name,
-			attack_damage,
-			defense_bonus,
-			final_damage
-		])
-		AudioManager.play_sfx("shield_block")
+	var missed: bool
+	var base_damage: int
+	if is_valkyrie:
+		missed = false
+		base_damage = d4
+		d6 = 0  # Not used
+	elif d6 == d4:
+		missed = true
+		base_damage = 0
 	else:
-		AudioManager.play_sfx("damage_hit")
+		missed = false
+		base_damage = abs(d6 - d4)
 
-	# Note: We can't spawn particles here directly because CombatSystem is RefCounted
-	# and doesn't have global_position. Particle spawning should happen in UI layer.
-	# For now, we'll emit the signal and let GameBoard handle particles.
+	var equipment_bonus = attacker.get_attack_damage_bonus()
+	var defense_bonus = target.get_defense_bonus()
+	var total = 0
+	if not missed:
+		total = max(1, base_damage + equipment_bonus - defense_bonus)
 
-	# Apply final damage
+	if is_valkyrie:
+		print("[Combat] %s (Valkyrie) attacks %s: D4=%d +%d equip −%d def = %d" % [
+			attacker.display_name, target.display_name,
+			d4, equipment_bonus, defense_bonus, total
+		])
+	else:
+		print("[Combat] %s attacks %s: D6=%d D4=%d → |%d−%d|=%d +%d equip −%d def = %d%s" % [
+			attacker.display_name, target.display_name,
+			d6, d4, d6, d4, base_damage,
+			equipment_bonus, defense_bonus, total,
+			" (MISSED)" if missed else ""
+		])
+
+	return {
+		"d6": d6, "d4": d4,
+		"base": base_damage,
+		"equipment": equipment_bonus,
+		"defense": defense_bonus,
+		"total": total,
+		"missed": missed,
+	}
+
+
+## Apply pre-calculated damage to target (defense already factored in by caller)
+func apply_damage(attacker: Player, target: Player, final_damage: int) -> void:
+	# Gregor "Ghostly Barrier" - absorb all damage if shielded
+	if target.has_meta("shielded") and target.get_meta("shielded"):
+		print("[Combat] %s is shielded by Ghostly Barrier — no damage!" % target.display_name)
+		target.set_meta("shielded", false)
+		AudioManager.play_sfx("shield_block")
+		return
+
+	if final_damage <= 0:
+		return
+
+	# Apply damage
 	target.hp -= final_damage
 	GameState.damage_dealt.emit(attacker, target, final_damage)
+
+	# Vampire "Suck Blood" - heal 2 when attacking and dealing damage
+	if attacker.character_id == "vampire" and attacker.is_revealed and not attacker.ability_disabled and final_damage > 0:
+		attacker.heal(2)
+		print("[Combat] Vampire's Suck Blood: healed 2 HP after dealing damage")
 
 	# Check for death
 	if target.hp <= 0:
@@ -61,6 +91,7 @@ func process_death(victim: Player, killer: Player) -> void:
 
 	victim.is_alive = false
 	victim.is_revealed = true
+	GameState.character_revealed.emit(victim, null, victim.faction)
 	GameState.player_died.emit(victim, killer)
 
 	print("[Combat] %s killed by %s - character revealed!" % [
@@ -69,6 +100,3 @@ func process_death(victim: Player, killer: Player) -> void:
 	])
 
 
-## Roll a D6 dice (returns 1-6)
-func roll_d6() -> int:
-	return randi() % 6 + 1

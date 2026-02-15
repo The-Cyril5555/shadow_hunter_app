@@ -113,13 +113,16 @@ static func build_action_context(bot: Player, players: Array) -> Dictionary:
 	context["has_attack_equipment"] = bot.get_attack_damage_bonus() > 0
 	context["has_defense_equipment"] = bot.get_defense_bonus() > 0
 
-	# Nearby enemies (same zone)
+	# Nearby enemies (same island/group of 2 zones)
 	var nearby_enemies = []
 	var weakest_hp = 10
+	var bot_group = ZoneData.get_group_for_zone(bot.position_zone, GameState.zone_positions)
 	for player in players:
-		if player != bot and player.is_alive and player.position_zone == bot.position_zone:
-			nearby_enemies.append(player)
-			weakest_hp = min(weakest_hp, player.hp)
+		if player != bot and player.is_alive:
+			var player_group = ZoneData.get_group_for_zone(player.position_zone, GameState.zone_positions)
+			if player_group == bot_group and bot_group != -1:
+				nearby_enemies.append(player)
+				weakest_hp = min(weakest_hp, player.hp)
 
 	context["nearby_enemies"] = nearby_enemies
 	context["weakest_enemy_hp"] = weakest_hp

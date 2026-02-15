@@ -15,10 +15,9 @@ extends RefCounted
 
 enum RevealStage {
 	BUILDUP,      # Anticipation particles and scale pulse
-	FLIP,         # Card rotation reveal
+	FLIP,         # Card scale:x flip with texture swap
 	EXPLOSION,    # Dramatic particle burst and shake
-	PAUSE,        # Hold to appreciate reveal
-	STING         # Musical cue
+	SETTLE,       # Hold to appreciate reveal
 }
 
 
@@ -30,8 +29,9 @@ enum RevealStage {
 ## @param player: Player instance being revealed
 ## @param card_node: Control/Node2D displaying the character card
 ## @param tree: SceneTree for awaiting (usually card_node.get_tree())
+## @param texture_swap_callback: Callable to swap card textures at mid-flip
 ## @returns: void (async)
-static func play_reveal_sequence(player: Player, card_node: Node, tree: SceneTree) -> void:
+static func play_reveal_sequence(player: Player, card_node: Node, tree: SceneTree, texture_swap_callback: Callable = Callable()) -> void:
 	if not is_instance_valid(player) or not is_instance_valid(card_node):
 		push_error("[AnimationOrchestrator] Invalid player or card_node")
 		return
@@ -45,16 +45,13 @@ static func play_reveal_sequence(player: Player, card_node: Node, tree: SceneTre
 	# Stage 1: Buildup (0.5s)
 	await _stage_buildup(card_node, tree)
 
-	# Stage 2: Card Flip (0.8s)
-	await _stage_flip(card_node, player, tree)
+	# Stage 2: Card Flip (0.8s) with texture swap at midpoint
+	await _stage_flip(card_node, tree, texture_swap_callback)
 
-	# Stage 3: Explosion (1.0s)
+	# Stage 3: Explosion (0.6s)
 	await _stage_explosion(card_node, tree)
 
-	# Stage 4: Music Sting (simultaneous with pause)
-	_stage_sting(player)
-
-	# Stage 5: Pause (0.7s)
+	# Stage 4: Settle (0.3s)
 	await _stage_pause(tree)
 
 	print("[AnimationOrchestrator] Reveal sequence completed for %s" % player.character_name)
@@ -85,38 +82,32 @@ static func _stage_buildup(card_node: Node, tree: SceneTree) -> void:
 	print("[AnimationOrchestrator] Buildup stage complete (%.2fs)" % duration)
 
 
-## Stage 2: Card Flip - Rotate card and reveal character
-static func _stage_flip(card_node: Node, _player: Player, tree: SceneTree) -> void:
+## Stage 2: Card Flip - Scale X flip with texture swap at midpoint
+static func _stage_flip(card_node: Node, tree: SceneTree, texture_swap_callback: Callable = Callable()) -> void:
 	var duration = PolishConfig.get_duration("card_flip_duration")
 
-	if not "rotation_degrees" in card_node:
-		push_warning("[AnimationOrchestrator] Card node doesn't have rotation_degrees property")
+	if not "scale" in card_node:
+		push_warning("[AnimationOrchestrator] Card node doesn't have scale property")
+		if texture_swap_callback.is_valid():
+			texture_swap_callback.call()
 		await tree.create_timer(duration).timeout
 		return
 
-	# Create flip animation tween
-	var tween = card_node.create_tween()
-	tween.set_trans(Tween.TRANS_CUBIC)
-	tween.set_ease(Tween.EASE_IN_OUT)
+	# Phase 1: scale:x 1.0 → 0.0 (card edge)
+	var tween1 = card_node.create_tween()
+	tween1.tween_property(card_node, "scale:x", 0.0, duration * 0.5)\
+		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+	await tween1.finished
 
-	# Rotate 180 degrees (flip over)
-	tween.tween_property(card_node, "rotation_degrees", 180.0, duration * 0.5)
+	# Swap textures at midpoint (card is invisible edge-on)
+	if texture_swap_callback.is_valid():
+		texture_swap_callback.call()
 
-	# Rotate back to 0 (complete flip)
-	tween.tween_property(card_node, "rotation_degrees", 360.0, duration * 0.5)
-
-	# Wait for mid-flip to swap texture/text
-	await tree.create_timer(duration * 0.5).timeout
-
-	# TODO: Swap card texture/text to show character (requires card_node structure)
-	# For now, just update via signal or assume UI handles it
-
-	# Wait for flip to complete
-	await tree.create_timer(duration * 0.5).timeout
-
-	# Reset rotation to 0
-	if "rotation_degrees" in card_node:
-		card_node.rotation_degrees = 0.0
+	# Phase 2: scale:x 0.0 → 1.0 (reveal face)
+	var tween2 = card_node.create_tween()
+	tween2.tween_property(card_node, "scale:x", 1.0, duration * 0.5)\
+		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	await tween2.finished
 
 	print("[AnimationOrchestrator] Flip stage complete (%.2fs)" % duration)
 
@@ -145,26 +136,7 @@ static func _stage_explosion(card_node: Node, tree: SceneTree) -> void:
 	print("[AnimationOrchestrator] Explosion stage complete (%.2fs)" % duration)
 
 
-## Stage 4: Music Sting - Play dramatic musical cue
-static func _stage_sting(player: Player) -> void:
-	# TODO: Implement music sting based on faction
-	# For now, we don't have music system yet (would be Story 5.2 expansion or later)
-	# Just log the intent
-
-	var faction_sting = "sting_%s" % player.faction
-	print("[AnimationOrchestrator] Music sting: %s (not implemented yet)" % faction_sting)
-
-	# Future implementation:
-	# match player.faction:
-	#     "hunter":
-	#         AudioManager.play_music_sting("sting_hunter")
-	#     "shadow":
-	#         AudioManager.play_music_sting("sting_shadow")
-	#     "neutral":
-	#         AudioManager.play_music_sting("sting_neutral")
-
-
-## Stage 5: Pause - Hold to appreciate the reveal
+## Stage 4: Settle - Hold to appreciate the reveal
 static func _stage_pause(tree: SceneTree) -> void:
 	var duration = PolishConfig.get_duration("reveal_pause_duration")
 

@@ -189,22 +189,25 @@ func _execute_bot_attack(bot: Player, enemies: Array) -> void:
 
 	print("[BotController] ⚔️ %s attacking %s (HP: %d)" % [bot.display_name, target.display_name, target.hp])
 
-	# Calculate and apply damage (using base damage + equipment bonuses)
-	var base_damage = 1  # Base attack damage
-	var attack_bonus = bot.get_attack_damage_bonus()
-	var total_damage = base_damage + attack_bonus
-
-	# Use CombatSystem instance to apply damage
+	# Calculate damage using Shadow Hunters rules: |D6 - D4|
 	var combat = CombatSystem.new()
-	combat.apply_damage(bot, target, total_damage)
+	var result = combat.calculate_attack_damage(bot, target)
 
-	bot_action_completed.emit(bot, "zone_action", {"action": "attack", "target": target, "damage": total_damage})
+	if result.missed:
+		print("[BotController] ❌ %s missed! (D6=%d == D4=%d)" % [bot.display_name, result.d6, result.d4])
+		bot_action_completed.emit(bot, "zone_action", {"action": "attack", "target": target, "damage": 0, "missed": true})
+		return
+
+	var hp_before = target.hp
+	combat.apply_damage(bot, target, result.total)
+
+	bot_action_completed.emit(bot, "zone_action", {"action": "attack", "target": target, "damage": result.total, "missed": false})
 	print("[BotController] ✅ %s dealt %d damage to %s (HP: %d → %d)" % [
 		bot.display_name,
-		total_damage,
+		result.total,
 		target.display_name,
-		target.hp + total_damage,  # before
-		target.hp  # after
+		hp_before,
+		target.hp
 	])
 
 

@@ -1,7 +1,7 @@
 ## ActiveAbilitySystem - Manages player-triggered active abilities
 ##
 ## Handles manual activation, targeting, validation, and effect application
-## for character active abilities (Franklin's Leadership, Vampire's Bloodthirst, etc.)
+## for character active abilities (Franklin's Lightning, Allie's Mother's Love, etc.)
 ##
 ## Features:
 ## - "Once per game" usage tracking
@@ -62,8 +62,8 @@ func register_player_ability(player: Player) -> void:
 		return  # Only register active abilities
 
 	# Initialize usage tracking
-	_ability_usage_tracker[player.player_id] = false
-	_ability_disabled_tracker[player.player_id] = false
+	_ability_usage_tracker[player.id] = false
+	_ability_disabled_tracker[player.id] = false
 
 	print("[ActiveAbilitySystem] Registered active ability for %s: %s" % [
 		player.character_name,
@@ -86,12 +86,12 @@ func can_activate_ability(player: Player) -> Dictionary:
 		return {"can_activate": false, "reason": "Not an active ability"}
 
 	# Check if ability is disabled (Ellen's curse)
-	if _ability_disabled_tracker.get(player.player_id, false):
+	if _ability_disabled_tracker.get(player.id, false):
 		return {"can_activate": false, "reason": "Ability is permanently disabled"}
 
 	# Check "once per game" constraint
 	var usage = player.ability_data.get("usage", "unlimited")
-	if usage == "once" and _ability_usage_tracker.get(player.player_id, false):
+	if usage == "once" and _ability_usage_tracker.get(player.id, false):
 		return {"can_activate": false, "reason": "Already used (once per game)"}
 
 	# Check revelation requirement
@@ -136,7 +136,7 @@ func activate_ability(player: Player, targets: Array = []) -> bool:
 	# Mark as used if "once per game"
 	var usage = player.ability_data.get("usage", "unlimited")
 	if usage == "once":
-		_ability_usage_tracker[player.player_id] = true
+		_ability_usage_tracker[player.id] = true
 		player.ability_used = true
 		print("[ActiveAbilitySystem] Marked %s's ability as used" % player.character_name)
 
@@ -154,7 +154,7 @@ func activate_ability(player: Player, targets: Array = []) -> bool:
 
 ## Disable a player's ability permanently (Ellen's curse effect)
 func disable_ability(player: Player) -> void:
-	_ability_disabled_tracker[player.player_id] = true
+	_ability_disabled_tracker[player.id] = true
 	player.ability_disabled = true
 	print("[ActiveAbilitySystem] Disabled ability for %s" % player.character_name)
 
@@ -168,19 +168,34 @@ func disable_ability(player: Player) -> void:
 func _apply_ability_effect(player: Player, targets: Array, character_id: String) -> Dictionary:
 	match character_id:
 		"franklin":
-			return _apply_franklin_leadership(player, targets)
+			return _apply_franklin_lightning(player, targets)
 
 		"george":
-			return _apply_george_demolition(player, targets)
+			return _apply_george_demolish(player, targets)
 
-		"vampire":
-			return _apply_vampire_bloodthirst(player, targets)
-
-		"emi":
-			return _apply_emi_blessed(player)
+		"allie":
+			return _apply_allie_mothers_love(player)
 
 		"ellen":
 			return _apply_ellen_curse(player, targets)
+
+		"fuka":
+			return _apply_fuka_dynamite_nurse(player, targets)
+
+		"gregor":
+			return _apply_gregor_ghostly_barrier(player)
+
+		"wight":
+			return _apply_wight_multiplication(player)
+
+		"ultra_soul":
+			return _apply_ultra_soul_murder_ray(player)
+
+		"agnes":
+			return _apply_agnes_capriccio(player)
+
+		"david":
+			return _apply_david_grave_digger(player, targets)
 
 		_:
 			return {
@@ -190,36 +205,8 @@ func _apply_ability_effect(player: Player, targets: Array, character_id: String)
 			}
 
 
-## Franklin "Leadership" - Move any player to self's zone
-func _apply_franklin_leadership(player: Player, targets: Array) -> Dictionary:
-	if targets.size() != 1:
-		return {"success": false, "effect_type": "movement", "error": "Requires exactly 1 target"}
-
-	var target = targets[0] as Player
-	if not target:
-		return {"success": false, "effect_type": "movement", "error": "Invalid target"}
-
-	# Move target to Franklin's zone
-	var old_zone = target.position_zone
-	target.position_zone = player.position_zone
-
-	print("[ActiveAbilitySystem] Franklin moved %s from %s to %s" % [
-		target.character_name,
-		old_zone,
-		player.current_zone
-	])
-
-	return {
-		"success": true,
-		"effect_type": "movement",
-		"moved_player": target.character_name,
-		"from_zone": old_zone,
-		"to_zone": player.current_zone
-	}
-
-
-## George "Demolition" - Deal 3 damage to player in same zone, take 2 self-damage
-func _apply_george_demolition(player: Player, targets: Array) -> Dictionary:
+## Franklin "Lightning" - Once per game, roll d6 to damage a target
+func _apply_franklin_lightning(player: Player, targets: Array) -> Dictionary:
 	if targets.size() != 1:
 		return {"success": false, "effect_type": "damage", "error": "Requires exactly 1 target"}
 
@@ -227,57 +214,55 @@ func _apply_george_demolition(player: Player, targets: Array) -> Dictionary:
 	if not target:
 		return {"success": false, "effect_type": "damage", "error": "Invalid target"}
 
-	# Check same zone
-	if target.position_zone != player.position_zone:
-		return {"success": false, "effect_type": "damage", "error": "Target must be in same zone"}
+	# Roll d6 for damage
+	var damage = randi() % 6 + 1
+	target.take_damage(damage, player)
 
-	# Apply damage
-	target.take_damage(3, player)
-	player.take_damage(2, player)  # Self-damage
-
-	print("[ActiveAbilitySystem] George dealt 3 damage to %s and took 2 self-damage" % target.character_name)
+	print("[ActiveAbilitySystem] Franklin's Lightning dealt %d damage (d6) to %s" % [damage, target.character_name])
 
 	return {
 		"success": true,
 		"effect_type": "damage",
-		"target_damage": 3,
-		"self_damage": 2
+		"damage": damage,
+		"dice": "d6"
 	}
 
 
-## Vampire "Bloodthirst" - Deal 1 damage to any player, heal 1
-func _apply_vampire_bloodthirst(player: Player, targets: Array) -> Dictionary:
+## George "Demolish" - Once per game, roll d4 to damage a target
+func _apply_george_demolish(player: Player, targets: Array) -> Dictionary:
 	if targets.size() != 1:
-		return {"success": false, "effect_type": "damage_heal", "error": "Requires exactly 1 target"}
+		return {"success": false, "effect_type": "damage", "error": "Requires exactly 1 target"}
 
 	var target = targets[0] as Player
 	if not target:
-		return {"success": false, "effect_type": "damage_heal", "error": "Invalid target"}
+		return {"success": false, "effect_type": "damage", "error": "Invalid target"}
 
-	# Deal damage and heal
-	target.take_damage(1, player)
-	player.heal(1)
+	# Roll d4 for damage
+	var damage = randi() % 4 + 1
+	target.take_damage(damage, player)
 
-	print("[ActiveAbilitySystem] Vampire dealt 1 damage to %s and healed 1 HP" % target.character_name)
+	print("[ActiveAbilitySystem] George's Demolish dealt %d damage (d4) to %s" % [damage, target.character_name])
 
 	return {
 		"success": true,
-		"effect_type": "damage_heal",
-		"damage": 1,
-		"heal": 1
+		"effect_type": "damage",
+		"damage": damage,
+		"dice": "d4"
 	}
 
 
-## Emi "Blessed" - Add +1 damage to attack (handled by combat system)
-func _apply_emi_blessed(player: Player) -> Dictionary:
-	# This ability is actually triggered during combat
-	# Return success as a confirmation that the bonus will be applied
-	print("[ActiveAbilitySystem] Emi's Blessed activated (+1 damage this attack)")
+## Allie "Mother's Love" - Once per game, fully heal all damage
+func _apply_allie_mothers_love(player: Player) -> Dictionary:
+	var old_hp = player.hp
+	player.hp = player.hp_max
+
+	print("[ActiveAbilitySystem] Allie's Mother's Love: healed from %d to %d HP" % [old_hp, player.hp])
 
 	return {
 		"success": true,
-		"effect_type": "damage_boost",
-		"damage_bonus": 1
+		"effect_type": "full_heal",
+		"old_hp": old_hp,
+		"new_hp": player.hp
 	}
 
 
@@ -302,18 +287,130 @@ func _apply_ellen_curse(player: Player, targets: Array) -> Dictionary:
 	}
 
 
+## Fuka "Dynamite Nurse" - Set any character's damage to exactly 7 points
+func _apply_fuka_dynamite_nurse(player: Player, targets: Array) -> Dictionary:
+	if targets.size() != 1:
+		return {"success": false, "effect_type": "damage_set", "error": "Requires exactly 1 target"}
+
+	var target = targets[0] as Player
+	if not target:
+		return {"success": false, "effect_type": "damage_set", "error": "Invalid target"}
+
+	# Set damage to exactly 7: hp = hp_max - 7
+	var old_hp = target.hp
+	var new_hp = target.hp_max - 7
+	target.hp = max(0, new_hp)
+
+	print("[ActiveAbilitySystem] Fuka set %s's damage to 7 (HP: %d -> %d)" % [
+		target.character_name, old_hp, target.hp
+	])
+
+	return {
+		"success": true,
+		"effect_type": "damage_set",
+		"target": target.character_name,
+		"old_hp": old_hp,
+		"new_hp": target.hp
+	}
+
+
+## Gregor "Ghostly Barrier" - Prevent all damage until next turn
+func _apply_gregor_ghostly_barrier(player: Player) -> Dictionary:
+	player.set_meta("shielded", true)
+
+	print("[ActiveAbilitySystem] Gregor activated Ghostly Barrier (shielded until next turn)")
+
+	return {
+		"success": true,
+		"effect_type": "shield",
+	}
+
+
+## Wight "Multiplication" - Gain extra turns equal to dead character count
+func _apply_wight_multiplication(player: Player) -> Dictionary:
+	var dead_count = 0
+	for p in GameState.players:
+		if p.hp <= 0 and p.id != player.id:
+			dead_count += 1
+
+	player.set_meta("extra_turns", dead_count)
+
+	print("[ActiveAbilitySystem] Wight gains %d extra turns (%d dead characters)" % [
+		dead_count, dead_count
+	])
+
+	return {
+		"success": true,
+		"effect_type": "extra_turns",
+		"extra_turns": dead_count
+	}
+
+
+## Ultra Soul "Murder Ray" - Inflict 3 damage to all characters at the Underworld
+func _apply_ultra_soul_murder_ray(player: Player) -> Dictionary:
+	var hit_players: Array = []
+	for p in GameState.players:
+		if p.position_zone == "underworld" and p.id != player.id and p.hp > 0:
+			p.take_damage(3, player)
+			hit_players.append(p.character_name if p.is_revealed else PlayerColors.get_label(p))
+
+	print("[ActiveAbilitySystem] Ultra Soul's Murder Ray hit %d players at Underworld" % hit_players.size())
+
+	return {
+		"success": true,
+		"effect_type": "area_damage",
+		"damage": 3,
+		"hit_count": hit_players.size(),
+		"hit_players": hit_players
+	}
+
+
+## Agnes "Capriccio" - Swap attack target direction (right neighbor -> left)
+func _apply_agnes_capriccio(player: Player) -> Dictionary:
+	player.set_meta("capriccio_active", true)
+
+	print("[ActiveAbilitySystem] Agnes activated Capriccio (target direction swapped)")
+
+	return {
+		"success": true,
+		"effect_type": "target_swap",
+	}
+
+
+## David "Grave Digger" - Obtain an equipment card from discard piles
+## @param targets: Array with a single Card element (chosen equipment from discard)
+func _apply_david_grave_digger(player: Player, targets: Array) -> Dictionary:
+	if targets.size() != 1:
+		return {"success": false, "effect_type": "equip_discard", "error": "Requires exactly 1 equipment card"}
+
+	var card = targets[0]
+	if not card or not card is Card:
+		return {"success": false, "effect_type": "equip_discard", "error": "Invalid card"}
+
+	# Equip the card directly
+	player.equipment.append(card)
+
+	print("[ActiveAbilitySystem] David equipped %s from discard" % card.name)
+
+	return {
+		"success": true,
+		"effect_type": "equip_discard",
+		"card_name": card.name
+	}
+
+
 # =============================================================================
 # UTILITY METHODS
 # =============================================================================
 
 ## Check if player has used their ability (for UI display)
 func has_used_ability(player: Player) -> bool:
-	return _ability_usage_tracker.get(player.player_id, false)
+	return _ability_usage_tracker.get(player.id, false)
 
 
 ## Check if player's ability is disabled (for UI display)
 func is_ability_disabled(player: Player) -> bool:
-	return _ability_disabled_tracker.get(player.player_id, false)
+	return _ability_disabled_tracker.get(player.id, false)
 
 
 ## Reset all ability usage (for new game)
