@@ -1,6 +1,7 @@
-[gd_scene load_steps=12 format=3 uid="uid://yjhv3prk4kl2"]
+[gd_scene load_steps=14 format=3 uid="uid://yjhv3prk4kl2"]
 
 [ext_resource type="Script" uid="uid://ohu15oidcil" path="res://scripts/game/game_board.gd" id="1_game_board"]
+[ext_resource type="Shader" path="res://assets/shaders/balatro_bg.gdshader" id="12_balatro_bg"]
 [ext_resource type="PackedScene" uid="uid://b86qiecm7mcqb" path="res://scenes/ui/card_reveal.tscn" id="2_card_reveal"]
 [ext_resource type="PackedScene" path="res://scenes/ui/equipment_action_menu.tscn" id="3_equipment_action_menu"]
 [ext_resource type="PackedScene" path="res://scenes/ui/target_selection_panel.tscn" id="4_target_selection_panel"]
@@ -11,6 +12,10 @@
 [ext_resource type="PackedScene" path="res://scenes/board/action_prompt.tscn" id="9_action_prompt"]
 [ext_resource type="PackedScene" path="res://scenes/board/human_player_info.tscn" id="10_human_player_info"]
 [ext_resource type="PackedScene" path="res://scenes/ui/zone_effect_popup.tscn" id="11_zone_effect_popup"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_board_bg"]
+shader = ExtResource("12_balatro_bg")
+shader_parameter/is_rotating = false
 
 [node name="GameBoard" type="Control"]
 layout_mode = 3
@@ -28,7 +33,8 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.25, 0.15, 0.35, 1)
+material = SubResource("ShaderMaterial_board_bg")
+color = Color(1, 1, 1, 1)
 
 [node name="MainLayout" type="MarginContainer" parent="."]
 layout_mode = 1
@@ -67,7 +73,16 @@ size_flags_vertical = 3
 theme_override_constants/separation = 8
 alignment = 1
 
-[node name="ActionPrompt" parent="MainLayout/VBoxContainer/MiddleRow/CenterArea" instance=ExtResource("9_action_prompt")]
+[node name="ActionPrompt" parent="." instance=ExtResource("9_action_prompt")]
+layout_mode = 1
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -260
+offset_top = -210
+offset_right = 0
+offset_bottom = 0
 
 [node name="TurnInfoPanel" type="VBoxContainer" parent="MainLayout/VBoxContainer/MiddleRow"]
 custom_minimum_size = Vector2(150, 0)
