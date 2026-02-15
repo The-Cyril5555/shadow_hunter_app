@@ -82,52 +82,56 @@ func mark_player_dead(player: Player) -> void:
 # Private Methods
 # -----------------------------------------------------------------------------
 
-## Apply HP score card background texture
+## Apply brown background with gold border
 func _apply_background() -> void:
-	var bg_path = CardImageMapper.get_hp_score_card_path("variant_01")
-	var bg_texture = CardImageMapper.load_texture(bg_path)
-	if bg_texture:
-		var style = StyleBoxTexture.new()
-		style.texture = bg_texture
-		style.content_margin_left = 8
-		style.content_margin_top = 8
-		style.content_margin_right = 8
-		style.content_margin_bottom = 8
-		add_theme_stylebox_override("panel", style)
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color(0.25, 0.15, 0.08)
+	style.set_border_width_all(2)
+	style.border_color = Color(0.85, 0.68, 0.2)
+	style.set_corner_radius_all(6)
+	style.content_margin_left = 10
+	style.content_margin_top = 10
+	style.content_margin_right = 10
+	style.content_margin_bottom = 10
+	add_theme_stylebox_override("panel", style)
 
 
-## Build the row structure
+## Build the row structure with gold separators and uniform spacing
 func _build_rows() -> void:
 	_row_containers.clear()
 
-	# Row 0 = "NO DAMAGE" (title row tokens area)
-	# Already exists as the first flow in the scene
-	# Rows 1-14 are built dynamically
 	for i in range(MAX_DAMAGE_ROWS + 1):
+		# Gold separator between rows (not before the first)
+		if i > 0:
+			var gold_line = ColorRect.new()
+			gold_line.color = Color(0.85, 0.68, 0.2)
+			gold_line.custom_minimum_size = Vector2(0, 1)
+			gold_line.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			rows_container.add_child(gold_line)
+
 		var row = HBoxContainer.new()
-		row.add_theme_constant_override("separation", 4)
+		row.add_theme_constant_override("separation", 6)
+		row.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		row.alignment = BoxContainer.ALIGNMENT_CENTER
 
 		if i == 0:
-			# "NO DAMAGE" row - no number label needed, title handles it
+			# "NO DAMAGE" row - no number label, title handles it
 			pass
 		else:
 			var num_label = Label.new()
 			num_label.text = str(i)
-			num_label.custom_minimum_size = Vector2(28, 0)
+			num_label.custom_minimum_size = Vector2(24, 0)
 			num_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			num_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 			num_label.add_theme_font_size_override("font_size", 14)
-			num_label.add_theme_color_override("font_color", Color(0.85, 0.75, 0.5))
+			num_label.add_theme_color_override("font_color", Color(0.85, 0.68, 0.2))
 			row.add_child(num_label)
-
-		# Separator line after number
-		var sep = HSeparator.new()
-		sep.custom_minimum_size = Vector2(0, 1)
-		sep.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
 		# Token flow area
 		var token_flow = HBoxContainer.new()
 		token_flow.add_theme_constant_override("separation", 3)
 		token_flow.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		token_flow.alignment = BoxContainer.ALIGNMENT_CENTER
 		row.add_child(token_flow)
 
 		rows_container.add_child(row)

@@ -44,11 +44,11 @@ func _update_tooltip() -> void:
 		return
 	var type_str = "Humain" if player.is_human else "Bot"
 	var tip = "%s (%s)" % [player.display_name, type_str]
-	tip += "\nHP: %d/%d" % [player.hp, player.hp_max]
 
 	if player.character_name != "" and player.is_revealed:
 		tip += "\nPersonnage: %s" % player.character_name
 		tip += "\nFaction: %s" % player.faction.capitalize()
+		tip += "\nHP: %d/%d" % [player.hp, player.hp_max]
 
 	if player.equipment.size() > 0:
 		tip += "\n\nÉquipement:"

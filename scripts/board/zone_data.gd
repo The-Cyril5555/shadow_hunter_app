@@ -147,6 +147,14 @@ static func get_group_for_position(position: int) -> int:
 	return -1
 
 
+## Get the group (island) for a zone_id using current zone_positions layout
+static func get_group_for_zone(zone_id: String, zone_positions: Array) -> int:
+	var idx = zone_positions.find(zone_id)
+	if idx == -1:
+		return -1
+	return get_group_for_position(idx)
+
+
 ## Format dice range as display string (e.g. "2-3", "6", "8-9")
 static func format_dice_range(dice_range: Array) -> String:
 	if dice_range.size() == 0:

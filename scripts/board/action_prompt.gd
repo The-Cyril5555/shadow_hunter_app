@@ -1,5 +1,5 @@
-## ActionPrompt - Inline contextual prompt for player actions
-## Sits below the zone cards, showing what the current player can do.
+## ActionPrompt - Action buttons (Reveal / Ability / Attack / End Turn) anchored bottom-right
+## Always visible, disabled when not the player's action phase.
 class_name ActionPrompt
 extends PanelContainer
 
@@ -7,96 +7,105 @@ extends PanelContainer
 # -----------------------------------------------------------------------------
 # Signals
 # -----------------------------------------------------------------------------
-signal action_chosen(action: String)  # "draw", "attack", "end_turn"
+signal action_chosen(action: String)  # "reveal", "ability", "attack", "end_turn"
 
 
 # -----------------------------------------------------------------------------
 # References @onready
 # -----------------------------------------------------------------------------
-@onready var prompt_label: Label = $MarginContainer/HBoxContainer/PromptLabel
-@onready var draw_button: Button = $MarginContainer/HBoxContainer/DrawButton
-@onready var attack_button: Button = $MarginContainer/HBoxContainer/AttackButton
-@onready var end_turn_button: Button = $MarginContainer/HBoxContainer/EndTurnButton
+@onready var reveal_button: Button = $MarginContainer/VBoxContainer/RevealButton
+@onready var ability_button: Button = $MarginContainer/VBoxContainer/AbilityButton
+@onready var attack_button: Button = $MarginContainer/VBoxContainer/AttackButton
+@onready var end_turn_button: Button = $MarginContainer/VBoxContainer/EndTurnButton
 
 
 # -----------------------------------------------------------------------------
 # Lifecycle
 # -----------------------------------------------------------------------------
 func _ready() -> void:
-	draw_button.pressed.connect(func(): action_chosen.emit("draw"))
+	reveal_button.pressed.connect(func(): action_chosen.emit("reveal"))
+	ability_button.pressed.connect(func(): action_chosen.emit("ability"))
 	attack_button.pressed.connect(func(): action_chosen.emit("attack"))
 	end_turn_button.pressed.connect(func(): action_chosen.emit("end_turn"))
-	visible = false
+
+	# Style the panel
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color(0.1, 0.08, 0.15, 0.85)
+	style.border_color = Color(0.4, 0.35, 0.25)
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(8)
+	add_theme_stylebox_override("panel", style)
+
+	# Start disabled
+	_set_disabled(true)
+	visible = true
 
 
 # -----------------------------------------------------------------------------
 # Public Methods
 # -----------------------------------------------------------------------------
 
-## Show action choices for the current human player
-func show_action_prompt(player: Player, can_draw: bool, deck_type: String, target_count: int) -> void:
-	# Build contextual message
-	if can_draw and deck_type != "":
-		var deck_name = deck_type.capitalize()
-		prompt_label.text = "%s peut piocher une carte %s" % [PlayerColors.get_label(player), deck_name]
-	else:
-		prompt_label.text = "Tour de %s — Choisissez une action" % PlayerColors.get_label(player)
-	prompt_label.add_theme_color_override("font_color", PlayerColors.get_color(player.id))
-
-	# Draw is automatic on zone arrival, hide button
-	draw_button.visible = false
-	attack_button.visible = true
-	attack_button.disabled = target_count == 0
-	attack_button.text = "Attaquer (%d)" % target_count if target_count > 0 else "Attaquer"
-	end_turn_button.visible = true
-	end_turn_button.disabled = false
-
-	_show_animated()
+## Enable buttons after card draw (action phase)
+func show_action_prompt(player: Player, _can_draw: bool, _deck_type: String, target_count: int, has_attacked: bool = false) -> void:
+	_update_buttons(player, target_count, has_attacked)
 
 
-## Update prompt after a draw (disable draw, keep attack/end)
-func update_after_draw(player: Player, target_count: int) -> void:
-	prompt_label.text = "Carte piochée — Choisissez une action"
-	prompt_label.add_theme_color_override("font_color", PlayerColors.get_color(player.id))
-	draw_button.disabled = true
-	attack_button.disabled = target_count == 0
-	attack_button.text = "Attaquer (%d)" % target_count if target_count > 0 else "Attaquer"
-	end_turn_button.disabled = false
-	_show_animated()
+## Enable buttons after card draw
+func update_after_draw(player: Player, target_count: int, has_attacked: bool = false) -> void:
+	_update_buttons(player, target_count, has_attacked)
 
 
-## Show a waiting message during bot turns
-func show_waiting_prompt(player_name: String) -> void:
-	prompt_label.text = "Tour de %s..." % player_name
-	prompt_label.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
-	draw_button.visible = false
-	attack_button.visible = false
-	end_turn_button.visible = false
-	_show_animated()
+## Disable buttons during bot turns
+func show_waiting_prompt(_player_name: String) -> void:
+	_set_disabled(true)
 
 
-## Show movement phase prompt
-func show_movement_prompt(player: Player) -> void:
-	prompt_label.text = "%s — Lancez les dés pour vous déplacer" % PlayerColors.get_label(player)
-	prompt_label.add_theme_color_override("font_color", PlayerColors.get_color(player.id))
-	draw_button.visible = false
-	attack_button.visible = false
-	end_turn_button.visible = false
-	_show_animated()
+## Disable buttons during movement phase
+func show_movement_prompt(_player: Player) -> void:
+	_set_disabled(true)
 
 
-## Hide the prompt
+## Disable buttons (end of turn)
 func hide_prompt() -> void:
-	visible = false
+	_set_disabled(true)
 
 
 # -----------------------------------------------------------------------------
 # Private Methods
 # -----------------------------------------------------------------------------
 
-func _show_animated() -> void:
-	if not visible:
-		visible = true
-		modulate.a = 0.0
-		var tween = create_tween()
-		tween.tween_property(self, "modulate:a", 1.0, 0.15)
+func _update_buttons(player: Player, target_count: int, has_attacked: bool) -> void:
+	# Daniel cannot voluntarily reveal (only via Scream on character death)
+	reveal_button.disabled = player.is_revealed or player.character_id == "daniel"
+	_update_ability_button(player)
+	attack_button.disabled = target_count == 0 or has_attacked
+	attack_button.text = "Attaquer (%d)" % target_count if target_count > 0 and not has_attacked else "Attaquer"
+	end_turn_button.disabled = false
+
+
+func _update_ability_button(player: Player) -> void:
+	# Must be revealed and have an active ability
+	if not player.is_revealed:
+		ability_button.disabled = true
+		ability_button.text = "Compétence"
+		return
+
+	var ability = player.ability_data
+	if ability.is_empty() or ability.get("type", "") != "active":
+		ability_button.disabled = true
+		ability_button.text = "Compétence"
+		return
+
+	# Check with ActiveAbilitySystem
+	var check = GameState.active_ability_system.can_activate_ability(player)
+	ability_button.disabled = not check.can_activate
+	ability_button.text = ability.get("name", "Compétence")
+
+
+func _set_disabled(disabled: bool) -> void:
+	reveal_button.disabled = disabled
+	ability_button.disabled = disabled
+	ability_button.text = "Compétence"
+	attack_button.disabled = disabled
+	attack_button.text = "Attaquer"
+	end_turn_button.disabled = disabled

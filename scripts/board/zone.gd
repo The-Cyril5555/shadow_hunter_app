@@ -16,6 +16,7 @@ signal zone_clicked(zone: Zone)
 var zone_id: String = ""
 var zone_name: String = ""
 var deck_type: String = ""
+var zone_description: String = ""
 var dice_range: Array = []
 var players_here: Array = []
 var is_highlighted: bool = false
@@ -38,6 +39,7 @@ func setup(zone_data: Dictionary, position_dice_range: Array = []) -> void:
 	zone_id = zone_data.get("id", "")
 	zone_name = zone_data.get("name", "Unknown Zone")
 	deck_type = zone_data.get("deck_type", "")
+	zone_description = zone_data.get("description", "")
 	dice_range = position_dice_range
 
 	# Load zone card image as primary visual
@@ -60,12 +62,7 @@ func setup(zone_data: Dictionary, position_dice_range: Array = []) -> void:
 	_apply_zone_style()
 
 	# Set tooltip
-	var tip = zone_name
-	if deck_type != "":
-		tip += "\nDeck: %s" % deck_type.capitalize()
-	if dice_range.size() > 0:
-		tip += "\nDés: %s" % ZoneData.format_dice_range(dice_range)
-	tooltip_text = tip
+	_update_tooltip()
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 
 	print("[Zone] Initialized zone: %s (dice: %s)" % [zone_name, ZoneData.format_dice_range(dice_range)])
@@ -151,11 +148,12 @@ func _update_tooltip() -> void:
 		text += " [%s]" % ZoneData.format_dice_range(dice_range)
 	if deck_type != "":
 		text += "\nDeck: %s" % deck_type.capitalize()
+	if zone_description != "":
+		text += "\n%s" % zone_description
 	if players_here.size() > 0:
 		text += "\n\nJoueurs (%d):" % players_here.size()
 		for p in players_here:
-			var status = "HP: %d/%d" % [p.hp, p.hp_max] if p.is_alive else "Mort"
-			text += "\n  %s - %s" % [p.display_name, status]
+			text += "\n  %s" % p.display_name
 	tooltip_text = text
 
 

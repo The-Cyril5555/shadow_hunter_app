@@ -3,43 +3,44 @@
 [ext_resource type="Script" path="res://scripts/board/action_prompt.gd" id="1_prompt"]
 
 [node name="ActionPrompt" type="PanelContainer"]
-custom_minimum_size = Vector2(0, 60)
-layout_mode = 2
+custom_minimum_size = Vector2(240, 0)
 script = ExtResource("1_prompt")
 
 [node name="MarginContainer" type="MarginContainer" parent="."]
 layout_mode = 2
-theme_override_constants/margin_left = 16
-theme_override_constants/margin_top = 8
-theme_override_constants/margin_right = 16
-theme_override_constants/margin_bottom = 8
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
 
-[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
 layout_mode = 2
-theme_override_constants/separation = 16
-alignment = 1
+theme_override_constants/separation = 8
 
-[node name="PromptLabel" type="Label" parent="MarginContainer/HBoxContainer"]
+[node name="RevealButton" type="Button" parent="MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(220, 48)
 layout_mode = 2
-size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 16
-text = "Choisissez une action"
-vertical_alignment = 1
+text = "Se révéler"
+disabled = true
 
-[node name="DrawButton" type="Button" parent="MarginContainer/HBoxContainer"]
-custom_minimum_size = Vector2(120, 40)
+[node name="AbilityButton" type="Button" parent="MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(220, 48)
 layout_mode = 2
-theme_override_font_sizes/font_size = 14
-text = "Piocher"
+theme_override_font_sizes/font_size = 16
+text = "Compétence"
+disabled = true
 
-[node name="AttackButton" type="Button" parent="MarginContainer/HBoxContainer"]
-custom_minimum_size = Vector2(120, 40)
+[node name="AttackButton" type="Button" parent="MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(220, 48)
 layout_mode = 2
-theme_override_font_sizes/font_size = 14
+theme_override_font_sizes/font_size = 16
 text = "Attaquer"
+disabled = true
 
-[node name="EndTurnButton" type="Button" parent="MarginContainer/HBoxContainer"]
-custom_minimum_size = Vector2(120, 40)
+[node name="EndTurnButton" type="Button" parent="MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(220, 48)
 layout_mode = 2
-theme_override_font_sizes/font_size = 14
+theme_override_font_sizes/font_size = 16
 text = "Fin de tour"
+disabled = true
