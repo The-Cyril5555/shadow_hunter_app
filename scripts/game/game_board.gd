@@ -913,7 +913,7 @@ func _apply_instant_card_effect(card: Card, player: Player) -> void:
 			var d6 = randi() % 6 + 1
 			var d4 = randi() % 4 + 1
 			var dice_sum = d6 + d4
-			var zone_id = ZoneData.get_zone_for_dice_sum(dice_sum)
+			var zone_id = ZoneData.get_zone_for_dice_sum(dice_sum, GameState.zone_positions)
 			var dmg = card.effect.get("damage", 3)
 			if zone_id == "":
 				if toast:
