@@ -194,6 +194,7 @@ func _update_equipment() -> void:
 		tex_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		tex_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		tex_rect.custom_minimum_size = Vector2(60, 84)
+		tex_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var texture = CardImageMapper.load_texture(CardImageMapper.get_card_image_path(card))
 		if texture:
 			tex_rect.texture = texture

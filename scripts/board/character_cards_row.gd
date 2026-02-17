@@ -215,6 +215,7 @@ func _create_card_slot(player: Player) -> PanelContainer:
 	bg_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	bg_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	bg_rect.size = Vector2(CARD_WIDTH, CARD_HEIGHT)
+	bg_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	card_container.add_child(bg_rect)
 
 	var char_rect = TextureRect.new()
@@ -223,6 +224,7 @@ func _create_card_slot(player: Player) -> PanelContainer:
 	char_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	char_rect.size = Vector2(CARD_WIDTH, CARD_HEIGHT)
 	char_rect.visible = false
+	char_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	card_container.add_child(char_rect)
 
 	# Shine overlay (transparent, renders the tilt shader)
