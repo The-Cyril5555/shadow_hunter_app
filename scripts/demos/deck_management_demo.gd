@@ -62,40 +62,37 @@ func _on_init_deck_pressed() -> void:
 	# Create sample card data (simplified White deck cards)
 	var test_cards_data = [
 		{
-			"id": "holy_water",
-			"name": "Holy Water",
+			"id": "white_holy_water",
+			"name": "Eau Bénite",
 			"deck": "white",
-			"type": "equipment",
-			"effect": "damage",
-			"value": 1,
-			"copies_in_deck": 3
+			"type": "instant",
+			"copies_in_deck": 3,
+			"effect": {"type": "heal", "value": 2, "description": "Soigne 2 HP."}
 		},
 		{
-			"id": "first_aid",
+			"id": "white_first_aid",
 			"name": "First Aid",
 			"deck": "white",
-			"type": "equipment",
-			"effect": "heal",
-			"value": 2,
-			"copies_in_deck": 2
+			"type": "instant",
+			"copies_in_deck": 2,
+			"effect": {"type": "set_damage", "value": 7, "description": "Set damage to 7."}
 		},
 		{
-			"id": "holy_robe",
+			"id": "white_holy_robe",
 			"name": "Holy Robe",
 			"deck": "white",
 			"type": "equipment",
-			"effect": "defense",
-			"value": 1,
-			"copies_in_deck": 2
+			"copies_in_deck": 2,
+			"effect": {"type": "defense", "value": 1, "description": "Defense +1."}
 		},
 		{
-			"id": "talisman",
-			"name": "Talisman",
+			"id": "white_spear_longinus",
+			"name": "Lance de Longinus",
 			"deck": "white",
 			"type": "equipment",
-			"effect": "damage",
-			"value": 2,
-			"copies_in_deck": 1
+			"copies_in_deck": 1,
+			"faction_restriction": "hunter",
+			"effect": {"type": "damage", "value": 2, "description": "Attack +2."}
 		}
 	]
 
@@ -146,11 +143,10 @@ func _on_draw_card_pressed() -> void:
 
 	if card:
 		drawn_cards.append(card)
-		print("  Drew: %s (type: %s, effect: %s +%d)" % [
+		print("  Drew: %s (type: %s, %s)" % [
 			card.name,
 			card.type,
-			card.effect,
-			card.value
+			card.get_effect_description()
 		])
 	else:
 		print("  ❌ Deck exhausted!")

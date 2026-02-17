@@ -84,15 +84,17 @@ func mark_player_dead(player: Player) -> void:
 
 ## Apply brown background with gold border
 func _apply_background() -> void:
-	var style = StyleBoxFlat.new()
-	style.bg_color = Color(0.25, 0.15, 0.08)
-	style.set_border_width_all(2)
-	style.border_color = Color(0.85, 0.68, 0.2)
-	style.set_corner_radius_all(6)
-	style.content_margin_left = 10
-	style.content_margin_top = 10
-	style.content_margin_right = 10
-	style.content_margin_bottom = 10
+	var tex = load("res://asset_remake/life_asset.png")
+	var style = StyleBoxTexture.new()
+	style.texture = tex
+	style.texture_margin_left = 15
+	style.texture_margin_top = 15
+	style.texture_margin_right = 15
+	style.texture_margin_bottom = 15
+	style.content_margin_left = 16
+	style.content_margin_top = 16
+	style.content_margin_right = 16
+	style.content_margin_bottom = 16
 	add_theme_stylebox_override("panel", style)
 
 
@@ -103,14 +105,16 @@ func _build_rows() -> void:
 	for i in range(MAX_DAMAGE_ROWS + 1):
 		# Gold separator between rows (not before the first)
 		if i > 0:
-			var gold_line = ColorRect.new()
-			gold_line.color = Color(0.85, 0.68, 0.2)
-			gold_line.custom_minimum_size = Vector2(0, 1)
+			var gold_line = TextureRect.new()
+			gold_line.texture = load("res://asset_remake/gold_bar.png")
+			gold_line.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			gold_line.stretch_mode = TextureRect.STRETCH_SCALE
+			gold_line.custom_minimum_size = Vector2(0, 4)
 			gold_line.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			rows_container.add_child(gold_line)
 
 		var row = HBoxContainer.new()
-		row.add_theme_constant_override("separation", 6)
+		row.add_theme_constant_override("separation", 8)
 		row.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		row.alignment = BoxContainer.ALIGNMENT_CENTER
 
@@ -120,10 +124,10 @@ func _build_rows() -> void:
 		else:
 			var num_label = Label.new()
 			num_label.text = str(i)
-			num_label.custom_minimum_size = Vector2(24, 0)
+			num_label.custom_minimum_size = Vector2(30, 0)
 			num_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 			num_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-			num_label.add_theme_font_size_override("font_size", 14)
+			num_label.add_theme_font_size_override("font_size", 18)
 			num_label.add_theme_color_override("font_color", Color(0.85, 0.68, 0.2))
 			row.add_child(num_label)
 
@@ -142,7 +146,7 @@ func _build_rows() -> void:
 func _create_marker(player: Player) -> Label:
 	var marker = Label.new()
 	marker.text = PlayerColors.get_label(player)
-	marker.add_theme_font_size_override("font_size", 13)
+	marker.add_theme_font_size_override("font_size", 16)
 	marker.add_theme_color_override("font_color", PlayerColors.get_color(player.id))
 	return marker
 

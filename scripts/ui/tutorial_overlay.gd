@@ -19,60 +19,19 @@ signal step_action_required(action: String)
 # CONSTANTS
 # =============================================================================
 
-const STEPS: Array[Dictionary] = [
-	{
-		"title": "Bienvenue dans Shadow Hunter !",
-		"text": "Ce tutoriel vous guidera à travers les mécaniques de base du jeu.\n\nShadow Hunter est un jeu de plateau où des Hunters, Shadows et Neutres s'affrontent dans l'ombre. Votre identité est secrète !",
-		"action": "next",
-	},
-	{
-		"title": "Le plateau de jeu",
-		"text": "Le plateau comporte 6 zones. Chaque zone a des propriétés différentes :\n\n• 3 zones ont un deck de cartes (Hermite, Lumière, Ténèbres)\n• 3 zones n'ont pas de deck\n\nLes zones sont connectées entre elles pour le déplacement.",
-		"action": "next",
-	},
-	{
-		"title": "Phase 1 : Mouvement",
-		"text": "Chaque tour commence par la phase de mouvement.\n\nCliquez sur le bouton « Lancer les dés » pour déterminer votre distance de déplacement.",
-		"action": "roll_dice",
-		"highlight": "roll_dice_button",
-	},
-	{
-		"title": "Choisir une zone",
-		"text": "Les zones accessibles sont maintenant en surbrillance jaune.\n\nCliquez sur une zone en surbrillance pour vous y déplacer. Essayez de choisir une zone avec un deck de cartes !",
-		"action": "move_to_zone",
-	},
-	{
-		"title": "Phase 2 : Action",
-		"text": "Après le mouvement, vous entrez en phase d'action. Vous pouvez :\n\n• Piocher une carte du deck de votre zone\n• Attaquer un joueur dans votre zone\n• Terminer votre tour\n\nCliquez sur « Piocher une carte » si un deck est disponible.",
-		"action": "draw_card_or_next",
-		"highlight": "draw_card_button",
-	},
-	{
-		"title": "Les cartes",
-		"text": "Il y a 3 types de cartes :\n\n• Instantanée — Effet immédiat (soin ou dégâts)\n• Équipement — Ajoutée à votre main, à équiper pour des bonus\n• Vision — Devinez la faction d'un autre joueur\n\nLes cartes équipement apparaissent dans votre main à gauche.",
-		"action": "next",
-	},
-	{
-		"title": "Le combat",
-		"text": "Pour attaquer, vous devez être dans la même zone qu'un autre joueur.\n\nLes dégâts = D6 + bonus d'équipement.\nSi les HP d'un joueur tombent à 0, il meurt et son personnage est révélé.",
-		"action": "next",
-	},
-	{
-		"title": "Factions et victoire",
-		"text": "3 factions avec des objectifs différents :\n\n• HUNTERS — Éliminer tous les Shadows\n• SHADOWS — Éliminer tous les Hunters\n• NEUTRALS — Objectif personnel unique\n\nVotre faction est secrète. Vous pouvez vous révéler pour activer des capacités spéciales.",
-		"action": "next",
-	},
-	{
-		"title": "Commandes utiles",
-		"text": "• Échap — Menu pause (sauvegarde, chargement)\n• F1 — Aide et règles complètes\n• Survolez les éléments pour voir les tooltips\n\nVous pouvez rejouer ce tutoriel depuis le menu principal à tout moment.",
-		"action": "next",
-	},
-	{
-		"title": "Tutoriel terminé !",
-		"text": "Vous connaissez maintenant les bases de Shadow Hunter !\n\nCliquez « Terminer » pour retourner au menu principal et commencer une vraie partie.",
-		"action": "finish",
-	},
-]
+func _get_steps() -> Array[Dictionary]:
+	return [
+		{"title": Tr.t("tutorial.step1_title"), "text": Tr.t("tutorial.step1_text"), "action": "next"},
+		{"title": Tr.t("tutorial.step2_title"), "text": Tr.t("tutorial.step2_text"), "action": "next"},
+		{"title": Tr.t("tutorial.step3_title"), "text": Tr.t("tutorial.step3_text"), "action": "roll_dice", "highlight": "roll_dice_button"},
+		{"title": Tr.t("tutorial.step4_title"), "text": Tr.t("tutorial.step4_text"), "action": "move_to_zone"},
+		{"title": Tr.t("tutorial.step5_title"), "text": Tr.t("tutorial.step5_text"), "action": "draw_card_or_next", "highlight": "draw_card_button"},
+		{"title": Tr.t("tutorial.step6_title"), "text": Tr.t("tutorial.step6_text"), "action": "next"},
+		{"title": Tr.t("tutorial.step7_title"), "text": Tr.t("tutorial.step7_text"), "action": "next"},
+		{"title": Tr.t("tutorial.step8_title"), "text": Tr.t("tutorial.step8_text"), "action": "next"},
+		{"title": Tr.t("tutorial.step9_title"), "text": Tr.t("tutorial.step9_text"), "action": "next"},
+		{"title": Tr.t("tutorial.step10_title"), "text": Tr.t("tutorial.step10_text"), "action": "finish"},
+	]
 
 
 # =============================================================================
@@ -196,7 +155,7 @@ func _build_ui() -> void:
 	vbox.add_child(btn_row)
 
 	_skip_button = Button.new()
-	_skip_button.text = "Passer le tutoriel"
+	_skip_button.text = Tr.t("tutorial.skip")
 	_skip_button.add_theme_font_size_override("font_size", 14)
 	_skip_button.add_theme_color_override("font_color", Color(0.6, 0.6, 0.7))
 	_skip_button.pressed.connect(_on_skip_pressed)
@@ -214,38 +173,39 @@ func _build_ui() -> void:
 # =============================================================================
 
 func _show_step(index: int) -> void:
-	if index < 0 or index >= STEPS.size():
+	var steps = _get_steps()
+	if index < 0 or index >= steps.size():
 		return
 
 	_current_step = index
-	var step = STEPS[index]
+	var step = steps[index]
 
 	_title_label.text = step.title
 	_text_label.text = step.text
-	_step_counter.text = "%d/%d" % [index + 1, STEPS.size()]
+	_step_counter.text = "%d/%d" % [index + 1, steps.size()]
 
 	var action = step.get("action", "next")
 	_waiting_for_action = ""
 
 	match action:
 		"next":
-			_next_button.text = "Suivant"
+			_next_button.text = Tr.t("tutorial.next")
 			_next_button.visible = true
 		"finish":
-			_next_button.text = "Terminer"
+			_next_button.text = Tr.t("tutorial.finish")
 			_next_button.visible = true
 		"roll_dice":
-			_next_button.text = "En attente..."
+			_next_button.text = Tr.t("tutorial.waiting")
 			_next_button.visible = false
 			_waiting_for_action = "roll_dice"
 			step_action_required.emit("roll_dice")
 		"move_to_zone":
-			_next_button.text = "En attente..."
+			_next_button.text = Tr.t("tutorial.waiting")
 			_next_button.visible = false
 			_waiting_for_action = "move_to_zone"
 			step_action_required.emit("move_to_zone")
 		"draw_card_or_next":
-			_next_button.text = "Passer cette étape"
+			_next_button.text = Tr.t("tutorial.skip_step")
 			_next_button.visible = true
 			_waiting_for_action = "draw_card_or_next"
 			step_action_required.emit("draw_card")
@@ -254,7 +214,7 @@ func _show_step(index: int) -> void:
 
 
 func _advance_step() -> void:
-	if _current_step + 1 < STEPS.size():
+	if _current_step + 1 < _get_steps().size():
 		_show_step(_current_step + 1)
 	else:
 		_finish_tutorial()
@@ -271,7 +231,7 @@ func _finish_tutorial() -> void:
 # =============================================================================
 
 func _on_next_pressed() -> void:
-	var step = STEPS[_current_step]
+	var step = _get_steps()[_current_step]
 	var action = step.get("action", "next")
 
 	if action == "finish":

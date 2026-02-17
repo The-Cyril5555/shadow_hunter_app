@@ -134,7 +134,7 @@ func _build_ui() -> void:
 
 	# Cancel button
 	cancel_button = Button.new()
-	cancel_button.text = "Annuler"
+	cancel_button.text = Tr.t("zone.cancel")
 	cancel_button.custom_minimum_size = Vector2(0, 36)
 	cancel_button.pressed.connect(_on_cancel_pressed)
 	vbox.add_child(cancel_button)
@@ -143,29 +143,29 @@ func _build_ui() -> void:
 ## Build UI for Weird Woods: choose a player, then damage or heal
 func _build_damage_or_heal_ui(all_players: Array) -> void:
 	var hint = Label.new()
-	hint.text = "Choisissez un joueur :"
+	hint.text = Tr.t("zone.choose_player")
 	hint.add_theme_font_size_override("font_size", 16)
 	hint.add_theme_color_override("font_color", Color(0.9, 0.9, 0.9))
 	content_container.add_child(hint)
 
-	var targets = _get_alive_others(all_players)
+	var targets = all_players.filter(func(p): return p.is_alive)
 	if targets.is_empty():
-		hint.text = "Aucun joueur ciblable"
-		cancel_button.text = "Fermer"
+		hint.text = Tr.t("zone.no_targets")
+		cancel_button.text = Tr.t("zone.close")
 		return
 
 	for target in targets:
 		var row = _create_player_row(target)
 
 		var dmg_btn = Button.new()
-		dmg_btn.text = "2 Dégâts"
+		dmg_btn.text = Tr.t("zone.damage_2")
 		dmg_btn.custom_minimum_size = Vector2(90, 34)
 		dmg_btn.add_theme_color_override("font_color", Color(1.0, 0.4, 0.4))
 		dmg_btn.pressed.connect(_on_weird_woods_choice.bind(target, "damage"))
 		row.add_child(dmg_btn)
 
 		var heal_btn = Button.new()
-		heal_btn.text = "1 Soin"
+		heal_btn.text = Tr.t("zone.heal_1")
 		heal_btn.custom_minimum_size = Vector2(80, 34)
 		heal_btn.add_theme_color_override("font_color", Color(0.4, 1.0, 0.4))
 		heal_btn.pressed.connect(_on_weird_woods_choice.bind(target, "heal"))
@@ -177,15 +177,15 @@ func _build_damage_or_heal_ui(all_players: Array) -> void:
 ## Build UI for Underworld Gate: choose a deck to draw from
 func _build_choose_deck_ui() -> void:
 	var hint = Label.new()
-	hint.text = "Choisissez un deck :"
+	hint.text = Tr.t("zone.choose_deck")
 	hint.add_theme_font_size_override("font_size", 16)
 	hint.add_theme_color_override("font_color", Color(0.9, 0.9, 0.9))
 	content_container.add_child(hint)
 
 	var decks = [
-		{"type": "hermit", "label": "Hermite (Vision)", "color": Color(0.6, 0.5, 0.3)},
-		{"type": "white", "label": "Blanche (Bénéfique)", "color": Color(0.9, 0.9, 0.9)},
-		{"type": "black", "label": "Noire (Maléfique)", "color": Color(0.5, 0.5, 0.5)},
+		{"type": "hermit", "label": Tr.t("zone.deck_hermit"), "color": Color(0.6, 0.5, 0.3)},
+		{"type": "white", "label": Tr.t("zone.deck_white"), "color": Color(0.9, 0.9, 0.9)},
+		{"type": "black", "label": Tr.t("zone.deck_black"), "color": Color(0.5, 0.5, 0.5)},
 	]
 
 	for deck_info in decks:
@@ -193,7 +193,7 @@ func _build_choose_deck_ui() -> void:
 		var count = deck.get_card_count() if deck else 0
 
 		var btn = Button.new()
-		btn.text = "%s (%d cartes)" % [deck_info.label, count]
+		btn.text = Tr.t("zone.deck_cards", [deck_info.label, count])
 		btn.custom_minimum_size = Vector2(0, 44)
 		btn.add_theme_font_size_override("font_size", 16)
 		btn.add_theme_color_override("font_color", deck_info.color)
@@ -208,16 +208,16 @@ func _build_steal_equipment_ui(all_players: Array) -> void:
 
 	if targets.is_empty():
 		var hint = Label.new()
-		hint.text = "Aucun joueur n'a d'équipement"
+		hint.text = Tr.t("zone.no_equipment")
 		hint.add_theme_font_size_override("font_size", 16)
 		hint.add_theme_color_override("font_color", Color(0.8, 0.6, 0.4))
 		hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		content_container.add_child(hint)
-		cancel_button.text = "Fermer"
+		cancel_button.text = Tr.t("zone.close")
 		return
 
 	var hint = Label.new()
-	hint.text = "Volez un équipement :"
+	hint.text = Tr.t("zone.steal_equipment")
 	hint.add_theme_font_size_override("font_size", 16)
 	hint.add_theme_color_override("font_color", Color(0.9, 0.9, 0.9))
 	content_container.add_child(hint)
@@ -234,7 +234,7 @@ func _build_steal_equipment_ui(all_players: Array) -> void:
 			row.add_child(name_lbl)
 
 			var steal_btn = Button.new()
-			steal_btn.text = "Voler"
+			steal_btn.text = Tr.t("zone.steal")
 			steal_btn.custom_minimum_size = Vector2(80, 34)
 			steal_btn.add_theme_color_override("font_color", Color(1.0, 0.7, 0.2))
 			steal_btn.pressed.connect(_on_steal_equipment.bind(target, card))

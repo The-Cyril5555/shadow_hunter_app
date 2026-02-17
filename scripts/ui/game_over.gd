@@ -55,18 +55,18 @@ func _display_results() -> void:
 
 	# Set title
 	if not winning_players.is_empty():
-		title_label.text = "VICTOIRE!"
+		title_label.text = Tr.t("gameover.victory")
 	else:
-		title_label.text = "PARTIE TERMINÉE"
+		title_label.text = Tr.t("gameover.game_over")
 
 	# Set faction banner
 	if not winning_faction.is_empty():
 		# Check if there are also neutral winners alongside faction
 		var has_neutral_winners = winning_players.any(func(p): return p.faction == "neutral")
 		if has_neutral_winners and winning_faction != "neutral":
-			faction_label.text = "%s gagnent! (+ Neutres)" % _get_faction_name_plural(winning_faction)
+			faction_label.text = Tr.t("gameover.winners_with_neutrals", [_get_faction_name_plural(winning_faction)])
 		else:
-			faction_label.text = "%s gagnent!" % _get_faction_name_plural(winning_faction)
+			faction_label.text = Tr.t("gameover.winners", [_get_faction_name_plural(winning_faction)])
 		_set_faction_banner_color(winning_faction)
 	else:
 		faction_banner.visible = false
@@ -92,11 +92,11 @@ func _determine_winner() -> Dictionary:
 func _get_faction_name_plural(faction: String) -> String:
 	match faction:
 		"hunter":
-			return "Les Hunters"
+			return Tr.t("gameover.hunters")
 		"shadow":
-			return "Les Shadows"
+			return Tr.t("gameover.shadows")
 		"neutral":
-			return "Les Neutres"
+			return Tr.t("gameover.neutrals")
 		_:
 			return faction.capitalize()
 
@@ -196,7 +196,7 @@ func _create_player_reveal_card(player: Player) -> HBoxContainer:
 	# Winner badge
 	if player in winning_players:
 		var badge = Label.new()
-		badge.text = "GAGNANT"
+		badge.text = Tr.t("gameover.winner_badge")
 		badge.add_theme_font_size_override("font_size", 14)
 		badge.add_theme_color_override("font_color", Color(1.0, 0.85, 0.0))
 		card.add_child(badge)
@@ -220,10 +220,10 @@ func _display_statistics() -> void:
 	# Use the scoreboard label to display stats
 	var stats = GameState.get_game_statistics()
 
-	var stats_text = "--- STATISTIQUES ---\n"
-	stats_text += "Tours joués: %d\n" % stats.turns_played
-	stats_text += "Attaques: %d | Dégâts totaux: %d\n" % [stats.total_attacks, stats.total_damage]
-	stats_text += "Morts: %d | Équipements: %d\n" % [stats.total_deaths, stats.equipment_equipped]
+	var stats_text = Tr.t("gameover.stats_title") + "\n"
+	stats_text += Tr.t("gameover.stats_turns", [stats.turns_played]) + "\n"
+	stats_text += Tr.t("gameover.stats_attacks", [stats.total_attacks, stats.total_damage]) + "\n"
+	stats_text += Tr.t("gameover.stats_deaths", [stats.total_deaths, stats.equipment_equipped]) + "\n"
 
 	# Find MVP (most damage dealt)
 	var mvp_name = ""
@@ -235,7 +235,7 @@ func _display_statistics() -> void:
 			mvp_name = player_name
 
 	if mvp_name != "":
-		stats_text += "\nMVP: %s (%d dégâts)" % [mvp_name, mvp_damage]
+		stats_text += "\n" + Tr.t("gameover.stats_mvp", [mvp_name, mvp_damage])
 
 	scoreboard_label.text = stats_text
 

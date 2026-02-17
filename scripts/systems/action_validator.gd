@@ -14,11 +14,11 @@ extends RefCounted
 func can_roll_dice(game_board) -> Dictionary:
 	# Check if in MOVEMENT phase
 	if GameState.current_phase != GameState.TurnPhase.MOVEMENT:
-		return {"valid": false, "reason": "Peut seulement lancer les dés pendant la phase Mouvement"}
+		return {"valid": false, "reason": Tr.t("validate.dice_phase")}
 
 	# Check if dice already rolled this turn (tracked in GameBoard)
 	if game_board.has_rolled_this_turn:
-		return {"valid": false, "reason": "Dés déjà lancés ce tour"}
+		return {"valid": false, "reason": Tr.t("validate.dice_used")}
 
 	return {"valid": true, "reason": ""}
 
@@ -28,26 +28,26 @@ func can_roll_dice(game_board) -> Dictionary:
 func can_draw_card(game_board) -> Dictionary:
 	# Check if in ACTION phase
 	if GameState.current_phase != GameState.TurnPhase.ACTION:
-		return {"valid": false, "reason": "Peut seulement piocher pendant la phase Action"}
+		return {"valid": false, "reason": Tr.t("validate.draw_phase")}
 
 	# Check if already drawn this turn
 	if game_board.has_drawn_this_turn:
-		return {"valid": false, "reason": "Carte déjà piochée ce tour"}
+		return {"valid": false, "reason": Tr.t("validate.draw_used")}
 
 	# Get current player
 	var current_player = GameState.get_current_player()
 	if current_player == null:
-		return {"valid": false, "reason": "Aucun joueur actif"}
+		return {"valid": false, "reason": Tr.t("validate.no_player")}
 
 	# Check if zone has a deck
 	var zone_id = current_player.position_zone
 	var deck = GameState.get_deck_for_zone(zone_id)
 	if deck == null:
-		return {"valid": false, "reason": "Aucun deck disponible dans cette zone"}
+		return {"valid": false, "reason": Tr.t("validate.no_deck")}
 
 	# Check if deck has cards available
 	if deck.get_card_count() == 0:
-		return {"valid": false, "reason": "Le deck est vide"}
+		return {"valid": false, "reason": Tr.t("validate.deck_empty")}
 
 	return {"valid": true, "reason": ""}
 
@@ -57,12 +57,12 @@ func can_draw_card(game_board) -> Dictionary:
 func can_attack(game_board) -> Dictionary:
 	# Check if in ACTION phase
 	if GameState.current_phase != GameState.TurnPhase.ACTION:
-		return {"valid": false, "reason": "Peut seulement attaquer pendant la phase Action"}
+		return {"valid": false, "reason": Tr.t("validate.attack_phase")}
 
 	# Check if valid targets exist
 	var valid_targets = game_board.get_valid_targets()
 	if valid_targets.is_empty():
-		return {"valid": false, "reason": "Aucune cible valide à attaquer"}
+		return {"valid": false, "reason": Tr.t("validate.no_target")}
 
 	return {"valid": true, "reason": ""}
 
@@ -92,4 +92,4 @@ func validate_action(action_name: String, game_board, extra_param = null) -> Dic
 			return can_end_turn()
 		_:
 			push_warning("[ActionValidator] Unknown action: %s" % action_name)
-			return {"valid": false, "reason": "Action inconnue: %s" % action_name}
+			return {"valid": false, "reason": Tr.t("validate.unknown", [action_name])}

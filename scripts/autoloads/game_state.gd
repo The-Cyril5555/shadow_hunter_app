@@ -321,6 +321,15 @@ func advance_phase() -> void:
 				phase_changed.emit(current_phase)
 				return
 
+			# Concealed Knowledge — replay turn once
+			if current_player and current_player.get_meta("extra_turn", false):
+				current_player.set_meta("extra_turn", false)
+				current_phase = TurnPhase.MOVEMENT
+				print("[GameState] Concealed Knowledge extra turn for %s" % current_player.display_name)
+				turn_started.emit(current_player, turn_count)
+				phase_changed.emit(current_phase)
+				return
+
 			# Move to next alive player (skip dead players)
 			var attempts = 0
 			var found_alive_player = false

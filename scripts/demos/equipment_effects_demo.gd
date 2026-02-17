@@ -81,28 +81,29 @@ func _on_init_players_pressed() -> void:
 	# Add equipment cards to attacker's hand
 	var sword = Card.new()
 	sword.from_dict({
-		"id": "holy_sword",
-		"name": "Holy Sword",
+		"id": "white_spear_longinus",
+		"name": "Lance de Longinus",
 		"deck": "white",
 		"type": "equipment",
+		"faction_restriction": "hunter",
 		"effect": {
 			"type": "damage",
-			"value": 3,
-			"description": "Deal 3 extra damage"
+			"value": 2,
+			"description": "Attack +2 (Hunter only)"
 		}
 	})
 	attacker.hand.append(sword)
 
 	var dagger = Card.new()
 	dagger.from_dict({
-		"id": "cursed_dagger",
-		"name": "Cursed Dagger",
+		"id": "black_chainsaw",
+		"name": "Chainsaw",
 		"deck": "black",
 		"type": "equipment",
 		"effect": {
 			"type": "damage",
-			"value": 2,
-			"description": "Deal 2 extra damage"
+			"value": 1,
+			"description": "Attack +1"
 		}
 	})
 	attacker.hand.append(dagger)
@@ -110,36 +111,36 @@ func _on_init_players_pressed() -> void:
 	# Add equipment cards to defender's hand
 	var shield = Card.new()
 	shield.from_dict({
-		"id": "holy_shield",
-		"name": "Holy Shield",
+		"id": "white_holy_robe",
+		"name": "Holy Robe",
 		"deck": "white",
 		"type": "equipment",
 		"effect": {
 			"type": "defense",
-			"value": 2,
-			"description": "Reduce incoming damage by 2"
+			"value": 1,
+			"description": "Defense +1, Attack -1"
 		}
 	})
 	defender.hand.append(shield)
 
 	var armor = Card.new()
 	armor.from_dict({
-		"id": "blessed_armor",
-		"name": "Blessed Armor",
-		"deck": "white",
+		"id": "black_butcher_knife",
+		"name": "Butcher Knife",
+		"deck": "black",
 		"type": "equipment",
 		"effect": {
-			"type": "defense",
-			"value": 3,
-			"description": "Reduce incoming damage by 3"
+			"type": "damage",
+			"value": 1,
+			"description": "Attack +1"
 		}
 	})
 	defender.hand.append(armor)
 
 	combat_log.clear()
 	combat_log.append("Players initialized")
-	combat_log.append("Attacker hand: Holy Sword (+3 damage), Cursed Dagger (+2 damage)")
-	combat_log.append("Defender hand: Holy Shield (+2 defense), Blessed Armor (+3 defense)")
+	combat_log.append("Attacker hand: Lance de Longinus (+2 dmg), Chainsaw (+1 dmg)")
+	combat_log.append("Defender hand: Holy Robe (+1 def), Butcher Knife (+1 dmg)")
 
 	print("  Created Attacker: HP %d/%d, hand: %d cards" % [attacker.hp, attacker.hp_max, attacker.hand.size()])
 	print("  Created Defender: HP %d/%d, hand: %d cards" % [defender.hp, defender.hp_max, defender.hand.size()])

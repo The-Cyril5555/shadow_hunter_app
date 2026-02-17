@@ -62,31 +62,29 @@ func _on_init_player_pressed() -> void:
 
 	var white_cards_data = [
 		{
-			"id": "holy_water",
-			"name": "Holy Water",
+			"id": "white_holy_water",
+			"name": "Eau Bénite",
 			"deck": "white",
-			"type": "equipment",
-			"effect": "damage",
-			"value": 1,
-			"copies_in_deck": 3
+			"type": "instant",
+			"copies_in_deck": 3,
+			"effect": {"type": "heal", "value": 2, "description": "Soigne 2 HP."}
 		},
 		{
-			"id": "first_aid",
+			"id": "white_first_aid",
 			"name": "First Aid",
 			"deck": "white",
-			"type": "equipment",
-			"effect": "heal",
-			"value": 2,
-			"copies_in_deck": 2
+			"type": "instant",
+			"copies_in_deck": 2,
+			"effect": {"type": "set_damage", "value": 7, "description": "Set damage to 7."}
 		},
 		{
-			"id": "exorcism",
-			"name": "Exorcism",
+			"id": "white_spear_longinus",
+			"name": "Lance de Longinus",
 			"deck": "white",
-			"type": "spell",
-			"effect": "damage",
-			"value": 3,
-			"copies_in_deck": 1
+			"type": "equipment",
+			"copies_in_deck": 1,
+			"faction_restriction": "hunter",
+			"effect": {"type": "damage", "value": 2, "description": "Attack +2."}
 		}
 	]
 
@@ -98,13 +96,12 @@ func _on_init_player_pressed() -> void:
 
 	var black_cards_data = [
 		{
-			"id": "cursed_doll",
-			"name": "Cursed Doll",
+			"id": "black_chainsaw",
+			"name": "Chainsaw",
 			"deck": "black",
 			"type": "equipment",
-			"effect": "damage",
-			"value": 2,
-			"copies_in_deck": 2
+			"copies_in_deck": 2,
+			"effect": {"type": "damage", "value": 1, "description": "Attack +1."}
 		}
 	]
 
@@ -154,8 +151,7 @@ func _on_add_card_pressed() -> void:
 	card.name = "Test Card"
 	card.deck = "white"
 	card.type = "equipment"
-	card.effect = "test"
-	card.value = 1
+	card.effect = {"type": "damage", "value": 1, "description": "Test effect"}
 
 	var success = HandManager.add_to_hand(test_player, card)
 
@@ -206,7 +202,7 @@ func _on_get_equipment_pressed() -> void:
 
 	print("  Equipment cards: %d" % equipment.size())
 	for card in equipment:
-		print("    - %s (effect: %s +%d)" % [card.name, card.effect, card.value])
+		print("    - %s (%s)" % [card.name, card.get_effect_description()])
 
 	_update_status_labels()
 
@@ -246,12 +242,11 @@ func _update_status_labels() -> void:
 		hand_text += "\nCards:"
 		for i in range(test_player.hand.size()):
 			var card = test_player.hand[i]
-			hand_text += "\n  %d. %s [%s] (%s +%d)" % [
+			hand_text += "\n  %d. %s [%s] (%s)" % [
 				i + 1,
 				card.name,
 				card.deck,
-				card.effect,
-				card.value
+				card.get_effect_description()
 			]
 
 	# Count equipment

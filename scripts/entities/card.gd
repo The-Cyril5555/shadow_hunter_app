@@ -13,6 +13,7 @@ var deck: String = ""  # "hermit", "white", "black"
 var type: String = ""  # "instant", "equipment", "vision"
 var effect: Dictionary = {}
 var copies_in_deck: int = 1
+var faction_restriction: String = ""  # "", "hunter", "shadow", "neutral"
 
 
 # -----------------------------------------------------------------------------
@@ -27,6 +28,7 @@ func from_dict(data: Dictionary) -> void:
 	type = data.get("type", "instant")
 	effect = data.get("effect", {})
 	copies_in_deck = data.get("copies_in_deck", 1)
+	faction_restriction = data.get("faction_restriction", "")
 
 
 ## Convert card to dictionary (for save/load)
@@ -37,7 +39,8 @@ func to_dict() -> Dictionary:
 		"deck": deck,
 		"type": type,
 		"effect": effect,
-		"copies_in_deck": copies_in_deck
+		"copies_in_deck": copies_in_deck,
+		"faction_restriction": faction_restriction
 	}
 
 

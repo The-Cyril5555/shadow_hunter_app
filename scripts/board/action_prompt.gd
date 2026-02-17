@@ -79,7 +79,7 @@ func _update_buttons(player: Player, target_count: int, has_attacked: bool) -> v
 	reveal_button.disabled = player.is_revealed or player.character_id == "daniel"
 	_update_ability_button(player)
 	attack_button.disabled = target_count == 0 or has_attacked
-	attack_button.text = "Attaquer (%d)" % target_count if target_count > 0 and not has_attacked else "Attaquer"
+	attack_button.text = Tr.t("action.attack_n", [target_count]) if target_count > 0 and not has_attacked else Tr.t("action.attack")
 	end_turn_button.disabled = false
 
 
@@ -87,13 +87,13 @@ func _update_ability_button(player: Player) -> void:
 	# Must be revealed and have an active ability
 	if not player.is_revealed:
 		ability_button.disabled = true
-		ability_button.text = "Compétence"
+		ability_button.text = Tr.t("action.ability")
 		return
 
 	var ability = player.ability_data
 	if ability.is_empty() or ability.get("type", "") != "active":
 		ability_button.disabled = true
-		ability_button.text = "Compétence"
+		ability_button.text = Tr.t("action.ability")
 		return
 
 	# Check with ActiveAbilitySystem
@@ -105,7 +105,7 @@ func _update_ability_button(player: Player) -> void:
 func _set_disabled(disabled: bool) -> void:
 	reveal_button.disabled = disabled
 	ability_button.disabled = disabled
-	ability_button.text = "Compétence"
+	ability_button.text = Tr.t("action.ability")
 	attack_button.disabled = disabled
-	attack_button.text = "Attaquer"
+	attack_button.text = Tr.t("action.attack")
 	end_turn_button.disabled = disabled

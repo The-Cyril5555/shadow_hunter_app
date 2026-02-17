@@ -7,10 +7,11 @@
       "description": "Prefers attacking and risk-taking. High combat aggression, low defense priority.",
       "color": "#FF4444",
       "decision_weights": {
-        "attack": 0.4,
+        "attack": 0.35,
         "defense": 0.1,
-        "risk": 0.4,
-        "card_draw": 0.1
+        "risk": 0.35,
+        "card_draw": 0.1,
+        "reveal": 0.3
       }
     },
     "prudent": {
@@ -19,9 +20,10 @@
       "color": "#4444FF",
       "decision_weights": {
         "attack": 0.1,
-        "defense": 0.4,
+        "defense": 0.35,
         "risk": 0.1,
-        "card_draw": 0.4
+        "card_draw": 0.35,
+        "reveal": 0.15
       }
     },
     "balanced": {
@@ -29,10 +31,11 @@
       "description": "Adapts to game state with moderate approach. No strong preferences.",
       "color": "#44FF44",
       "decision_weights": {
-        "attack": 0.25,
-        "defense": 0.25,
-        "risk": 0.25,
-        "card_draw": 0.25
+        "attack": 0.2,
+        "defense": 0.2,
+        "risk": 0.2,
+        "card_draw": 0.2,
+        "reveal": 0.2
       }
     }
   }

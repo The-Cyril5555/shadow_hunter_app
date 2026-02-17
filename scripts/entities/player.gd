@@ -106,6 +106,8 @@ func remove_equipment(card_id: String) -> bool:
 func get_attack_damage_bonus() -> int:
 	var bonus = 0
 	for card in equipment:
+		if card.faction_restriction != "" and faction != card.faction_restriction:
+			continue  # Card kept but effect inactive
 		if card.get_effect_type() == "damage":
 			bonus += card.get_effect_value()
 	return bonus
@@ -115,6 +117,8 @@ func get_attack_damage_bonus() -> int:
 func get_defense_bonus() -> int:
 	var bonus = 0
 	for card in equipment:
+		if card.faction_restriction != "" and faction != card.faction_restriction:
+			continue  # Card kept but effect inactive
 		if card.get_effect_type() == "defense":
 			bonus += card.get_effect_value()
 	return bonus

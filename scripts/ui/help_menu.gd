@@ -10,89 +10,18 @@ extends CanvasLayer
 # CONSTANTS
 # =============================================================================
 
-const RULES: Array[Dictionary] = [
-	{
-		"title": "Mise en place",
-		"content": """• 4 à 8 joueurs (humains et/ou bots)
-• Chaque joueur reçoit un personnage secret avec une faction (Hunter, Shadow ou Neutral)
-• Les personnages ont des HP et une capacité spéciale unique
-• Tous les joueurs commencent à la Cabane de l'Ermite
-• 3 decks de cartes sont placés : Hermite, Lumière, Ténèbres"""
-	},
-	{
-		"title": "Déroulement d'un tour",
-		"content": """Chaque tour se déroule en 2 phases :
-
-1. MOUVEMENT — Lancez les dés (d6+d4) et déplacez-vous vers la zone correspondant au résultat
-2. ACTION — Choisissez une action :
-   • Piocher une carte du deck de votre zone
-   • Attaquer un joueur présent dans votre zone
-   • Terminer votre tour sans action"""
-	},
-	{
-		"title": "Zones du plateau",
-		"content": """Le plateau comporte 6 zones :
-
-• Cabane de l'Ermite — Deck Hermite (cartes de vision)
-• Église — Deck Lumière (soins, protection)
-• Cimetière — Deck Ténèbres (dégâts, malus)
-• Forêt Étrange — Pas de deck
-• Porte des Enfers — Pas de deck
-• Autel Ancien — Pas de deck
-
-Chaque zone a une plage de numéros (2-3, 4-5, 6, 7, 8-9, 10). Le résultat des dés détermine directement la zone de destination."""
-	},
-	{
-		"title": "Cartes",
-		"content": """Il existe 3 types de cartes :
-
-• Instantanée — Effet appliqué immédiatement (soin, dégâts)
-• Équipement — Ajoutée à votre main, peut être équipée pour des bonus permanents
-• Vision — Permet de deviner la faction d'un autre joueur
-
-Les cartes équipement peuvent être équipées (+dégâts, +défense) ou défaussées."""
-	},
-	{
-		"title": "Combat",
-		"content": """Pour attaquer :
-• Vous devez être dans la même zone que votre cible
-• Les dégâts sont calculés avec un D6 + bonus d'équipement
-• Si les HP de la cible tombent à 0, elle meurt
-• Un personnage mort est révélé automatiquement"""
-	},
-	{
-		"title": "Factions et victoire",
-		"content": """3 factions avec des objectifs différents :
-
-• HUNTERS — Gagnent quand tous les Shadows sont morts
-• SHADOWS — Gagnent quand tous les Hunters sont morts
-• NEUTRALS — Chacun a un objectif personnel unique
-
-Votre faction est secrète ! Vous pouvez vous révéler volontairement pour activer certaines capacités."""
-	},
-	{
-		"title": "Capacités spéciales",
-		"content": """Chaque personnage a une capacité unique :
-
-• Passive — S'active automatiquement (ex: réduction de dégâts)
-• Active — Activation manuelle, parfois nécessite d'être révélé
-
-Certaines capacités sont plus puissantes une fois révélé, mais révéler votre faction donne des informations à vos adversaires."""
-	},
-	{
-		"title": "Sauvegarde",
-		"content": """• Auto-save toutes les 5 actions majeures
-• 3 emplacements de sauvegarde manuelle
-• Accessible via le menu pause (Échap)
-• Chargement depuis le menu principal ou le menu pause"""
-	},
-	{
-		"title": "Raccourcis clavier",
-		"content": """• Échap — Menu pause
-• F1 — Aide et règles (ce menu)
-• Survolez n'importe quel élément pour voir son tooltip"""
-	},
-]
+func _get_rules() -> Array[Dictionary]:
+	return [
+		{"title": Tr.t("help.setup_title"), "content": Tr.t("help.setup_content")},
+		{"title": Tr.t("help.turn_title"), "content": Tr.t("help.turn_content")},
+		{"title": Tr.t("help.zones_title"), "content": Tr.t("help.zones_content")},
+		{"title": Tr.t("help.cards_title"), "content": Tr.t("help.cards_content")},
+		{"title": Tr.t("help.combat_title"), "content": Tr.t("help.combat_content")},
+		{"title": Tr.t("help.factions_title"), "content": Tr.t("help.factions_content")},
+		{"title": Tr.t("help.abilities_title"), "content": Tr.t("help.abilities_content")},
+		{"title": Tr.t("help.save_title"), "content": Tr.t("help.save_content")},
+		{"title": Tr.t("help.shortcuts_title"), "content": Tr.t("help.shortcuts_content")},
+	]
 
 
 # =============================================================================
@@ -195,21 +124,21 @@ func _build_ui() -> void:
 	vbox.add_child(header)
 
 	var title = Label.new()
-	title.text = "AIDE & RÈGLES"
+	title.text = Tr.t("help.title")
 	title.add_theme_font_size_override("font_size", 26)
 	title.add_theme_color_override("font_color", Color(1.0, 0.9, 0.3))
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(title)
 
 	var close_btn = Button.new()
-	close_btn.text = "Fermer (F1)"
+	close_btn.text = Tr.t("help.close")
 	close_btn.add_theme_font_size_override("font_size", 16)
 	close_btn.pressed.connect(hide_help)
 	header.add_child(close_btn)
 
 	# Search field
 	_search_field = LineEdit.new()
-	_search_field.placeholder_text = "Rechercher..."
+	_search_field.placeholder_text = Tr.t("help.search")
 	_search_field.add_theme_font_size_override("font_size", 16)
 	_search_field.text_changed.connect(_filter_sections)
 	vbox.add_child(_search_field)
@@ -228,7 +157,7 @@ func _build_ui() -> void:
 	scroll.add_child(_content_container)
 
 	# Build rule sections
-	for rule in RULES:
+	for rule in _get_rules():
 		var section = _create_section(rule.title, rule.content)
 		_content_container.add_child(section.container)
 		_sections.append(section)

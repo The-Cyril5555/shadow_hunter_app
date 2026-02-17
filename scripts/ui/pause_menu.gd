@@ -96,7 +96,7 @@ func _build_ui() -> void:
 
 	# Title
 	var title = Label.new()
-	title.text = "PAUSE"
+	title.text = Tr.t("pause.title")
 	title.add_theme_font_size_override("font_size", 28)
 	title.add_theme_color_override("font_color", Color(1.0, 0.9, 0.3))
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -111,10 +111,10 @@ func _build_ui() -> void:
 	_main_buttons.add_theme_constant_override("separation", 8)
 	vbox.add_child(_main_buttons)
 
-	_add_button(_main_buttons, "Reprendre", _on_resume_pressed)
-	_add_button(_main_buttons, "Sauvegarder", _on_save_pressed)
-	_add_button(_main_buttons, "Charger", _on_load_pressed)
-	_add_button(_main_buttons, "Quitter au menu", _on_quit_pressed)
+	_add_button(_main_buttons, Tr.t("pause.resume"), _on_resume_pressed)
+	_add_button(_main_buttons, Tr.t("pause.save"), _on_save_pressed)
+	_add_button(_main_buttons, Tr.t("pause.load"), _on_load_pressed)
+	_add_button(_main_buttons, Tr.t("pause.quit"), _on_quit_pressed)
 
 	# Save/Load panel (hidden by default)
 	_save_load_panel = VBoxContainer.new()
@@ -132,7 +132,7 @@ func _build_ui() -> void:
 	_slots_container.add_theme_constant_override("separation", 6)
 	_save_load_panel.add_child(_slots_container)
 
-	_add_button(_save_load_panel, "Retour", _on_back_pressed)
+	_add_button(_save_load_panel, Tr.t("pause.back"), _on_back_pressed)
 
 
 func _add_button(parent: Control, text: String, callback: Callable) -> Button:
@@ -161,7 +161,7 @@ func _show_slots(mode: String) -> void:
 
 	# Set title
 	var slot_title = _save_load_panel.get_node("SlotTitle")
-	slot_title.text = "SAUVEGARDER" if mode == "save" else "CHARGER"
+	slot_title.text = Tr.t("pause.save_title") if mode == "save" else Tr.t("pause.load_title")
 
 	# Clear existing slots
 	for child in _slots_container.get_children():
@@ -179,7 +179,7 @@ func _show_slots(mode: String) -> void:
 		# Skip empty slots for load (except if they exist)
 		if mode == "load" and not info.get("exists", false):
 			var empty_btn = Button.new()
-			empty_btn.text = "%s - Vide" % info.get("slot_name", "")
+			empty_btn.text = Tr.t("pause.empty_slot", [info.get("slot_name", "")])
 			empty_btn.custom_minimum_size = Vector2(0, 45)
 			empty_btn.disabled = true
 			_slots_container.add_child(empty_btn)
@@ -187,14 +187,9 @@ func _show_slots(mode: String) -> void:
 
 		var btn = Button.new()
 		if info.get("exists", false):
-			btn.text = "%s - Tour %d (%d joueurs) - %s" % [
-				info.get("slot_name", ""),
-				info.get("turn_count", 0),
-				info.get("player_count", 0),
-				info.get("date_string", ""),
-			]
+			btn.text = Tr.t("pause.slot_info", [info.get("slot_name", ""), info.get("turn_count", 0), info.get("player_count", 0), info.get("date_string", "")])
 		else:
-			btn.text = "%s - Vide" % info.get("slot_name", "")
+			btn.text = Tr.t("pause.empty_slot", [info.get("slot_name", "")])
 
 		btn.custom_minimum_size = Vector2(0, 45)
 		btn.add_theme_font_size_override("font_size", 14)

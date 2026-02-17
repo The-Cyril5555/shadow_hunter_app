@@ -46,13 +46,13 @@ func test_cards_loaded() -> void:
 
 func test_get_card_by_id() -> void:
 	var test_name = "get_card_data() should return correct card"
-	var card = GameState.get_card_data("hermit_vision_1")
+	var card = GameState.get_card_data("hermit_prediction")
 
 	if card.is_empty():
-		record_fail(test_name, "Card 'hermit_vision_1' not found")
+		record_fail(test_name, "Card 'hermit_prediction' not found")
 		return
 
-	if card.get("id") == "hermit_vision_1" and card.get("deck") == "hermit":
+	if card.get("id") == "hermit_prediction" and card.get("deck") == "hermit":
 		record_pass(test_name, "Card data correct: %s (deck: %s)" % [card.get("name"), card.get("deck")])
 	else:
 		record_fail(test_name, "Card data incorrect")
@@ -168,16 +168,16 @@ func test_get_cards_by_type_vision() -> void:
 
 func test_defensive_copy() -> void:
 	var test_name = "get_card_data() should return defensive copy"
-	var card = GameState.get_card_data("white_heal_1")
+	var card = GameState.get_card_data("white_holy_water")
 
 	if card.is_empty():
-		record_fail(test_name, "Card 'white_heal_1' not found")
+		record_fail(test_name, "Card 'white_holy_water' not found")
 		return
 
 	var original_name = card.get("name", "")
 	card["name"] = "MODIFIED"
 
-	var card2 = GameState.get_card_data("white_heal_1")
+	var card2 = GameState.get_card_data("white_holy_water")
 	var name2 = card2.get("name", "")
 
 	if name2 != "MODIFIED" and name2 == original_name:
@@ -198,16 +198,16 @@ func test_invalid_card_id() -> void:
 
 func test_card_entity_creation() -> void:
 	var test_name = "Card entity should instantiate from card_data"
-	var card_data = GameState.get_card_data("black_damage_1")
+	var card_data = GameState.get_card_data("black_vampire_bat")
 
 	if card_data.is_empty():
-		record_fail(test_name, "Card 'black_damage_1' not found")
+		record_fail(test_name, "Card 'black_vampire_bat' not found")
 		return
 
 	var card = Card.new()
 	card.from_dict(card_data)
 
-	if card.id == "black_damage_1" and card.deck == "black" and card.type == "instant":
+	if card.id == "black_vampire_bat" and card.deck == "black" and card.type == "instant":
 		record_pass(test_name, "Card entity created: %s (%s, %s)" % [card.name, card.deck, card.type])
 	else:
 		record_fail(test_name, "Card entity has incorrect properties")

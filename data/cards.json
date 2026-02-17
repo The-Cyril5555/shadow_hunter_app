@@ -1,84 +1,112 @@
 {
-	"version": "1.0",
-	"description": "Shadow Hunter card definitions",
+	"version": "2.0",
+	"description": "Shadow Hunter card definitions - Complete 48-card set",
 	"decks": {
 		"hermit": {
 			"name": "Hermit",
 			"description": "Vision cards from the Hermit's Cabin",
 			"cards": [
 				{
-					"id": "hermit_telepathy",
-					"name": "Télépathie",
-					"deck": "hermit",
-					"type": "vision",
-					"copies_in_deck": 1,
-					"effect": {
-						"type": "vision_condition",
-						"condition_factions": ["shadow", "hunter"],
-						"action": "damage_target",
-						"value": 1,
-						"description": "Je parie que tu es Shadow... ou Hunter. Si c'est le cas, reçois 1 dégât."
-					}
-				},
-				{
-					"id": "hermit_clairvoyance",
-					"name": "Clairvoyance",
-					"deck": "hermit",
-					"type": "vision",
-					"copies_in_deck": 1,
-					"effect": {
-						"type": "vision_condition",
-						"condition_factions": ["shadow", "neutral"],
-						"action": "heal_drawer",
-						"value": 1,
-						"description": "Je parie que tu es Shadow... ou Neutre. Si c'est le cas, je me soigne 1 HP."
-					}
-				},
-				{
-					"id": "hermit_greed",
-					"name": "Vision Cupide",
-					"deck": "hermit",
-					"type": "vision",
-					"copies_in_deck": 1,
-					"effect": {
-						"type": "vision_condition",
-						"condition_factions": ["neutral"],
-						"action": "steal_equipment",
-						"value": 0,
-						"description": "Je parie que tu es Neutre. Si c'est le cas, donne-moi un de tes équipements."
-					}
-				},
-				{
-					"id": "hermit_stealth",
-					"name": "Vision Furtive",
-					"deck": "hermit",
-					"type": "vision",
-					"copies_in_deck": 1,
-					"effect": {
-						"type": "vision_condition",
-						"condition_factions": ["hunter", "neutral"],
-						"action": "damage_target",
-						"value": 1,
-						"description": "Je parie que tu es Hunter... ou Neutre. Si c'est le cas, reçois 1 dégât."
-					}
-				},
-				{
-					"id": "hermit_supreme",
-					"name": "Vision Suprême",
+					"id": "hermit_aid",
+					"name": "Hermit's Aid",
 					"deck": "hermit",
 					"type": "vision",
 					"copies_in_deck": 1,
 					"effect": {
 						"type": "vision_condition",
 						"condition_factions": ["hunter"],
-						"action": "damage_target",
-						"value": 2,
-						"description": "Je parie que tu es Hunter. Si c'est le cas, reçois 2 dégâts."
+						"action": "heal_or_damage",
+						"value": 1,
+						"description": "Je parie que tu es Hunter. Si c'est le cas, soigne 1 HP (si impossible, reçois 1 dégât)."
 					}
 				},
 				{
-					"id": "hermit_lightning",
-					"name": "Vision Foudroyante",
+					"id": "hermit_nurturance",
+					"name": "Hermit's Nurturance",
+					"deck": "hermit",
+					"type": "vision",
+					"copies_in_deck": 1,
+					"effect": {
+						"type": "vision_condition",
+						"condition_factions": ["neutral"],
+						"action": "heal_or_damage",
+						"value": 1,
+						"description": "Je parie que tu es Neutre. Si c'est le cas, soigne 1 HP (si impossible, reçois 1 dégât)."
+					}
+				},
+				{
+					"id": "hermit_huddle",
+					"name": "Hermit's Huddle",
+					"deck": "hermit",
+					"type": "vision",
+					"copies_in_deck": 1,
+					"effect": {
+						"type": "vision_condition",
+						"condition_factions": ["shadow"],
+						"action": "heal_or_damage",
+						"value": 1,
+						"description": "Je parie que tu es Shadow. Si c'est le cas, soigne 1 HP (si impossible, reçois 1 dégât)."
+					}
+				},
+				{
+					"id": "hermit_blackmail",
+					"name": "Hermit's Blackmail",
+					"deck": "hermit",
+					"type": "vision",
+					"copies_in_deck": 2,
+					"effect": {
+						"type": "vision_condition",
+						"condition_factions": ["neutral", "hunter"],
+						"action": "give_equipment_or_damage",
+						"value": 1,
+						"description": "Je parie que tu es Neutre ou Hunter. Si c'est le cas, donne un équipement au joueur actuel ou reçois 1 dégât."
+					}
+				},
+				{
+					"id": "hermit_anger",
+					"name": "Hermit's Anger",
+					"deck": "hermit",
+					"type": "vision",
+					"copies_in_deck": 2,
+					"effect": {
+						"type": "vision_condition",
+						"condition_factions": ["shadow", "hunter"],
+						"action": "give_equipment_or_damage",
+						"value": 1,
+						"description": "Je parie que tu es Shadow ou Hunter. Si c'est le cas, donne un équipement au joueur actuel ou reçois 1 dégât."
+					}
+				},
+				{
+					"id": "hermit_greed",
+					"name": "Hermit's Greed",
+					"deck": "hermit",
+					"type": "vision",
+					"copies_in_deck": 2,
+					"effect": {
+						"type": "vision_condition",
+						"condition_factions": ["neutral", "shadow"],
+						"action": "give_equipment_or_damage",
+						"value": 1,
+						"description": "Je parie que tu es Neutre ou Shadow. Si c'est le cas, donne un équipement au joueur actuel ou reçois 1 dégât."
+					}
+				},
+				{
+					"id": "hermit_slap",
+					"name": "Hermit's Slap",
+					"deck": "hermit",
+					"type": "vision",
+					"copies_in_deck": 2,
+					"effect": {
+						"type": "vision_condition",
+						"condition_factions": ["hunter"],
+						"action": "damage_target",
+						"value": 1,
+						"description": "Je parie que tu es Hunter. Si c'est le cas, reçois 1 dégât."
+					}
+				},
+				{
+					"id": "hermit_spell",
+					"name": "Hermit's Spell",
 					"deck": "hermit",
 					"type": "vision",
 					"copies_in_deck": 1,
@@ -89,6 +117,64 @@
 						"value": 1,
 						"description": "Je parie que tu es Shadow. Si c'est le cas, reçois 1 dégât."
 					}
+				},
+				{
+					"id": "hermit_exorcism",
+					"name": "Hermit's Exorcism",
+					"deck": "hermit",
+					"type": "vision",
+					"copies_in_deck": 1,
+					"effect": {
+						"type": "vision_condition",
+						"condition_factions": ["shadow"],
+						"action": "damage_target",
+						"value": 2,
+						"description": "Je parie que tu es Shadow. Si c'est le cas, reçois 2 dégâts."
+					}
+				},
+				{
+					"id": "hermit_bully",
+					"name": "Hermit's Bully",
+					"deck": "hermit",
+					"type": "vision",
+					"copies_in_deck": 1,
+					"effect": {
+						"type": "vision_condition",
+						"condition_type": "hp_max_lte",
+						"condition_value": 11,
+						"action": "damage_target",
+						"value": 1,
+						"description": "Je parie que tes HP max sont 11 ou moins. Si c'est le cas, reçois 1 dégât."
+					}
+				},
+				{
+					"id": "hermit_tough_love",
+					"name": "Hermit's Tough Love",
+					"deck": "hermit",
+					"type": "vision",
+					"copies_in_deck": 1,
+					"effect": {
+						"type": "vision_condition",
+						"condition_type": "hp_max_gte",
+						"condition_value": 12,
+						"action": "damage_target",
+						"value": 2,
+						"description": "Je parie que tes HP max sont 12 ou plus. Si c'est le cas, reçois 2 dégâts."
+					}
+				},
+				{
+					"id": "hermit_prediction",
+					"name": "Hermit's Prediction",
+					"deck": "hermit",
+					"type": "vision",
+					"copies_in_deck": 1,
+					"effect": {
+						"type": "vision_condition",
+						"condition_factions": ["hunter", "shadow", "neutral"],
+						"action": "reveal_to_drawer",
+						"value": 0,
+						"description": "Montre ta carte de personnage au joueur qui t'a donné cette carte."
+					}
 				}
 			]
 		},
@@ -97,27 +183,190 @@
 			"description": "Beneficial cards from the Church",
 			"cards": [
 				{
-					"id": "white_heal_1",
-					"name": "Holy Water",
+					"id": "white_holy_water",
+					"name": "Eau Bénite",
 					"deck": "white",
 					"type": "instant",
-					"copies_in_deck": 3,
+					"copies_in_deck": 2,
 					"effect": {
 						"type": "heal",
 						"value": 2,
-						"description": "Heal 2 HP"
+						"description": "Soigne 2 HP."
 					}
 				},
 				{
-					"id": "white_equip_1",
-					"name": "Holy Sword",
+					"id": "white_flare_judgment",
+					"name": "Flare of Judgment",
+					"deck": "white",
+					"type": "instant",
+					"copies_in_deck": 1,
+					"effect": {
+						"type": "damage_all_others",
+						"value": 2,
+						"description": "Inflige 2 dégâts à tous les autres personnages."
+					}
+				},
+				{
+					"id": "white_first_aid",
+					"name": "First Aid",
+					"deck": "white",
+					"type": "instant",
+					"copies_in_deck": 1,
+					"effect": {
+						"type": "set_damage",
+						"value": 7,
+						"target": "choose",
+						"description": "Choisissez un joueur (vous inclus). Ses dégâts passent à 7."
+					}
+				},
+				{
+					"id": "white_concealed_knowledge",
+					"name": "Concealed Knowledge",
+					"deck": "white",
+					"type": "instant",
+					"copies_in_deck": 1,
+							"effect": {
+						"type": "extra_turn",
+						"value": 0,
+						"description": "Après ce tour, vous rejouez immédiatement."
+					}
+				},
+				{
+					"id": "white_guardian_angel",
+					"name": "Guardian Angel",
+					"deck": "white",
+					"type": "instant",
+					"copies_in_deck": 1,
+							"effect": {
+						"type": "damage_immunity",
+						"value": 0,
+						"description": "Vous ne subissez aucun dégât d'attaque jusqu'à votre prochain tour."
+					}
+				},
+				{
+					"id": "white_disenchant_mirror",
+					"name": "Disenchant Mirror",
+					"deck": "white",
+					"type": "instant",
+					"copies_in_deck": 1,
+							"effect": {
+						"type": "force_shadow_reveal",
+						"value": 0,
+						"description": "Si vous êtes Shadow (non révélé), vous devez révéler votre personnage."
+					}
+				},
+				{
+					"id": "white_blessing",
+					"name": "Blessing",
+					"deck": "white",
+					"type": "instant",
+					"copies_in_deck": 1,
+					"effect": {
+						"type": "heal_d6",
+						"value": 0,
+						"target": "choose_other",
+						"description": "Choisissez un autre joueur. Lancez un d6, il récupère autant de HP."
+					}
+				},
+				{
+					"id": "white_chocolate",
+					"name": "Chocolate",
+					"deck": "white",
+					"type": "instant",
+					"copies_in_deck": 1,
+					"effect": {
+						"type": "faction_reveal_heal",
+						"condition_type": "hp_max_lte",
+						"condition_value": 11,
+						"value": 0,
+						"description": "Si vos HP max sont 11 ou moins, vous pouvez vous révéler. Si révélé, soins complets."
+					}
+				},
+				{
+					"id": "white_advent",
+					"name": "Advent",
+					"deck": "white",
+					"type": "instant",
+					"copies_in_deck": 1,
+					"faction_restriction": "hunter",
+					"effect": {
+						"type": "faction_reveal_heal",
+						"condition_factions": ["hunter"],
+						"value": 0,
+						"description": "Si vous êtes Hunter, vous pouvez vous révéler. Si révélé, soins complets."
+					}
+				},
+				{
+					"id": "white_fortune_brooch",
+					"name": "Fortune Brooch",
 					"deck": "white",
 					"type": "equipment",
-					"copies_in_deck": 2,
+					"copies_in_deck": 1,
+							"effect": {
+						"type": "immunity_weird_woods",
+						"value": 0,
+						"description": "Vous ne subissez aucun dégât des Weird Woods."
+					}
+				},
+				{
+					"id": "white_talisman",
+					"name": "Talisman",
+					"deck": "white",
+					"type": "equipment",
+					"copies_in_deck": 1,
+							"effect": {
+						"type": "immunity_black_cards",
+						"value": 0,
+						"description": "Immunisé contre Vampire Bat, Bloodthirsty Spider et Dynamite."
+					}
+				},
+				{
+					"id": "white_mystic_compass",
+					"name": "Mystic Compass",
+					"deck": "white",
+					"type": "equipment",
+					"copies_in_deck": 1,
+							"effect": {
+						"type": "double_dice_roll",
+						"value": 0,
+						"description": "Lancez les dés deux fois et choisissez le résultat pour le déplacement."
+					}
+				},
+				{
+					"id": "white_silver_rosary",
+					"name": "Silver Rosary",
+					"deck": "white",
+					"type": "equipment",
+					"copies_in_deck": 1,
+							"effect": {
+						"type": "steal_equip_on_kill",
+						"value": 0,
+						"description": "Quand vous tuez un personnage, vous récupérez tout son équipement."
+					}
+				},
+				{
+					"id": "white_spear_longinus",
+					"name": "Lance de Longinus",
+					"deck": "white",
+					"type": "equipment",
+					"copies_in_deck": 1,
+					"faction_restriction": "hunter",
 					"effect": {
 						"type": "damage",
 						"value": 2,
-						"description": "Deal 2 damage to target"
+						"description": "Si vous êtes Hunter révélé, vos attaques infligent 2 dégâts supplémentaires."
+					}
+				},
+				{
+					"id": "white_holy_robe",
+					"name": "Holy Robe",
+					"deck": "white",
+					"type": "equipment",
+					"copies_in_deck": 1,
+					"effect": {
+						"type": "defense",
+						"value": 1,
+						"description": "Les dégâts que vous infligez et recevez en attaque sont réduits de 1."
 					}
 				}
 			]
@@ -127,42 +376,171 @@
 			"description": "Harmful cards from the Cemetery",
 			"cards": [
 				{
-					"id": "black_damage_1",
-					"name": "Dark Curse",
+					"id": "black_vampire_bat",
+					"name": "Vampire Bat",
 					"deck": "black",
 					"type": "instant",
 					"copies_in_deck": 3,
 					"effect": {
-						"type": "damage",
-						"value": 2,
-						"description": "Deal 2 damage to target"
+						"type": "vampire_drain",
+						"damage": 2,
+						"heal": 1,
+						"target": "choose",
+						"description": "Inflige 2 dégâts à un joueur et vous soigne 1 HP."
 					}
 				},
 				{
-					"id": "black_equip_1",
-					"name": "Cursed Blade",
+					"id": "black_moody_goblin",
+					"name": "Moody Goblin",
 					"deck": "black",
-					"type": "equipment",
+					"type": "instant",
 					"copies_in_deck": 2,
 					"effect": {
+						"type": "steal_equipment",
+						"value": 1,
+						"target": "choose",
+						"description": "Volez un équipement d'un autre joueur."
+					}
+				},
+				{
+					"id": "black_bloodthirsty_spider",
+					"name": "Bloodthirsty Spider",
+					"deck": "black",
+					"type": "instant",
+					"copies_in_deck": 1,
+					"effect": {
+						"type": "mutual_damage",
+						"damage": 2,
+						"self_damage": 2,
+						"target": "choose",
+						"description": "Inflige 2 dégâts à un joueur et vous subissez 2 dégâts."
+					}
+				},
+				{
+					"id": "black_spiritual_doll",
+					"name": "Spiritual Doll",
+					"deck": "black",
+					"type": "instant",
+					"copies_in_deck": 1,
+					"effect": {
+						"type": "self_damage_gamble",
+						"damage": 3,
+						"threshold": 4,
+						"target": "choose",
+						"description": "Choisissez un joueur et lancez un d6. Sur 1-4, il subit 3 dégâts. Sur 5-6, vous subissez 3 dégâts."
+					}
+				},
+				{
+					"id": "black_dynamite",
+					"name": "Dynamite",
+					"deck": "black",
+					"type": "instant",
+					"copies_in_deck": 1,
+							"effect": {
+						"type": "aoe_dice_damage",
+						"damage": 3,
+						"description": "Lancez 2 dés. Tous les joueurs dans la zone correspondante subissent 3 dégâts. Si 7, rien ne se passe."
+					}
+				},
+				{
+					"id": "black_banana_peel",
+					"name": "Banana Peel",
+					"deck": "black",
+					"type": "instant",
+					"copies_in_deck": 1,
+					"effect": {
+						"type": "give_equipment",
+						"value": 1,
+						"description": "Donnez un de vos équipements à un autre joueur. Si impossible, subissez 1 dégât."
+					}
+				},
+				{
+					"id": "black_diabolic_ritual",
+					"name": "Diabolic Ritual",
+					"deck": "black",
+					"type": "instant",
+					"copies_in_deck": 1,
+					"faction_restriction": "shadow",
+					"effect": {
+						"type": "faction_reveal_heal",
+						"condition_factions": ["shadow"],
+						"value": 0,
+						"description": "Si vous êtes Shadow, vous pouvez vous révéler. Si révélé, soins complets."
+					}
+				},
+				{
+					"id": "black_chainsaw",
+					"name": "Chainsaw",
+					"deck": "black",
+					"type": "equipment",
+					"copies_in_deck": 1,
+					"effect": {
 						"type": "damage",
-						"value": 3,
-						"description": "Deal 3 damage to target"
+						"value": 1,
+						"description": "Vos attaques infligent 1 dégât supplémentaire."
+					}
+				},
+				{
+					"id": "black_butcher_knife",
+					"name": "Butcher Knife",
+					"deck": "black",
+					"type": "equipment",
+					"copies_in_deck": 1,
+					"effect": {
+						"type": "damage",
+						"value": 1,
+						"description": "Vos attaques infligent 1 dégât supplémentaire."
+					}
+				},
+				{
+					"id": "black_rusted_axe",
+					"name": "Rusted Broad Axe",
+					"deck": "black",
+					"type": "equipment",
+					"copies_in_deck": 1,
+					"effect": {
+						"type": "damage",
+						"value": 1,
+						"description": "Vos attaques infligent 1 dégât supplémentaire."
+					}
+				},
+				{
+					"id": "black_machine_gun",
+					"name": "Machine Gun",
+					"deck": "black",
+					"type": "equipment",
+					"copies_in_deck": 1,
+							"effect": {
+						"type": "aoe_attack",
+						"value": 0,
+						"description": "Votre attaque touche tous les personnages dans votre zone d'attaque."
+					}
+				},
+				{
+					"id": "black_handgun",
+					"name": "Handgun",
+					"deck": "black",
+					"type": "equipment",
+					"copies_in_deck": 1,
+							"effect": {
+						"type": "extended_range",
+						"value": 0,
+						"description": "Toutes les zones sauf votre zone d'attaque originale deviennent votre zone d'attaque."
+					}
+				},
+				{
+					"id": "black_cursed_sword",
+					"name": "Cursed Sword Masamune",
+					"deck": "black",
+					"type": "equipment",
+					"copies_in_deck": 1,
+							"effect": {
+						"type": "forced_attack",
+						"value": 0,
+						"description": "Vous devez attaquer si possible. Lancez un d4 au lieu du calcul normal de dégâts."
 					}
 				}
 			]
-		}
-	},
-	"card_template": {
-		"id": "template",
-		"name": "Card Name",
-		"deck": "hermit|white|black",
-		"type": "equipment|instant|vision",
-		"copies_in_deck": 1,
-		"effect": {
-			"type": "damage|heal|reveal|draw|special",
-			"value": 0,
-			"description": "Effect description"
 		}
 	}
 }

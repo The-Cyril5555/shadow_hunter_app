@@ -45,6 +45,15 @@ func show_for_card(card: Card, at_position: Vector2) -> void:
 	current_card = card
 	card_name_label.text = card.name
 
+	# Check faction restriction — disable equip if player can't use this card
+	var current_player = GameState.get_current_player()
+	if card.faction_restriction != "" and current_player and current_player.faction != card.faction_restriction:
+		equip_button.disabled = true
+		equip_button.tooltip_text = Tr.t("equip.restricted", [card.faction_restriction])
+	else:
+		equip_button.disabled = false
+		equip_button.tooltip_text = ""
+
 	# Position menu
 	global_position = at_position
 

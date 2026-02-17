@@ -17,9 +17,12 @@ func calculate_attack_damage(attacker: Player, target: Player) -> Dictionary:
 	var is_valkyrie = attacker.character_id == "valkyrie" \
 		and attacker.is_revealed and not attacker.ability_disabled
 
+	# Cursed Sword Masamune — d4 only, no miss
+	var has_cursed_sword = _has_active_equipment(attacker, "forced_attack")
+
 	var missed: bool
 	var base_damage: int
-	if is_valkyrie:
+	if is_valkyrie or has_cursed_sword:
 		missed = false
 		base_damage = d4
 		d6 = 0  # Not used
@@ -68,6 +71,12 @@ func apply_damage(attacker: Player, target: Player, final_damage: int) -> void:
 		AudioManager.play_sfx("shield_block")
 		return
 
+	# Guardian Angel — immune to attack damage until next turn
+	if target.has_meta("damage_immune") and target.get_meta("damage_immune"):
+		print("[Combat] %s is protected by Guardian Angel — no damage!" % target.display_name)
+		AudioManager.play_sfx("shield_block")
+		return
+
 	if final_damage <= 0:
 		return
 
@@ -92,6 +101,20 @@ func process_death(victim: Player, killer: Player) -> void:
 	victim.is_alive = false
 	victim.is_revealed = true
 	GameState.character_revealed.emit(victim, null, victim.faction)
+
+	# Silver Rosary — killer steals all equipment from victim
+	if killer and killer != victim:
+		for card in killer.equipment:
+			if card.get_effect_type() == "steal_equip_on_kill":
+				if card.faction_restriction == "" or killer.faction == card.faction_restriction:
+					var stolen_cards = victim.equipment.duplicate()
+					for stolen in stolen_cards:
+						victim.equipment.erase(stolen)
+						killer.equipment.append(stolen)
+					if stolen_cards.size() > 0:
+						print("[Combat] Silver Rosary: %s stole %d equipment from %s" % [killer.display_name, stolen_cards.size(), victim.display_name])
+					break
+
 	GameState.player_died.emit(victim, killer)
 
 	print("[Combat] %s killed by %s - character revealed!" % [
@@ -100,3 +123,10 @@ func process_death(victim: Player, killer: Player) -> void:
 	])
 
 
+## Check if player has an active equipment with the given effect type (faction OK)
+static func _has_active_equipment(player: Player, effect_type: String) -> bool:
+	for card in player.equipment:
+		if card.get_effect_type() == effect_type:
+			if card.faction_restriction == "" or player.faction == card.faction_restriction:
+				return true
+	return false

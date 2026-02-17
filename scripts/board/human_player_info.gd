@@ -148,7 +148,7 @@ func _update_hand() -> void:
 
 	if _player.hand.is_empty():
 		var empty_label = Label.new()
-		empty_label.text = "Pas de carte"
+		empty_label.text = Tr.t("info.no_card")
 		empty_label.add_theme_font_size_override("font_size", 12)
 		empty_label.add_theme_color_override("font_color", Color(0.5, 0.5, 0.5))
 		hand_container.add_child(empty_label)
@@ -170,7 +170,7 @@ func _update_equipment() -> void:
 
 	if _player.equipment.is_empty():
 		var empty_label = Label.new()
-		empty_label.text = "Aucun"
+		empty_label.text = Tr.t("info.no_equipment")
 		empty_label.add_theme_font_size_override("font_size", 12)
 		empty_label.add_theme_color_override("font_color", Color(0.5, 0.5, 0.5))
 		equipment_container.add_child(empty_label)
