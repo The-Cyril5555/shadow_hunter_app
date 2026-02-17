@@ -36,6 +36,7 @@ var _bg_rect: TextureRect = null
 var _card_container: Control = null
 var _shine_overlay: ColorRect = null
 var _float_tween: Tween = null
+var _must_use_card: bool = false  # True when player drew instant card that must be used
 
 
 # -----------------------------------------------------------------------------
@@ -337,3 +338,17 @@ func _set_disabled(disabled: bool) -> void:
 	attack_button.disabled = disabled
 	attack_button.text = Tr.t("action.attack")
 	end_turn_button.disabled = disabled
+
+
+## Force card use - disable end turn until card is used
+func force_card_use() -> void:
+	_must_use_card = true
+	end_turn_button.disabled = true
+	end_turn_button.tooltip_text = "Vous devez utiliser la carte piochée"
+
+
+## Reset after card use
+func card_used() -> void:
+	_must_use_card = false
+	end_turn_button.disabled = false
+	end_turn_button.tooltip_text = ""

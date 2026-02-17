@@ -465,11 +465,11 @@ func _auto_draw_card(player: Player) -> void:
 	await card_reveal.card_reveal_finished
 
 	if card.type == "instant":
-		_apply_instant_card_effect(card, player)
+		# Instant cards must be used immediately
 		deck.discard_card(card)
 		_update_deck_displays()
-		if _instant_card_pending:
-			return  # Instant card target selection in progress
+		_force_card_use(player, card)
+		return  # _force_card_use handles everything
 	elif card.type == "equipment":
 		player.equipment.append(card)
 		GameState.equipment_equipped.emit(player, card)
@@ -644,11 +644,11 @@ func _on_draw_card_pressed() -> void:
 
 	# Apply card effect based on type
 	if card.type == "instant":
-		_apply_instant_card_effect(card, current_player)
+		# Instant cards must be used immediately
 		deck.discard_card(card)
 		_update_deck_displays()
-		if _instant_card_pending:
-			return  # Instant card target selection in progress
+		_force_card_use(current_player, card)
+		return  # _force_card_use handles everything
 	elif card.type == "equipment":
 		current_player.equipment.append(card)
 		GameState.equipment_equipped.emit(current_player, card)
@@ -2152,6 +2152,103 @@ func _check_werewolf_counterattack(target: Player, attacker: Player) -> void:
 				msg += " — Mort !"
 			toast.show_toast(msg, Color(0.7, 0.4, 1.0))
 		_update_display()
+
+
+# -----------------------------------------------------------------------------
+# Card Usage Helpers
+# -----------------------------------------------------------------------------
+
+## Check if a card can target the user themselves
+func _can_card_target_self(card: Card) -> bool:
+	var effect_type = card.effect.get("type", "")
+
+	# Offensive effects cannot target self
+	match effect_type:
+		"damage", "aoe_damage", "aoe_dice_damage", "steal_equipment":
+			return false
+
+		# Beneficial effects can target self
+		"heal", "draw_card", "equipment_slot":
+			return true
+
+		# Vision cards: depends on the specific effect
+		"vision_condition", "vision_attack", "vision_heal":
+			return true  # Vision cards usually target self
+
+		# Default: allow self-targeting for safety
+		_:
+			return true
+
+
+## Get valid targets for a specific card, respecting card restrictions
+func _get_valid_targets_for_card(user: Player, card: Card) -> Array:
+	var can_target_self = _can_card_target_self(card)
+
+	var targets = []
+	for p in GameState.players:
+		if not p.is_alive:
+			continue
+
+		# If card cannot target self, exclude the user
+		if not can_target_self and p == user:
+			continue
+
+		targets.append(p)
+
+	# Exception: if no other targets, allow self-targeting
+	if targets.is_empty() and not can_target_self:
+		targets.append(user)
+
+	return targets
+
+
+## Check if a card requires a target selection
+func _card_requires_target(card: Card) -> bool:
+	var effect_type = card.effect.get("type", "")
+
+	match effect_type:
+		"damage", "heal", "steal_equipment", "draw_card":
+			return true
+		"vision_condition", "vision_attack", "vision_heal":
+			return false  # Vision cards target self automatically
+		"aoe_damage", "aoe_dice_damage":
+			return false  # AOE doesn't need target selection
+		"equipment_slot":
+			return false  # Equipment doesn't need target
+		_:
+			return false
+
+
+## Force immediate use of instant card after draw
+func _force_card_use(player: Player, card: Card) -> void:
+	var requires_target = _card_requires_target(card)
+
+	if requires_target:
+		# Show target selection immediately
+		var valid_targets = _get_valid_targets_for_card(player, card)
+
+		if valid_targets.is_empty():
+			# No valid targets - show error and skip card
+			if toast:
+				toast.show_toast(Tr.t("error.no_valid_targets"), Color(1.0, 0.3, 0.3))
+			has_drawn_this_turn = true
+			_show_action_prompt(player)
+			return
+
+		# Disable end turn button until card is used
+		if player.is_human:
+			human_player_info.force_card_use()
+
+		# Open target selection
+		_current_card_to_use = card
+		_card_user = player
+		target_selection_panel.show_targets(valid_targets)
+		# When target is selected, _on_target_selected will handle it and call card_used()
+	else:
+		# Card doesn't need target - apply immediately
+		_apply_instant_card_effect(card, player)
+		has_drawn_this_turn = true
+		_show_action_prompt(player)
 
 
 # -----------------------------------------------------------------------------
