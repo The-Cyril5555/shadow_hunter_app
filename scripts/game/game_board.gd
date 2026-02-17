@@ -2236,9 +2236,10 @@ func _force_card_use(player: Player, card: Card) -> void:
 		if player.is_human:
 			human_player_info.force_card_use()
 
-		# Open target selection
-		_current_card_to_use = card
-		_card_user = player
+		# Open target selection using existing instant card flow
+		_instant_card_pending = true
+		_instant_card = card
+		_instant_card_player = player
 		target_selection_panel.show_targets(valid_targets)
 		# When target is selected, _on_target_selected will handle it and call card_used()
 	else:
