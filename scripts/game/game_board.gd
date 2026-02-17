@@ -2195,10 +2195,6 @@ func _get_valid_targets_for_card(user: Player, card: Card) -> Array:
 
 		targets.append(p)
 
-	# Exception: if no other targets, allow self-targeting
-	if targets.is_empty() and not can_target_self:
-		targets.append(user)
-
 	return targets
 
 
@@ -2228,9 +2224,10 @@ func _force_card_use(player: Player, card: Card) -> void:
 		var valid_targets = _get_valid_targets_for_card(player, card)
 
 		if valid_targets.is_empty():
-			# No valid targets - show error and skip card
+			# No valid targets - discard card without effect
 			if toast:
 				toast.show_toast(Tr.t("error.no_valid_targets"), Color(1.0, 0.3, 0.3))
+			_discard_card_from_hand(player, card)
 			has_drawn_this_turn = true
 			_show_action_prompt(player)
 			return
