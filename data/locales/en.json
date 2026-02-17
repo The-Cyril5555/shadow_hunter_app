@@ -211,6 +211,11 @@
 
 	"error.no_valid_targets": "No valid targets — card discarded",
 
+	"reveal.title": "Reveal",
+	"reveal.confirm_text": "Your condition is met.\nDo you want to reveal your identity to recover all your HP?",
+	"reveal.yes": "Reveal",
+	"reveal.no": "Stay hidden",
+
 	"help.title": "HELP & RULES",
 	"help.close": "Close (F1)",
 	"help.search": "Search...",

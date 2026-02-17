@@ -211,6 +211,11 @@
 
 	"error.no_valid_targets": "Aucune cible valide — carte défaussée",
 
+	"reveal.title": "Révélation",
+	"reveal.confirm_text": "Votre condition est remplie.\nVoulez-vous révéler votre identité pour récupérer tous vos HP ?",
+	"reveal.yes": "Se révéler",
+	"reveal.no": "Rester caché",
+
 	"help.title": "AIDE & RÈGLES",
 	"help.close": "Fermer (F1)",
 	"help.search": "Rechercher...",

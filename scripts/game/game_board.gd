@@ -40,6 +40,9 @@ var _instant_card_pending: bool = false  # True when waiting for instant card ta
 var _instant_card: Card = null  # Instant card being resolved
 var _instant_card_player: Player = null  # Player who drew the instant card
 var _combat_target: Player = null  # Target awaiting combat dice result
+var _reveal_choice_pending: bool = false  # True when waiting for human reveal confirmation
+
+signal _reveal_choice_made(confirmed: bool)
 
 ## Action validator instance
 var validator: ActionValidator = ActionValidator.new()
@@ -1121,6 +1124,7 @@ func _apply_instant_card_on_target(card: Card, player: Player, target: Player) -
 
 
 ## Apply faction reveal heal effect (Advent/Diabolic Ritual/Chocolate)
+## These cards are OPTIONAL: "you MAY reveal yourself — if revealed, full heal"
 func _apply_faction_reveal_heal(card: Card, player: Player) -> void:
 	var effect = card.effect
 	var can_use = false
@@ -1133,21 +1137,58 @@ func _apply_faction_reveal_heal(card: Card, player: Player) -> void:
 			can_use = player.hp_max <= cond_value
 		elif cond_type == "hp_max_gte":
 			can_use = player.hp_max >= cond_value
-	if can_use:
-		if not player.is_revealed:
-			player.reveal()
-			GameState.character_revealed.emit(player, player.ability_data, player.faction)
-		var healed = player.hp_max - player.hp
-		player.heal(player.hp_max)
-		damage_tracker.update_player_hp(player)
-		if healed > 0:
-			_play_heal_visual(player, healed)
-		if toast:
-			toast.show_toast(Tr.t("toast.reveal_full_heal", [PlayerColors.get_label(player)]), Color(1.0, 0.85, 0.2))
-	else:
+
+	if not can_use:
 		if toast:
 			toast.show_toast(Tr.t("toast.condition_not_met"), Color(0.5, 0.5, 0.5))
+		human_player_info.update_display()
+		return
+
+	# Condition met — player may CHOOSE to reveal
+	var wants_reveal = false
+	if player.is_human:
+		wants_reveal = await _ask_reveal_confirmation()
+	else:
+		# Bot: reveal only if damaged (strategic value)
+		wants_reveal = player.hp < player.hp_max
+
+	if not wants_reveal:
+		if toast:
+			toast.show_toast(Tr.t("toast.condition_not_met"), Color(0.5, 0.5, 0.5))
+		human_player_info.update_display()
+		return
+
+	if not player.is_revealed:
+		player.reveal()
+		GameState.character_revealed.emit(player, player.ability_data, player.faction)
+	var healed = player.hp_max - player.hp
+	player.heal(player.hp_max)
+	damage_tracker.update_player_hp(player)
+	if healed > 0:
+		_play_heal_visual(player, healed)
+	if toast:
+		toast.show_toast(Tr.t("toast.reveal_full_heal", [PlayerColors.get_label(player)]), Color(1.0, 0.85, 0.2))
 	human_player_info.update_display()
+
+
+## Show confirmation dialog asking human player if they want to reveal
+func _ask_reveal_confirmation() -> bool:
+	var dialog = ConfirmationDialog.new()
+	dialog.title = Tr.t("reveal.title")
+	dialog.dialog_text = Tr.t("reveal.confirm_text")
+	dialog.ok_button_text = Tr.t("reveal.yes")
+	dialog.cancel_button_text = Tr.t("reveal.no")
+	add_child(dialog)
+	dialog.confirmed.connect(_emit_reveal_choice.bind(true), CONNECT_ONE_SHOT)
+	dialog.canceled.connect(_emit_reveal_choice.bind(false), CONNECT_ONE_SHOT)
+	dialog.popup_centered()
+	var result = await _reveal_choice_made
+	dialog.queue_free()
+	return result
+
+
+func _emit_reveal_choice(confirmed: bool) -> void:
+	_reveal_choice_made.emit(confirmed)
 
 
 ## Log card effect action
