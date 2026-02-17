@@ -209,6 +209,8 @@
 	"validate.attack_phase": "Peut seulement attaquer pendant la phase Action",
 	"validate.unknown": "Action inconnue: %s",
 
+	"error.no_valid_targets": "Aucune cible valide — carte défaussée",
+
 	"help.title": "AIDE & RÈGLES",
 	"help.close": "Fermer (F1)",
 	"help.search": "Rechercher...",

@@ -209,6 +209,8 @@
 	"validate.attack_phase": "Can only attack during Action phase",
 	"validate.unknown": "Unknown action: %s",
 
+	"error.no_valid_targets": "No valid targets — card discarded",
+
 	"help.title": "HELP & RULES",
 	"help.close": "Close (F1)",
 	"help.search": "Search...",
