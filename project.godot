@@ -35,6 +35,7 @@ PolishConfig="*res://scripts/autoloads/polish_config.gd"
 AudioManager="*res://scripts/autoloads/audio_manager.gd"
 ParticlePool="*res://scripts/systems/particle_pool.gd"
 Tr="*res://scripts/autoloads/tr.gd"
+IconLoader="*res://scripts/autoloads/icon_loader.gd"
 
 [display]
 

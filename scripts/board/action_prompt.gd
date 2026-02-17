@@ -28,6 +28,17 @@ func _ready() -> void:
 	attack_button.pressed.connect(func(): action_chosen.emit("attack"))
 	end_turn_button.pressed.connect(func(): action_chosen.emit("end_turn"))
 
+	# Add icons to buttons
+	reveal_button.icon = IconLoader.get_icon("reveal")
+	ability_button.icon = IconLoader.get_icon("ability")
+	attack_button.icon = IconLoader.get_icon("attack")
+	end_turn_button.icon = IconLoader.get_icon("end_turn")
+
+	# Configure icon alignment
+	for btn in [reveal_button, ability_button, attack_button, end_turn_button]:
+		btn.icon_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		btn.expand_icon = true
+
 	# Style the panel
 	var style = StyleBoxFlat.new()
 	style.bg_color = Color(0.1, 0.08, 0.15, 0.85)

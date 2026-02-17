@@ -111,10 +111,10 @@ func _build_ui() -> void:
 	_main_buttons.add_theme_constant_override("separation", 8)
 	vbox.add_child(_main_buttons)
 
-	_add_button(_main_buttons, Tr.t("pause.resume"), _on_resume_pressed)
-	_add_button(_main_buttons, Tr.t("pause.save"), _on_save_pressed)
-	_add_button(_main_buttons, Tr.t("pause.load"), _on_load_pressed)
-	_add_button(_main_buttons, Tr.t("pause.quit"), _on_quit_pressed)
+	_add_button(_main_buttons, Tr.t("pause.resume"), _on_resume_pressed, "resume")
+	_add_button(_main_buttons, Tr.t("pause.save"), _on_save_pressed, "save")
+	_add_button(_main_buttons, Tr.t("pause.load"), _on_load_pressed, "load")
+	_add_button(_main_buttons, Tr.t("pause.quit"), _on_quit_pressed, "quit")
 
 	# Save/Load panel (hidden by default)
 	_save_load_panel = VBoxContainer.new()
@@ -132,15 +132,22 @@ func _build_ui() -> void:
 	_slots_container.add_theme_constant_override("separation", 6)
 	_save_load_panel.add_child(_slots_container)
 
-	_add_button(_save_load_panel, Tr.t("pause.back"), _on_back_pressed)
+	_add_button(_save_load_panel, Tr.t("pause.back"), _on_back_pressed, "cancel")
 
 
-func _add_button(parent: Control, text: String, callback: Callable) -> Button:
+func _add_button(parent: Control, text: String, callback: Callable, icon_name: String = "") -> Button:
 	var btn = Button.new()
 	btn.text = text
 	btn.custom_minimum_size = Vector2(0, 40)
 	btn.add_theme_font_size_override("font_size", 18)
 	btn.pressed.connect(callback)
+
+	# Add icon if provided
+	if icon_name != "":
+		btn.icon = IconLoader.get_icon(icon_name)
+		btn.icon_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		btn.expand_icon = true
+
 	parent.add_child(btn)
 	return btn
 

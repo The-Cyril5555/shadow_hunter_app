@@ -43,6 +43,12 @@ func _ready() -> void:
 	visible = false
 	roll_button.pressed.connect(_on_roll_pressed)
 	dice.dice_rolled.connect(_on_dice_result)
+
+	# Add icon to roll button
+	roll_button.icon = IconLoader.get_icon("roll_dice")
+	roll_button.icon_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	roll_button.expand_icon = true
+
 	_apply_styling()
 
 

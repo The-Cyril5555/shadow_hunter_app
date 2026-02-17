@@ -136,6 +136,9 @@ func _build_ui() -> void:
 	cancel_button = Button.new()
 	cancel_button.text = Tr.t("zone.cancel")
 	cancel_button.custom_minimum_size = Vector2(0, 36)
+	cancel_button.icon = IconLoader.get_icon("cancel")
+	cancel_button.icon_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	cancel_button.expand_icon = true
 	cancel_button.pressed.connect(_on_cancel_pressed)
 	vbox.add_child(cancel_button)
 
@@ -160,6 +163,9 @@ func _build_damage_or_heal_ui(all_players: Array) -> void:
 		var dmg_btn = Button.new()
 		dmg_btn.text = Tr.t("zone.damage_2")
 		dmg_btn.custom_minimum_size = Vector2(90, 34)
+		dmg_btn.icon = IconLoader.get_icon("attack")
+		dmg_btn.icon_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		dmg_btn.expand_icon = true
 		dmg_btn.add_theme_color_override("font_color", Color(1.0, 0.4, 0.4))
 		dmg_btn.pressed.connect(_on_weird_woods_choice.bind(target, "damage"))
 		row.add_child(dmg_btn)
@@ -167,6 +173,9 @@ func _build_damage_or_heal_ui(all_players: Array) -> void:
 		var heal_btn = Button.new()
 		heal_btn.text = Tr.t("zone.heal_1")
 		heal_btn.custom_minimum_size = Vector2(80, 34)
+		heal_btn.icon = IconLoader.get_icon("heal")
+		heal_btn.icon_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		heal_btn.expand_icon = true
 		heal_btn.add_theme_color_override("font_color", Color(0.4, 1.0, 0.4))
 		heal_btn.pressed.connect(_on_weird_woods_choice.bind(target, "heal"))
 		row.add_child(heal_btn)
@@ -236,6 +245,9 @@ func _build_steal_equipment_ui(all_players: Array) -> void:
 			var steal_btn = Button.new()
 			steal_btn.text = Tr.t("zone.steal")
 			steal_btn.custom_minimum_size = Vector2(80, 34)
+			steal_btn.icon = IconLoader.get_icon("steal")
+			steal_btn.icon_alignment = HORIZONTAL_ALIGNMENT_LEFT
+			steal_btn.expand_icon = true
 			steal_btn.add_theme_color_override("font_color", Color(1.0, 0.7, 0.2))
 			steal_btn.pressed.connect(_on_steal_equipment.bind(target, card))
 			row.add_child(steal_btn)
