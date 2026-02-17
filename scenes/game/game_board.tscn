@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3 uid="uid://yjhv3prk4kl2"]
+[gd_scene load_steps=13 format=3 uid="uid://yjhv3prk4kl2"]
 
 [ext_resource type="Script" uid="uid://ohu15oidcil" path="res://scripts/game/game_board.gd" id="1_game_board"]
 [ext_resource type="Shader" path="res://assets/shaders/balatro_bg.gdshader" id="12_balatro_bg"]
@@ -9,7 +9,6 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/dice_roll_popup.tscn" id="6_dice_roll_popup"]
 [ext_resource type="PackedScene" path="res://scenes/board/damage_tracker.tscn" id="7_damage_tracker"]
 [ext_resource type="PackedScene" path="res://scenes/board/character_cards_row.tscn" id="8_character_cards_row"]
-[ext_resource type="PackedScene" path="res://scenes/board/action_prompt.tscn" id="9_action_prompt"]
 [ext_resource type="PackedScene" path="res://scenes/board/human_player_info.tscn" id="10_human_player_info"]
 [ext_resource type="PackedScene" path="res://scenes/ui/zone_effect_popup.tscn" id="11_zone_effect_popup"]
 
@@ -72,17 +71,6 @@ layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/separation = 8
 alignment = 1
-
-[node name="ActionPrompt" parent="." instance=ExtResource("9_action_prompt")]
-layout_mode = 1
-anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -260
-offset_top = -180
-offset_right = 0
-offset_bottom = 0
 
 [node name="TurnInfoPanel" type="VBoxContainer" parent="MainLayout/VBoxContainer/MiddleRow"]
 custom_minimum_size = Vector2(150, 0)

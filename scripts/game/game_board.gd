@@ -10,7 +10,6 @@ extends Control
 @onready var damage_tracker: DamageTracker = $MainLayout/VBoxContainer/MiddleRow/DamageTracker
 @onready var character_cards_row: CharacterCardsRow = $MainLayout/VBoxContainer/CharacterCardsRow
 @onready var zones_container: HBoxContainer = $MainLayout/VBoxContainer/MiddleRow/CenterArea/ZonesContainer
-@onready var action_prompt: ActionPrompt = $ActionPrompt
 @onready var human_player_info: HumanPlayerInfo = $MainLayout/VBoxContainer/HumanPlayerInfo
 @onready var turn_info_label: Label = $MainLayout/VBoxContainer/MiddleRow/TurnInfoPanel/TurnLabel
 @onready var phase_info_label: Label = $MainLayout/VBoxContainer/MiddleRow/TurnInfoPanel/PhaseLabel
@@ -110,7 +109,7 @@ func _ready() -> void:
 	dice_roll_popup.combat_roll_completed.connect(_on_combat_roll_completed)
 
 	# Connect action prompt signal
-	action_prompt.action_chosen.connect(_on_action_prompt_chosen)
+	human_player_info.action_chosen.connect(_on_action_prompt_chosen)
 
 	# Connect zone effect popup signal
 	zone_effect_popup.effect_completed.connect(_on_zone_effect_completed)
@@ -320,10 +319,10 @@ func _on_phase_changed(new_phase: GameState.TurnPhase) -> void:
 			if current_player and current_player.has_meta("damage_immune"):
 				current_player.set_meta("damage_immune", false)
 			if current_player and not current_player.is_human:
-				action_prompt.show_waiting_prompt(current_player.display_name)
+				human_player_info.show_waiting_prompt(current_player.display_name)
 				_execute_bot_turn()
 			else:
-				action_prompt.show_movement_prompt(current_player)
+				human_player_info.show_movement_prompt(current_player)
 				var has_compass = _has_active_equipment(current_player, "double_dice_roll")
 				dice_roll_popup.show_for_player(current_player, has_compass)
 
@@ -338,10 +337,10 @@ func _on_phase_changed(new_phase: GameState.TurnPhase) -> void:
 				else:
 					_show_action_prompt(action_player)
 			else:
-				action_prompt.show_waiting_prompt(action_player.display_name if action_player else "")
+				human_player_info.show_waiting_prompt(action_player.display_name if action_player else "")
 
 		GameState.TurnPhase.END:
-			action_prompt.hide_prompt()
+			human_player_info.hide_prompt()
 
 
 # -----------------------------------------------------------------------------
@@ -355,7 +354,7 @@ func _show_action_prompt(player: Player) -> void:
 	var can_draw = not has_drawn_this_turn and deck != null and deck.get_card_count() > 0
 	var deck_type = deck.deck_type if deck != null else ""
 	var target_count = get_valid_targets().size()
-	action_prompt.show_action_prompt(player, can_draw, deck_type, target_count, has_attacked_this_turn)
+	human_player_info.show_action_prompt(player, can_draw, deck_type, target_count, has_attacked_this_turn)
 
 
 ## Handle action prompt choice
@@ -491,7 +490,7 @@ func _auto_draw_card(player: Player) -> void:
 
 	# Show remaining actions (attack/end turn)
 	var target_count = get_valid_targets().size()
-	action_prompt.update_after_draw(player, target_count, has_attacked_this_turn)
+	human_player_info.update_after_draw(player, target_count, has_attacked_this_turn)
 
 
 ## Check if a zone has a special effect (no deck)
@@ -596,7 +595,7 @@ func _on_zone_effect_completed(result: Dictionary) -> void:
 	# Show remaining actions (attack/end turn)
 	if current_player.is_human:
 		var target_count = get_valid_targets().size()
-		action_prompt.update_after_draw(current_player, target_count, has_attacked_this_turn)
+		human_player_info.update_after_draw(current_player, target_count, has_attacked_this_turn)
 
 
 ## Get deck by type name (hermit/white/black)
@@ -671,7 +670,7 @@ func _on_draw_card_pressed() -> void:
 	# Re-show action prompt for remaining choices
 	if current_player.is_human and GameState.current_phase == GameState.TurnPhase.ACTION:
 		var target_count = get_valid_targets().size()
-		action_prompt.update_after_draw(current_player, target_count, has_attacked_this_turn)
+		human_player_info.update_after_draw(current_player, target_count, has_attacked_this_turn)
 
 	print("[GameBoard] Card draw complete.")
 
@@ -1293,7 +1292,7 @@ func _finish_vision_card(player: Player) -> void:
 	# Show remaining actions
 	if player.is_human:
 		var target_count = get_valid_targets().size()
-		action_prompt.update_after_draw(player, target_count, has_attacked_this_turn)
+		human_player_info.update_after_draw(player, target_count, has_attacked_this_turn)
 
 
 # -----------------------------------------------------------------------------
@@ -1636,7 +1635,7 @@ func _on_reveal_pressed() -> void:
 
 	# Re-show action buttons with reveal now disabled
 	var target_count = get_valid_targets().size()
-	action_prompt.update_after_draw(current_player, target_count, has_attacked_this_turn)
+	human_player_info.update_after_draw(current_player, target_count, has_attacked_this_turn)
 
 
 ## Handle ability button click
@@ -1796,7 +1795,7 @@ func _get_players_in_zone(zone_id: String, exclude: Player) -> Array:
 ## Refresh action buttons after ability use
 func _refresh_action_buttons(player: Player) -> void:
 	var target_count = get_valid_targets().size()
-	action_prompt.update_after_draw(player, target_count, has_attacked_this_turn)
+	human_player_info.update_after_draw(player, target_count, has_attacked_this_turn)
 
 
 ## Handle attack button click
@@ -1834,7 +1833,7 @@ func _on_target_selected(target: Player) -> void:
 		SaveManager.track_action()
 		if card_player.is_human:
 			var target_count = get_valid_targets().size()
-			action_prompt.update_after_draw(card_player, target_count, has_attacked_this_turn)
+			human_player_info.update_after_draw(card_player, target_count, has_attacked_this_turn)
 		return
 
 	# Ability mode: resolve ability on target
@@ -1921,7 +1920,7 @@ func _on_combat_roll_completed(total_damage: int) -> void:
 
 	# Re-show action buttons (attack now disabled)
 	var target_count = get_valid_targets().size()
-	action_prompt.update_after_draw(attacker, target_count, has_attacked_this_turn)
+	human_player_info.update_after_draw(attacker, target_count, has_attacked_this_turn)
 
 
 ## Update UI to show dead player state
@@ -2166,7 +2165,7 @@ func _on_game_over(winning_faction: String) -> void:
 	print("[GameBoard] Game Over! %s wins!" % winning_faction)
 
 	# Hide action prompts
-	action_prompt.hide_prompt()
+	human_player_info.hide_prompt()
 	target_selection_panel.hide_panel()
 
 	# Show victory toast

@@ -60,3 +60,37 @@ text = "Équipement :"
 [node name="EquipmentContainer" type="HBoxContainer" parent="MarginContainer/HBoxContainer/InfoVBox"]
 layout_mode = 2
 theme_override_constants/separation = 6
+
+[node name="ButtonGrid" type="GridContainer" parent="MarginContainer/HBoxContainer"]
+layout_mode = 2
+theme_override_constants/h_separation = 8
+theme_override_constants/v_separation = 8
+columns = 2
+
+[node name="RevealButton" type="Button" parent="MarginContainer/HBoxContainer/ButtonGrid"]
+custom_minimum_size = Vector2(110, 48)
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "Se révéler"
+disabled = true
+
+[node name="AbilityButton" type="Button" parent="MarginContainer/HBoxContainer/ButtonGrid"]
+custom_minimum_size = Vector2(110, 48)
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "Compétence"
+disabled = true
+
+[node name="AttackButton" type="Button" parent="MarginContainer/HBoxContainer/ButtonGrid"]
+custom_minimum_size = Vector2(110, 48)
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "Attaquer"
+disabled = true
+
+[node name="EndTurnButton" type="Button" parent="MarginContainer/HBoxContainer/ButtonGrid"]
+custom_minimum_size = Vector2(110, 48)
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "Fin de tour"
+disabled = true
