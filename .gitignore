@@ -1,7 +1,5 @@
 # Godot 4.x cache and generated files
 .godot/
-.import/
-*.import
 *.uid
 
 # Export templates and builds
