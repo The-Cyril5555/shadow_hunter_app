@@ -7,7 +7,8 @@
 ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 ![Resolution](https://img.shields.io/badge/Resolution-1920x1080-blue)
 
----
+<img width="3839" height="2022" alt="image" src="https://github.com/user-attachments/assets/b13fcddd-92b2-4280-b0ca-4d72c130bb2d" />
+
 
 ## Presentation
 
