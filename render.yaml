@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: shadow-hunter-server
+    runtime: docker
+    dockerfilePath: deploy/Dockerfile
+    plan: free
+    envVars:
+      - key: PORT
+        value: "10000"
+    buildFilter:
+      paths:
+        - deploy/**
+        - scripts/**
+        - scenes/**
+        - data/**

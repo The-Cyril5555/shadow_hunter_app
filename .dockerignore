@@ -13,6 +13,6 @@ assets/shaders/
 # UID files (editor-generated)
 *.uid
 
-# Fly.io deploy folder itself
+# Deploy config files (not needed inside the image)
 deploy/
-fly.toml
+render.yaml

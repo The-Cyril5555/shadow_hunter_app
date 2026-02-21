@@ -7,7 +7,7 @@ extends Control
 # -----------------------------------------------------------------------------
 # Constants
 # -----------------------------------------------------------------------------
-const SERVER_URL_PROD: String = "wss://shadow-hunter.fly.dev"
+const SERVER_URL_PROD: String = "wss://shadow-hunter-server.onrender.com"
 const SERVER_URL_DEV: String = "ws://localhost:9080"
 
 
