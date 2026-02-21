@@ -20,9 +20,7 @@ _bmad/
 _bmad-output/
 
 # Reference materials (not game assets)
-images/
 game_board/
-remake character/
 
 # Empty documentation folder
 docs/
