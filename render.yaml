@@ -4,9 +4,7 @@ services:
     runtime: docker
     dockerfilePath: deploy/Dockerfile
     plan: free
-    envVars:
-      - key: PORT
-        value: "10000"
+    healthCheckPath: /health
     buildFilter:
       paths:
         - deploy/**

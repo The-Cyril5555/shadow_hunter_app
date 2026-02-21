@@ -25,6 +25,7 @@ var _start_btn: Button
 var _back_btn: Button
 var _main_panel: Control
 var _lobby_panel: Control
+var _custom_url_input: LineEdit
 
 
 # -----------------------------------------------------------------------------
@@ -171,6 +172,22 @@ func _build_main_panel() -> PanelContainer:
 	_join_btn.add_theme_font_size_override("font_size", 18)
 	_join_btn.pressed.connect(_on_join_pressed)
 	join_row.add_child(_join_btn)
+
+	# Advanced: custom server URL (for ngrok / local host)
+	var sep2 = HSeparator.new()
+	vbox.add_child(sep2)
+
+	var url_label = Label.new()
+	url_label.text = "Serveur perso (ngrok / local) — laisser vide pour Render"
+	url_label.add_theme_font_size_override("font_size", 12)
+	url_label.add_theme_color_override("font_color", Color(0.5, 0.5, 0.6))
+	vbox.add_child(url_label)
+
+	_custom_url_input = LineEdit.new()
+	_custom_url_input.placeholder_text = "wss://xxxx.ngrok-free.app  ou  ws://localhost:9080"
+	_custom_url_input.custom_minimum_size = Vector2(0, 38)
+	_custom_url_input.add_theme_font_size_override("font_size", 13)
+	vbox.add_child(_custom_url_input)
 
 	return panel
 
@@ -453,6 +470,11 @@ func _set_buttons_disabled(disabled: bool) -> void:
 
 
 func _get_server_url() -> String:
+	# Custom URL takes priority (ngrok, local host, etc.)
+	if is_instance_valid(_custom_url_input):
+		var custom: String = _custom_url_input.text.strip_edges()
+		if custom != "":
+			return custom
 	# Use dev URL if running locally (editor or local export)
 	if OS.has_feature("editor") or OS.has_feature("debug"):
 		return SERVER_URL_DEV

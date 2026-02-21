@@ -14,5 +14,6 @@ assets/shaders/
 *.uid
 
 # Deploy config files (not needed inside the image)
-deploy/
+deploy/Dockerfile
+deploy/koyeb.yaml
 render.yaml

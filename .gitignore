@@ -5,7 +5,6 @@
 
 # Export templates and builds
 export/
-export_presets.cfg
 *.exe
 *.x86_64
 *.apk
