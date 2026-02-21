@@ -24,6 +24,7 @@ extends Control
 var _colorblind_dropdown: OptionButton
 var _text_size_dropdown: OptionButton
 var _locale_dropdown: OptionButton
+var _fullscreen_checkbox: CheckBox
 
 
 # -----------------------------------------------------------------------------
@@ -114,6 +115,20 @@ func _build_extra_settings() -> void:
 	loc_row.add_child(_locale_dropdown)
 	parent.add_child(loc_row)
 
+	# Fullscreen toggle
+	var fs_row = HBoxContainer.new()
+	var fs_label = Label.new()
+	fs_label.text = Tr.t("settings.fullscreen")
+	fs_label.add_theme_font_size_override("font_size", 16)
+	fs_label.custom_minimum_size = Vector2(200, 0)
+	fs_row.add_child(fs_label)
+
+	_fullscreen_checkbox = CheckBox.new()
+	_fullscreen_checkbox.add_theme_font_size_override("font_size", 16)
+	_fullscreen_checkbox.toggled.connect(_on_fullscreen_toggled)
+	fs_row.add_child(_fullscreen_checkbox)
+	parent.add_child(fs_row)
+
 
 ## Load current UserSettings values into UI controls
 func _load_current_settings() -> void:
@@ -144,6 +159,9 @@ func _load_current_settings() -> void:
 	var loc_index = UserSettings.LOCALES.find(UserSettings.locale)
 	if loc_index >= 0:
 		_locale_dropdown.selected = loc_index
+
+	# Fullscreen
+	_fullscreen_checkbox.set_pressed_no_signal(UserSettings.fullscreen)
 
 
 # -----------------------------------------------------------------------------
@@ -191,6 +209,10 @@ func _on_locale_changed(index: int) -> void:
 	UserSettings.set_locale(new_locale)
 
 
+func _on_fullscreen_toggled(enabled: bool) -> void:
+	UserSettings.set_fullscreen(enabled)
+
+
 # -----------------------------------------------------------------------------
 # Button Handlers
 # -----------------------------------------------------------------------------
@@ -211,6 +233,8 @@ func _on_reset_pressed() -> void:
 	UserSettings.set_colorblind_mode("none")
 	UserSettings.set_text_size("medium")
 	UserSettings.set_locale("fr")
+	UserSettings.set_fullscreen(false)
+	_fullscreen_checkbox.button_pressed = false
 
 	master_value_label.text = "100%"
 	sfx_value_label.text = "100%"

@@ -116,7 +116,10 @@ func _build_ui() -> void:
 	style.set_border_width_all(3)
 	style.border_color = Color(1.0, 0.9, 0.3, 0.8)
 	style.set_corner_radius_all(12)
-	style.set_content_margin_all(20)
+	style.content_margin_left = 20
+	style.content_margin_right = 20
+	style.content_margin_top = 20
+	style.content_margin_bottom = 20
 	_panel.add_theme_stylebox_override("panel", style)
 	margin.add_child(_panel)
 

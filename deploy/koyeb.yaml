@@ -1,0 +1,23 @@
+# Koyeb deployment config — Shadow Hunter dedicated server
+# Doc: https://www.koyeb.com/docs
+
+name: shadow-hunter-server
+
+services:
+  - name: gameserver
+    type: worker          # Long-running process (not HTTP)
+    dockerfile: deploy/Dockerfile
+    build_args:
+      - GODOT_VERSION=4.6
+    env:
+      - key: PORT
+        value: "9080"
+    ports:
+      - port: 9080
+        protocol: tcp
+    instance_type: nano   # Free tier (0.1 vCPU, 256 MB RAM)
+    regions:
+      - par               # Paris
+    scaling:
+      min: 1
+      max: 1

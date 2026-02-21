@@ -62,6 +62,12 @@ signal player_moved(player, zone_id: String)
 # GAME STATE
 # =============================================================================
 
+## True when playing an online network game
+var is_network_game: bool = false
+
+## Index of the local player in network mode (-1 = server only, no local player)
+var my_network_player_index: int = -1
+
 ## All players in the game (human and bot)
 var players: Array = []  # Will be Array[Player] when Player class exists
 

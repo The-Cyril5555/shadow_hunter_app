@@ -9,6 +9,7 @@ signal expansion_toggle_changed(include_expansion: bool)
 signal volume_changed(volume_type: String, value: float)
 signal accessibility_changed(setting: String, value)
 signal locale_changed(new_locale: String)
+signal fullscreen_changed(enabled: bool)
 
 
 # Settings properties
@@ -26,6 +27,9 @@ var text_size: String = "medium"  # "small" (12px), "medium" (16px), "large" (20
 
 # Localization
 var locale: String = "fr"  # "fr" or "en"
+
+# Display
+var fullscreen: bool = false
 
 # Text size pixel mappings
 const TEXT_SIZE_MAP: Dictionary = {
@@ -48,6 +52,7 @@ const LOCALES: Array[String] = ["fr", "en"]
 
 func _ready() -> void:
 	load_settings()
+	apply_fullscreen()
 	print("[UserSettings] Initialized")
 
 
@@ -120,6 +125,12 @@ func load_settings() -> void:
 		else:
 			push_warning("[UserSettings] Invalid locale - using default")
 
+	if data.has("fullscreen"):
+		if typeof(data.fullscreen) == TYPE_BOOL:
+			fullscreen = data.fullscreen
+		else:
+			push_warning("[UserSettings] Invalid type for fullscreen - using default")
+
 	print("[UserSettings] Loaded settings: expansion=%s, colorblind=%s, text=%s, locale=%s" % [include_expansion, colorblind_mode, text_size, locale])
 
 
@@ -134,6 +145,7 @@ func save_settings() -> void:
 		"colorblind_mode": colorblind_mode,
 		"text_size": text_size,
 		"locale": locale,
+		"fullscreen": fullscreen,
 	}
 
 	var file = FileAccess.open("user://settings.json", FileAccess.WRITE)
@@ -253,6 +265,22 @@ func get_faction_display(faction: String) -> String:
 		var symbol = COLORBLIND_SYMBOLS.get(faction, "")
 		return "%s %s" % [symbol, faction.capitalize()]
 	return faction.capitalize()
+
+
+## Set fullscreen mode
+func set_fullscreen(enabled: bool) -> void:
+	if fullscreen == enabled:
+		return
+	fullscreen = enabled
+	save_settings()
+	apply_fullscreen()
+	fullscreen_changed.emit(fullscreen)
+
+
+## Apply fullscreen setting to the window
+func apply_fullscreen() -> void:
+	var mode = DisplayServer.WINDOW_MODE_FULLSCREEN if fullscreen else DisplayServer.WINDOW_MODE_MAXIMIZED
+	DisplayServer.window_set_mode(mode)
 
 
 ## Generic getter for settings

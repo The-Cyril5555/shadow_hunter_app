@@ -24,6 +24,19 @@ func _ready() -> void:
 	btn_container.add_child(tutorial_btn)
 	btn_container.move_child(tutorial_btn, 2)
 
+	# Add online multiplayer button
+	var online_btn = Button.new()
+	online_btn.name = "OnlineButton"
+	online_btn.custom_minimum_size = Vector2(250, 50)
+	online_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	online_btn.add_theme_font_size_override("font_size", 22)
+	online_btn.text = "Jouer en ligne"
+	online_btn.add_theme_color_override("font_color", Color(0.5, 0.9, 1.0))
+	online_btn.pressed.connect(_on_online_pressed)
+	# Insert after Tutorial (index 3)
+	btn_container.add_child(online_btn)
+	btn_container.move_child(online_btn, 3)
+
 	# Setup button hover effects
 	_setup_button_hover_effects()
 
@@ -41,6 +54,21 @@ func _ready() -> void:
 	help_btn.position = Vector2(-54, -54)
 	help_btn.pressed.connect(func(): help_menu.show_help())
 	add_child(help_btn)
+
+	# Fullscreen toggle button (bottom-right, left of "?")
+	var fs_btn = Button.new()
+	fs_btn.name = "FullscreenToggle"
+	fs_btn.custom_minimum_size = Vector2(44, 44)
+	fs_btn.add_theme_font_size_override("font_size", 18)
+	fs_btn.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	fs_btn.position = Vector2(-104, -54)
+	_update_fs_btn(fs_btn)
+	fs_btn.pressed.connect(_on_fs_toggle.bind(fs_btn))
+	UserSettings.fullscreen_changed.connect(func(_v): _update_fs_btn(fs_btn))
+	add_child(fs_btn)
+
+	# Title assembly animation
+	_play_title_intro()
 
 	print("[MainMenu] Ready")
 
@@ -131,9 +159,25 @@ func _on_tutorial_pressed() -> void:
 	GameModeStateMachine.transition_to(GameModeStateMachine.GameMode.TUTORIAL)
 
 
+func _on_online_pressed() -> void:
+	AudioManager.play_sfx("button_click")
+	GameModeStateMachine.transition_to(GameModeStateMachine.GameMode.ONLINE_LOBBY)
+
+
 func _on_settings_pressed() -> void:
 	AudioManager.play_sfx("button_click")
 	GameModeStateMachine.transition_to(GameModeStateMachine.GameMode.SETTINGS)
+
+
+func _update_fs_btn(btn: Button) -> void:
+	btn.text = "⊡" if UserSettings.fullscreen else "⛶"
+	btn.tooltip_text = "Passer en fenêtré" if UserSettings.fullscreen else "Passer en plein écran"
+
+
+func _on_fs_toggle(btn: Button) -> void:
+	AudioManager.play_sfx("button_click")
+	UserSettings.set_fullscreen(!UserSettings.fullscreen)
+	_update_fs_btn(btn)
 
 
 func _on_quit_pressed() -> void:
@@ -162,7 +206,10 @@ func _show_load_dialog() -> void:
 	style.set_border_width_all(2)
 	style.border_color = Color(0.4, 0.4, 0.6)
 	style.set_corner_radius_all(10)
-	style.set_content_margin_all(20)
+	style.content_margin_left = 20
+	style.content_margin_right = 20
+	style.content_margin_top = 20
+	style.content_margin_bottom = 20
 	panel.add_theme_stylebox_override("panel", style)
 	center.add_child(panel)
 
@@ -207,6 +254,21 @@ func _show_load_dialog() -> void:
 	back_btn.add_theme_font_size_override("font_size", 16)
 	back_btn.pressed.connect(func(): overlay.queue_free())
 	vbox.add_child(back_btn)
+
+
+## Play the title assembly (reverse disintegration) animation on startup
+func _play_title_intro() -> void:
+	var title = $CenterContainer/VBoxContainer/Title
+	var mat = ShaderMaterial.new()
+	mat.shader = preload("res://assets/shaders/title_intro.gdshader")
+	mat.set_shader_parameter("progress", 0.0)
+	title.material = mat
+	var tween = create_tween()
+	tween.tween_method(
+		func(v: float): mat.set_shader_parameter("progress", v),
+		0.0, 1.0, 8.0
+	).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tween.tween_callback(func(): title.material = null)
 
 
 func _on_load_slot_selected(slot_id: int, overlay: Control) -> void:

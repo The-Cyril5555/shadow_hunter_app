@@ -178,6 +178,7 @@
 	"settings.small": "Small (12px)",
 	"settings.medium": "Medium (16px)",
 	"settings.large": "Large (20px)",
+	"settings.fullscreen": "Fullscreen:",
 
 	"gameover.victory": "VICTORY!",
 	"gameover.game_over": "GAME OVER",
@@ -215,6 +216,11 @@
 	"reveal.confirm_text": "Your condition is met.\nDo you want to reveal your identity to recover all your HP?",
 	"reveal.yes": "Reveal",
 	"reveal.no": "Stay hidden",
+
+	"popup.equipment_title": "Equipment",
+	"popup.hand_title": "In hand",
+	"popup.no_equipment": "No equipment",
+	"popup.no_hand": "No cards in hand",
 
 	"help.title": "HELP & RULES",
 	"help.close": "Close (F1)",

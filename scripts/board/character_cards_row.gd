@@ -5,6 +5,12 @@ extends HBoxContainer
 
 
 # -----------------------------------------------------------------------------
+# Signals
+# -----------------------------------------------------------------------------
+signal card_clicked(player: Player)
+
+
+# -----------------------------------------------------------------------------
 # Constants
 # -----------------------------------------------------------------------------
 const CARD_WIDTH: int = 100
@@ -203,12 +209,14 @@ func _create_card_slot(player: Player) -> PanelContainer:
 	var vbox = VBoxContainer.new()
 	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
 	vbox.add_theme_constant_override("separation", 4)
+	vbox.mouse_filter = Control.MOUSE_FILTER_PASS
 	panel.add_child(vbox)
 
 	# Card container (layered: background + character)
 	var card_container = Control.new()
 	card_container.custom_minimum_size = Vector2(CARD_WIDTH, CARD_HEIGHT)
 	card_container.pivot_offset = Vector2(CARD_WIDTH / 2.0, CARD_HEIGHT / 2.0)
+	card_container.mouse_filter = Control.MOUSE_FILTER_PASS
 
 	var bg_rect = TextureRect.new()
 	bg_rect.custom_minimum_size = Vector2(CARD_WIDTH, CARD_HEIGHT)
@@ -259,6 +267,7 @@ func _create_card_slot(player: Player) -> PanelContainer:
 	label.add_theme_font_size_override("font_size", 16)
 	label.add_theme_color_override("font_color", PlayerColors.get_color(player.id))
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	vbox.add_child(label)
 
 	_slots[player.id] = {
@@ -382,6 +391,12 @@ func _on_card_hover_exit(player_id: int) -> void:
 
 ## Handle mouse movement over a card for tilt + shine update
 func _on_card_gui_input(event: InputEvent, player_id: int) -> void:
+	if event is InputEventMouseButton:
+		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+			if _slots.has(player_id):
+				card_clicked.emit(_slots[player_id]["player"])
+		return
+
 	if not event is InputEventMouseMotion:
 		return
 	if not _slots.has(player_id):

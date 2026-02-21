@@ -1,7 +1,8 @@
-[gd_scene load_steps=13 format=3 uid="uid://yjhv3prk4kl2"]
+[gd_scene load_steps=14 format=3 uid="uid://yjhv3prk4kl2"]
 
 [ext_resource type="Script" uid="uid://ohu15oidcil" path="res://scripts/game/game_board.gd" id="1_game_board"]
 [ext_resource type="Shader" path="res://assets/shaders/balatro_bg.gdshader" id="12_balatro_bg"]
+[ext_resource type="Script" path="res://scripts/board/player_equipment_popup.gd" id="13_player_equipment_popup"]
 [ext_resource type="PackedScene" uid="uid://b86qiecm7mcqb" path="res://scenes/ui/card_reveal.tscn" id="2_card_reveal"]
 [ext_resource type="PackedScene" path="res://scenes/ui/equipment_action_menu.tscn" id="3_equipment_action_menu"]
 [ext_resource type="PackedScene" path="res://scenes/ui/target_selection_panel.tscn" id="4_target_selection_panel"]
@@ -136,3 +137,9 @@ visible = false
 layer = 15
 
 [node name="ErrorMessage" parent="ErrorMessageLayer" instance=ExtResource("5_error_message")]
+
+[node name="PlayerEquipmentPopupLayer" type="CanvasLayer" parent="."]
+layer = 16
+
+[node name="PlayerEquipmentPopup" type="PanelContainer" parent="PlayerEquipmentPopupLayer"]
+script = ExtResource("13_player_equipment_popup")

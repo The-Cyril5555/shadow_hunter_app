@@ -178,6 +178,7 @@
 	"settings.small": "Petit (12px)",
 	"settings.medium": "Moyen (16px)",
 	"settings.large": "Grand (20px)",
+	"settings.fullscreen": "Plein écran :",
 
 	"gameover.victory": "VICTOIRE!",
 	"gameover.game_over": "PARTIE TERMINÉE",
@@ -215,6 +216,11 @@
 	"reveal.confirm_text": "Votre condition est remplie.\nVoulez-vous révéler votre identité pour récupérer tous vos HP ?",
 	"reveal.yes": "Se révéler",
 	"reveal.no": "Rester caché",
+
+	"popup.equipment_title": "Équipement",
+	"popup.hand_title": "En main",
+	"popup.no_equipment": "Aucun équipement",
+	"popup.no_hand": "Aucune carte en main",
 
 	"help.title": "AIDE & RÈGLES",
 	"help.close": "Fermer (F1)",

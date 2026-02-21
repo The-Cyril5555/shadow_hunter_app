@@ -10,7 +10,8 @@ enum GameMode {
 	SETTINGS,
 	TUTORIAL,
 	GAME,
-	GAME_OVER
+	GAME_OVER,
+	ONLINE_LOBBY
 }
 
 
@@ -49,6 +50,8 @@ func transition_to(new_mode: GameMode) -> void:
 			get_tree().change_scene_to_file("res://scenes/game/game_board.tscn")
 		GameMode.GAME_OVER:
 			get_tree().change_scene_to_file("res://scenes/ui/game_over.tscn")
+		GameMode.ONLINE_LOBBY:
+			get_tree().change_scene_to_file("res://scenes/ui/screens/online_lobby.tscn")
 
 
 func get_mode_name() -> String:

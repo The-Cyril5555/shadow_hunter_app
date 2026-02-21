@@ -22,6 +22,7 @@ extends Control
 @onready var error_message: ErrorMessage = $ErrorMessageLayer/ErrorMessage
 @onready var dice_roll_popup: DiceRollPopup = $DiceRollPopupLayer/DiceRollPopup
 @onready var zone_effect_popup: ZoneEffectPopup = $ZoneEffectPopupLayer/ZoneEffectPopup
+@onready var player_equipment_popup: PlayerEquipmentPopup = $PlayerEquipmentPopupLayer/PlayerEquipmentPopup
 
 
 # -----------------------------------------------------------------------------
@@ -56,6 +57,9 @@ var toast: FeedbackToast = null
 ## True once game_over signal fires — stops all game logic
 var _game_ended: bool = false
 
+## Network bridge (non-null only in online mode)
+var _net: GameNetworkBridge = null
+
 
 # -----------------------------------------------------------------------------
 # Lifecycle
@@ -69,8 +73,24 @@ func _ready() -> void:
 	GameState.current_phase = GameState.TurnPhase.MOVEMENT
 	GameState.game_in_progress = true
 
-	# Initialize decks
-	GameState.initialize_decks()
+	# Setup network bridge in online mode
+	if GameState.is_network_game:
+		_net = GameNetworkBridge.new()
+		_net.name = "GameNetworkBridge"
+		add_child(_net)
+		# Build peer→player map from room data stored in NetworkManager
+		var room_players = NetworkManager._current_room.get("players", [])
+		_net.setup_peer_map(room_players)
+		_net.set_my_player_index(GameState.my_network_player_index)
+		# Connect network signals
+		_net.remote_action_received.connect(_on_net_remote_action)
+		_net.public_state_received.connect(_on_net_public_state)
+		_net.private_state_received.connect(_on_net_private_state)
+		print("[GameBoard] Network bridge active — I am player %d" % GameState.my_network_player_index)
+
+	# Initialize decks (server always, client only if not network)
+	if not GameState.is_network_game or multiplayer.is_server():
+		GameState.initialize_decks()
 
 	# Initialize zones
 	_initialize_zones()
@@ -81,6 +101,7 @@ func _ready() -> void:
 	# Setup new visual components
 	damage_tracker.setup(GameState.players)
 	character_cards_row.setup(GameState.players)
+	character_cards_row.card_clicked.connect(_on_character_card_clicked)
 	human_player_info.setup(_get_local_human_player())
 
 	# Register active abilities for all players
@@ -306,6 +327,19 @@ func _on_phase_changed(new_phase: GameState.TurnPhase) -> void:
 	print("[GameBoard] Phase changed to: %s" % new_phase)
 	_update_display()
 
+	# Server in network mode: reset per-turn flags on MOVEMENT, then broadcast.
+	# All UI is handled client-side via _on_net_public_state.
+	if GameState.is_network_game and multiplayer.is_server():
+		if new_phase == GameState.TurnPhase.MOVEMENT:
+			has_drawn_this_turn = false
+			has_rolled_this_turn = false
+			has_attacked_this_turn = false
+			_pending_ability = false
+			_instant_card_pending = false
+		if _net:
+			_net.broadcast_public_state()
+		return
+
 	match new_phase:
 		GameState.TurnPhase.MOVEMENT:
 			has_drawn_this_turn = false
@@ -364,6 +398,28 @@ func _show_action_prompt(player: Player) -> void:
 func _on_action_prompt_chosen(action: String) -> void:
 	if _game_ended:
 		return
+	# In network mode, non-server clients send actions to server
+	if GameState.is_network_game and not multiplayer.is_server() and _net:
+		match action:
+			"draw":
+				_net.send_draw_card()
+			"attack":
+				# Client picks target locally, then sends attack+target to server
+				var targets = get_valid_targets()
+				if targets.is_empty():
+					return
+				target_selection_panel.show_targets(targets)
+				var chosen: Player = await target_selection_panel.target_selected
+				if chosen:
+					_net.send_attack(chosen.id)
+			"reveal":
+				_net.send_reveal()
+			"ability":
+				_net.send_action_request("ability")
+			"end_turn":
+				_net.send_end_turn()
+		return
+	# Local / server path
 	match action:
 		"draw":
 			_on_draw_card_pressed()
@@ -385,6 +441,12 @@ func _on_action_prompt_chosen(action: String) -> void:
 func _on_popup_zone_selected(zone_id: String) -> void:
 	var current_player = GameState.get_current_player()
 	if current_player == null:
+		return
+
+	# In network client mode: send zone choice to server, do not move locally.
+	if GameState.is_network_game and not multiplayer.is_server() and _net:
+		has_rolled_this_turn = true
+		_net.send_zone_choice({"zone_id": zone_id})
 		return
 
 	var zone = _get_zone_by_id(zone_id)
@@ -464,8 +526,9 @@ func _auto_draw_card(player: Player) -> void:
 
 	_update_deck_displays()
 
-	card_reveal.show_card(card)
-	await card_reveal.card_reveal_finished
+	if not (GameState.is_network_game and multiplayer.is_server()):
+		card_reveal.show_card(card)
+		await card_reveal.card_reveal_finished
 
 	if card.type == "instant":
 		# Instant cards must be used immediately
@@ -550,8 +613,9 @@ func _on_zone_effect_completed(result: Dictionary) -> void:
 				var card = deck.draw_card()
 				if card:
 					_update_deck_displays()
-					card_reveal.show_card(card)
-					await card_reveal.card_reveal_finished
+					if not (GameState.is_network_game and multiplayer.is_server()):
+						card_reveal.show_card(card)
+						await card_reveal.card_reveal_finished
 					if card.type == "instant":
 						_apply_instant_card_effect(card, current_player)
 						deck.discard_card(card)
@@ -641,9 +705,10 @@ func _on_draw_card_pressed() -> void:
 
 	_update_deck_displays()
 
-	# Show card reveal animation
-	card_reveal.show_card(card)
-	await card_reveal.card_reveal_finished
+	# Show card reveal animation — skip on headless server (no display)
+	if not (GameState.is_network_game and multiplayer.is_server()):
+		card_reveal.show_card(card)
+		await card_reveal.card_reveal_finished
 
 	# Apply card effect based on type
 	if card.type == "instant":
@@ -1146,7 +1211,10 @@ func _apply_faction_reveal_heal(card: Card, player: Player) -> void:
 
 	# Condition met — player may CHOOSE to reveal
 	var wants_reveal = false
-	if player.is_human:
+	if GameState.is_network_game and multiplayer.is_server():
+		# Client already clicked "Reveal" — auto-confirm on server
+		wants_reveal = true
+	elif player.is_human:
 		wants_reveal = await _ask_reveal_confirmation()
 	else:
 		# Bot: reveal only if damaged (strategic value)
@@ -1219,6 +1287,12 @@ func _start_vision_card(player: Player, card: Card, deck: DeckManager) -> void:
 
 	if targets.is_empty():
 		_finish_vision_card(player)
+		return
+
+	# In server network mode: auto-select a target (no UI)
+	if GameState.is_network_game and multiplayer.is_server():
+		var auto_target: Player = targets[randi() % targets.size()]
+		_resolve_vision_card(auto_target)
 		return
 
 	target_selection_panel.show_targets(targets, Tr.t("popup.vision_title"), Tr.t("popup.vision_send"))
@@ -1339,6 +1413,160 @@ func _finish_vision_card(player: Player) -> void:
 # -----------------------------------------------------------------------------
 # Signal Handlers — Visual component updates
 # -----------------------------------------------------------------------------
+
+func _on_character_card_clicked(player: Player) -> void:
+	player_equipment_popup.show_player(player)
+
+
+# -----------------------------------------------------------------------------
+# Signal Handlers — Network
+# -----------------------------------------------------------------------------
+
+## Server: received an action from a client peer — process it locally then broadcast
+func _on_net_remote_action(player_idx: int, action: Dictionary) -> void:
+	if not multiplayer.is_server():
+		return
+	var player = GameState.players[player_idx] if player_idx < GameState.players.size() else null
+	if player == null:
+		return
+	var action_type: String = action.get("type", "")
+
+	# --- Async actions (return early; broadcast handled by subsequent phase change) ---
+
+	# Zone move: client picked a zone after rolling dice
+	if action_type == "zone_choice":
+		var zone_id: String = action.get("choice", {}).get("zone_id", "")
+		var zone = _get_zone_by_id(zone_id)
+		if zone and player:
+			has_rolled_this_turn = true
+			await _move_player_to_zone(player, zone)
+			# _move_player_to_zone → advance_phase → _on_phase_changed broadcasts
+		return
+
+	# Attack: client already chose the target — server rolls damage and applies it
+	if action_type == "attack":
+		var target_id: int = action.get("target", -1)
+		var target = _find_player_by_id(target_id)
+		if target:
+			_combat_target = target
+			var damage: int = _server_roll_combat_damage(player, target)
+			await _on_combat_roll_completed(damage)
+		if _net:
+			_net.broadcast_public_state()
+			_net.send_all_private_states()
+		return
+
+	# --- Synchronous actions ---
+	match action_type:
+		"draw_card":
+			_on_draw_card_pressed()
+		"reveal":
+			_on_reveal_pressed()
+		"ability":
+			_on_ability_pressed()
+		"end_turn":
+			_on_end_turn_pressed()
+		"target_selected":
+			var target_id: int = action.get("target", -1)
+			var target = _find_player_by_id(target_id)
+			if target:
+				target_selection_panel._emit_selection(target)
+		"reveal_choice":
+			_reveal_choice_made.emit(action.get("confirmed", false))
+	# Broadcast after synchronous action
+	if _net:
+		_net.broadcast_public_state()
+		_net.send_all_private_states()
+
+
+## Client: received updated public state from server — refresh UI then adapt to turn
+func _on_net_public_state(_state: Dictionary) -> void:
+	if multiplayer.is_server():
+		return
+	# State already applied by GameNetworkBridge._apply_public_state
+	_update_display()
+	damage_tracker.setup(GameState.players)
+	character_cards_row.setup(GameState.players)
+	# Show toast if any
+	if _net and _net._last_toast_message != "":
+		if toast:
+			toast.show_toast(_net._last_toast_message, _net._last_toast_color)
+		_net._last_toast_message = ""
+	# Show appropriate interactive UI based on current turn/phase
+	_net_update_client_ui()
+
+
+## Client: show the right interactive UI when state is received from server
+func _net_update_client_ui() -> void:
+	var my_idx: int = GameState.my_network_player_index
+	var current: Player = GameState.get_current_player()
+	if current == null:
+		return
+	if GameState.current_player_index != my_idx:
+		# Not our turn — show passive waiting message
+		human_player_info.show_waiting_prompt(current.display_name)
+		return
+	# It's our turn — show interactive UI based on phase
+	var player: Player = current
+	match GameState.current_phase:
+		GameState.TurnPhase.MOVEMENT:
+			has_drawn_this_turn = false
+			has_rolled_this_turn = false
+			has_attacked_this_turn = false
+			human_player_info.show_movement_prompt(player)
+			var has_compass: bool = _has_active_equipment(player, "double_dice_roll")
+			dice_roll_popup.show_for_player(player, has_compass)
+		GameState.TurnPhase.ACTION:
+			var deck = GameState.get_deck_for_zone(player.position_zone)
+			var zone_has_deck: bool = deck != null and deck.get_card_count() > 0
+			if not has_drawn_this_turn and (zone_has_deck or _zone_has_effect(player.position_zone)):
+				# Show action prompt — player clicks "Draw Card" which sends draw_card to server
+				_show_action_prompt(player)
+			else:
+				_show_action_prompt(player)
+		GameState.TurnPhase.END:
+			pass  # Server advances automatically
+
+
+## Client: received private state update (hand, faction) from server
+func _on_net_private_state(_data: Dictionary) -> void:
+	if multiplayer.is_server():
+		return
+	# Private state already applied by GameNetworkBridge._apply_private_state
+	# Refresh hand display if human_player_info shows hand cards
+	human_player_info.update_display()
+
+
+## Helper: find a player by their id
+## Server: compute combat damage without UI — same formula as DiceRollPopup
+func _server_roll_combat_damage(attacker: Player, target: Player) -> int:
+	var d6: int = randi_range(1, 6)
+	var d4: int = randi_range(1, 4)
+	# Valkyrie: d4 only, no miss
+	var is_valkyrie: bool = attacker.character_id == "valkyrie" \
+		and attacker.is_revealed and not attacker.ability_disabled
+	# Cursed Sword: d4 only, no miss
+	var has_cursed_sword: bool = CombatSystem._has_active_equipment(attacker, "forced_attack")
+	var base_damage: int
+	if is_valkyrie or has_cursed_sword:
+		base_damage = d4
+	elif d6 == d4:
+		return 0  # Miss
+	else:
+		base_damage = abs(d6 - d4)
+	var equip_bonus: int = attacker.get_attack_damage_bonus()
+	var defense: int = target.get_defense_bonus()
+	if equip_bonus > 0 or defense > 0:
+		return max(1, base_damage + equip_bonus - defense)
+	return base_damage
+
+
+func _find_player_by_id(player_id: int) -> Player:
+	for p in GameState.players:
+		if p.id == player_id:
+			return p
+	return null
+
 
 func _on_damage_dealt(_attacker: Player, victim: Player, _amount: int) -> void:
 	damage_tracker.update_player_hp(victim)
@@ -1753,6 +1981,19 @@ func _on_ability_pressed() -> void:
 		_:
 			if toast:
 				toast.show_toast(Tr.t("toast.ability_unavailable"), Color(1.0, 0.6, 0.3))
+
+	# Server network mode: auto-select target for abilities that need one
+	if GameState.is_network_game and multiplayer.is_server() and _pending_ability:
+		var auto_targets: Array = []
+		match char_id:
+			"franklin", "george", "fuka":
+				auto_targets = _get_all_alive_others(player)
+			"ellen":
+				auto_targets = _get_revealed_with_abilities(player)
+		if not auto_targets.is_empty():
+			_resolve_ability_on_target(auto_targets[randi() % auto_targets.size()])
+		else:
+			_pending_ability = false
 
 
 ## Resolve ability on selected target
@@ -2271,6 +2512,13 @@ func _force_card_use(player: Player, card: Card) -> void:
 			_discard_card_from_hand(player, card)
 			has_drawn_this_turn = true
 			_show_action_prompt(player)
+			return
+
+		# In server network mode: auto-select a target (server-authoritative, no UI)
+		if GameState.is_network_game and multiplayer.is_server():
+			var auto_target: Player = valid_targets[randi() % valid_targets.size()]
+			_apply_instant_card_on_target(card, player, auto_target)
+			has_drawn_this_turn = true
 			return
 
 		# Disable end turn button until card is used
