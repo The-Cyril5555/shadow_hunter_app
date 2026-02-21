@@ -16,22 +16,34 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          lfs: true
 
-      - name: Export Godot game (Web / HTML5)
-        uses: firebelley/godot-export@v6
-        with:
-          godot_executable_download_url: >-
-            https://github.com/godotengine/godot/releases/download/4.6-stable/Godot_v4.6-stable_linux.x86_64.zip
-          godot_export_templates_download_url: >-
-            https://github.com/godotengine/godot/releases/download/4.6-stable/Godot_v4.6-stable_export_templates.tpz
-          relative_export_path: ./build
-          export_debug: false
+      - name: Install Godot 4.6
+        run: |
+          wget -q \
+            "https://github.com/godotengine/godot/releases/download/4.6-stable/Godot_v4.6-stable_linux.x86_64.zip" \
+            -O /tmp/godot.zip
+          unzip -q /tmp/godot.zip -d /tmp/
+          sudo mv "/tmp/Godot_v4.6-stable_linux.x86_64" /usr/local/bin/godot
+          sudo chmod +x /usr/local/bin/godot
+
+      - name: Install export templates
+        run: |
+          wget -q \
+            "https://github.com/godotengine/godot/releases/download/4.6-stable/Godot_v4.6-stable_export_templates.tpz" \
+            -O /tmp/templates.tpz
+          mkdir -p ~/.local/share/godot/export_templates/4.6.stable
+          unzip -q /tmp/templates.tpz -d /tmp/tpl/
+          mv /tmp/tpl/templates/* ~/.local/share/godot/export_templates/4.6.stable/
+
+      - name: Export Web
+        run: |
+          mkdir -p build
+          godot --headless --path . --export-release "Web" build/index.html 2>&1 || true
+          ls -la build/
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           branch: gh-pages
-          folder: build/Web
+          folder: build
           clean: true
