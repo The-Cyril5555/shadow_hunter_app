@@ -9,6 +9,8 @@ extends Control
 # -----------------------------------------------------------------------------
 const SERVER_URL_PROD: String = "wss://shadow-hunter-app.onrender.com"
 const SERVER_URL_DEV: String = "ws://localhost:9080"
+const HEALTH_URL: String = "https://shadow-hunter-app.onrender.com/health"
+const KEEPALIVE_INTERVAL: float = 600.0  # 10 minutes — prevent Render free-tier spin-down
 
 
 # -----------------------------------------------------------------------------
@@ -33,6 +35,8 @@ var _custom_url_input: LineEdit
 # -----------------------------------------------------------------------------
 var _is_host: bool = false
 var _connected: bool = false
+var _ping_http: HTTPRequest
+var _ping_timer: Timer
 
 
 # -----------------------------------------------------------------------------
@@ -41,6 +45,7 @@ var _connected: bool = false
 func _ready() -> void:
 	_build_ui()
 	_connect_network_signals()
+	_setup_keepalive()
 	print("[OnlineLobby] Ready")
 
 
@@ -476,3 +481,42 @@ func _get_server_url() -> String:
 		if custom != "":
 			return custom
 	return SERVER_URL_PROD
+
+
+# -----------------------------------------------------------------------------
+# Server Keepalive — prevents Render free-tier from spinning down
+# -----------------------------------------------------------------------------
+func _setup_keepalive() -> void:
+	_ping_http = HTTPRequest.new()
+	add_child(_ping_http)
+	_ping_http.request_completed.connect(_on_ping_completed)
+
+	_ping_timer = Timer.new()
+	_ping_timer.wait_time = KEEPALIVE_INTERVAL
+	_ping_timer.one_shot = false
+	_ping_timer.autostart = false
+	_ping_timer.timeout.connect(_send_ping)
+	add_child(_ping_timer)
+
+	_set_status("Vérification du serveur...", Color(0.7, 0.7, 0.9))
+	_send_ping()
+
+
+func _send_ping() -> void:
+	if not is_instance_valid(_ping_http):
+		return
+	if _ping_http.get_http_client_status() != HTTPClient.STATUS_DISCONNECTED:
+		return  # Already in progress
+	_ping_http.request(HEALTH_URL)
+
+
+func _on_ping_completed(result: int, response_code: int, _headers: PackedStringArray, _body: PackedByteArray) -> void:
+	if result == HTTPRequest.RESULT_SUCCESS and response_code == 200:
+		_set_status("Serveur en ligne ✓", Color(0.4, 1.0, 0.5))
+		if not _ping_timer.is_stopped():
+			pass  # Already running
+		else:
+			_ping_timer.start()
+	else:
+		# Server sleeping — let user know, they can retry in a minute
+		_set_status("Serveur en cours de démarrage... réessayez dans ~1 minute.", Color(1.0, 0.75, 0.3))
