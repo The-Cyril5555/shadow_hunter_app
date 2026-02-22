@@ -496,7 +496,7 @@ func _on_increase_bots() -> void:
 		NetworkManager.request_set_bot_count(_bot_count + 1)
 
 
-func _on_game_started(initial_players: Array, my_player_index: int) -> void:
+func _on_game_started(initial_players: Array, my_player_index: int, zone_positions: Array) -> void:
 	_set_status("La partie commence !", Color(0.3, 1.0, 0.5))
 	# Reconstruct GameState from initial data received from server
 	GameState.reset()
@@ -508,6 +508,9 @@ func _on_game_started(initial_players: Array, my_player_index: int) -> void:
 	GameState.turn_count = 1
 	GameState.current_player_index = 0
 	GameState.current_phase = GameState.TurnPhase.MOVEMENT
+	# Apply the server's zone order before the GameBoard loads
+	if zone_positions.size() > 0:
+		GameState.zone_positions = zone_positions
 	GameModeStateMachine.transition_to(GameModeStateMachine.GameMode.GAME)
 
 

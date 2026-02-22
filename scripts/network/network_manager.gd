@@ -16,7 +16,7 @@ signal room_created(code: String)
 signal room_joined(code: String, players: Array)
 signal room_join_failed(reason: String)
 signal lobby_updated(players: Array)
-signal game_started(initial_players: Array, my_player_index: int)
+signal game_started(initial_players: Array, my_player_index: int, zone_positions: Array)
 signal bot_count_updated(count: int)
 
 
@@ -297,9 +297,9 @@ func _rpc_bot_count_updated(count: int) -> void:
 
 ## Sent to each peer individually with their full initial state
 @rpc("authority", "reliable", "call_remote")
-func _rpc_game_started(initial_players: Array, my_player_index: int) -> void:
+func _rpc_game_started(initial_players: Array, my_player_index: int, zone_positions: Array) -> void:
 	print("[NetworkManager] Game started — I am player %d" % my_player_index)
-	game_started.emit(initial_players, my_player_index)
+	game_started.emit(initial_players, my_player_index, zone_positions)
 
 
 # -----------------------------------------------------------------------------
@@ -345,9 +345,13 @@ func _setup_network_game(room: Dictionary) -> void:
 	GameState.current_player_index = 0
 	GameState.current_phase = GameState.TurnPhase.MOVEMENT
 
+	# 4b. Establish zone positions on server now so clients receive the same order
+	GameState.setup_zone_positions()
+
 	print("[NetworkManager] Network game set up with %d players (%d human, %d bot)" % [player_count, room.players.size(), bot_count])
 
 	# 5. Send initial state to each peer individually
+	var zone_positions: Array = GameState.zone_positions.duplicate()
 	for i in range(room.peers.size()):
 		var peer_id: int = room.peers[i]
 		# Find which player index this peer controls
@@ -360,7 +364,7 @@ func _setup_network_game(room: Dictionary) -> void:
 
 		# Serialize players — each peer gets a version where only THEIR faction/hand is visible
 		var serialized: Array = _serialize_initial_players(players, my_idx)
-		_rpc_game_started.rpc_id(peer_id, serialized, my_idx)
+		_rpc_game_started.rpc_id(peer_id, serialized, my_idx, zone_positions)
 
 	# 6. Server also transitions to GAME scene to run GameBoard and process client RPCs
 	GameState.my_network_player_index = -1  # dedicated server has no local player

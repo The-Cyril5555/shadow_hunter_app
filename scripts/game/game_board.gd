@@ -202,8 +202,9 @@ func _initialize_zones() -> void:
 		child.queue_free()
 	zones.clear()
 
-	# Shuffle zone positions for this game
-	GameState.setup_zone_positions()
+	# Shuffle zone positions for this game (network games: positions already set by server)
+	if not GameState.is_network_game:
+		GameState.setup_zone_positions()
 
 	# Create zones in position order with spacers between groups
 	for i in range(GameState.zone_positions.size()):
@@ -360,6 +361,13 @@ func _on_phase_changed(new_phase: GameState.TurnPhase) -> void:
 					_net.send_all_private_states()
 				_execute_bot_turn()
 				return
+		elif new_phase == GameState.TurnPhase.ACTION:
+			# Server auto-applies zone effects for human players in effect zones
+			var cp = GameState.get_current_player()
+			if cp and cp.is_human and _zone_has_effect(cp.position_zone):
+				_server_auto_apply_zone_effect(cp)
+				# zone effect handler broadcasts after applying
+				return
 		if _net:
 			_net.broadcast_public_state()
 			_net.send_all_private_states()
@@ -451,6 +459,7 @@ func _on_action_prompt_chosen(action: String) -> void:
 				target_selection_panel.show_targets(targets)
 				var chosen: Player = await target_selection_panel.target_selected
 				if chosen:
+					has_attacked_this_turn = true
 					_net.send_attack(chosen.id)
 			"reveal":
 				_net.send_reveal()
@@ -703,6 +712,75 @@ func _on_zone_effect_completed(result: Dictionary) -> void:
 	if current_player.is_human:
 		var target_count = get_valid_targets().size()
 		human_player_info.update_after_draw(current_player, target_count, has_attacked_this_turn)
+
+
+## Server (network): auto-apply a zone effect without player interaction
+func _server_auto_apply_zone_effect(player: Player) -> void:
+	var zone_data = ZoneData.get_zone_by_id(player.position_zone)
+	var effect_type: String = zone_data.get("effect", "")
+	has_drawn_this_turn = true
+
+	match effect_type:
+		"damage_or_heal":
+			var alive = GameState.players.filter(func(p): return p.is_alive)
+			if alive.is_empty():
+				_net_broadcast_after_zone_effect()
+				return
+			var target: Player = alive[randi() % alive.size()]
+			if randf() > 0.5:
+				var died = target.take_damage(2)
+				GameState.damage_dealt.emit(player, target, 2)
+				if died:
+					GameState.player_died.emit(target, player)
+				if _net:
+					_net.broadcast_toast(Tr.t("toast.weird_woods_damage", [player.display_name, target.display_name]), Color(1.0, 0.5, 0.5))
+			else:
+				target.heal(1)
+				if _net:
+					_net.broadcast_toast(Tr.t("toast.weird_woods_heal", [player.display_name, target.display_name]), Color(0.5, 1.0, 0.5))
+
+		"choose_deck":
+			var deck_types = ["hermit", "white", "black"]
+			var deck_type: String = deck_types[randi() % deck_types.size()]
+			var deck = _get_deck_by_type(deck_type)
+			if deck and deck.get_card_count() > 0:
+				var card = deck.draw_card()
+				if card:
+					_update_deck_displays()
+					if card.type == "instant":
+						_apply_instant_card_effect(card, player)
+						deck.discard_card(card)
+						_update_deck_displays()
+						if _instant_card_pending:
+							return  # target selection will broadcast after resolution
+					elif card.type == "equipment":
+						player.equipment.append(card)
+						GameState.equipment_equipped.emit(player, card)
+					elif card.type == "vision":
+						_start_vision_card(player, card, deck)
+						return  # vision flow broadcasts after resolution
+
+		"steal_equipment":
+			var targets_with_equip = GameState.players.filter(
+				func(p): return p.is_alive and p != player and not p.equipment.is_empty()
+			)
+			if not targets_with_equip.is_empty():
+				var target: Player = targets_with_equip[randi() % targets_with_equip.size()]
+				var card: Card = target.equipment[randi() % target.equipment.size()]
+				target.equipment.erase(card)
+				player.equipment.append(card)
+				GameState.equipment_equipped.emit(player, card)
+				if _net:
+					_net.broadcast_toast(Tr.t("toast.steals_equip", [player.display_name, card.name, target.display_name]), Color(1.0, 0.7, 0.2))
+
+	_net_broadcast_after_zone_effect()
+
+
+## Broadcast state after server auto-applies a zone effect
+func _net_broadcast_after_zone_effect() -> void:
+	if _net:
+		_net.broadcast_public_state()
+		_net.send_all_private_states()
 
 
 ## Get deck by type name (hermit/white/black)
@@ -1485,6 +1563,9 @@ func _on_net_remote_action(player_idx: int, action: Dictionary) -> void:
 
 	# Attack: client already chose the target — server rolls damage and applies it
 	if action_type == "attack":
+		if has_attacked_this_turn:
+			push_warning("[GameBoard] Player %d already attacked this turn" % player_idx)
+			return
 		var target_id: int = action.get("target", -1)
 		var target = _find_player_by_id(target_id)
 		if target:
