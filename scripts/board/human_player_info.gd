@@ -14,27 +14,30 @@ signal action_chosen(action: String)  # "reveal", "ability", "attack", "end_turn
 # -----------------------------------------------------------------------------
 # References @onready
 # -----------------------------------------------------------------------------
-@onready var player_label: Label = $MarginContainer/HBoxContainer/PlayerLabel
-@onready var character_image: TextureRect = $MarginContainer/HBoxContainer/CharacterImage
-@onready var hp_label: Label = $MarginContainer/HBoxContainer/InfoVBox/HPLabel
-@onready var hand_container: HBoxContainer = $MarginContainer/HBoxContainer/InfoVBox/HandContainer
-@onready var equipment_container: HBoxContainer = $MarginContainer/HBoxContainer/InfoVBox/EquipmentContainer
+@onready var player_label: Label = $MarginContainer/MainHBox/CardVBox/PlayerLabel
+@onready var card_container: Control = $MarginContainer/MainHBox/CardVBox/CardContainer
+@onready var bg_rect: TextureRect = $MarginContainer/MainHBox/CardVBox/CardContainer/BgRect
+@onready var character_image: TextureRect = $MarginContainer/MainHBox/CardVBox/CardContainer/CharacterImage
+@onready var shine_overlay: ColorRect = $MarginContainer/MainHBox/CardVBox/CardContainer/ShineOverlay
+
+@onready var hp_label: Label = $MarginContainer/MainHBox/Col1VBox/HPLabel
+@onready var victory_label: Label = $MarginContainer/MainHBox/Col1VBox/VictoryLabel
+@onready var skill_label: Label = $MarginContainer/MainHBox/Col1VBox/SkillLabel
+
+@onready var hand_container: VBoxContainer = $MarginContainer/MainHBox/Col2VBox/HandContainer
+@onready var equipment_container: HBoxContainer = $MarginContainer/MainHBox/Col3VBox/EquipmentContainer
 
 # Action buttons
-@onready var reveal_button: Button = $MarginContainer/HBoxContainer/ButtonGrid/RevealButton
-@onready var ability_button: Button = $MarginContainer/HBoxContainer/ButtonGrid/AbilityButton
-@onready var attack_button: Button = $MarginContainer/HBoxContainer/ButtonGrid/AttackButton
-@onready var end_turn_button: Button = $MarginContainer/HBoxContainer/ButtonGrid/EndTurnButton
+@onready var reveal_button: Button = $MarginContainer/MainHBox/ButtonsCenter/ButtonGrid/RevealButton
+@onready var ability_button: Button = $MarginContainer/MainHBox/ButtonsCenter/ButtonGrid/AbilityButton
+@onready var attack_button: Button = $MarginContainer/MainHBox/ButtonsCenter/ButtonGrid/AttackButton
+@onready var end_turn_button: Button = $MarginContainer/MainHBox/ButtonsCenter/ButtonGrid/EndTurnButton
 
 
 # -----------------------------------------------------------------------------
 # Properties
 # -----------------------------------------------------------------------------
 var _player: Player = null
-var _card_bg_texture: Texture2D = null
-var _bg_rect: TextureRect = null
-var _card_container: Control = null
-var _shine_overlay: ColorRect = null
 var _float_tween: Tween = null
 var _must_use_card: bool = false  # True when player drew instant card that must be used
 
@@ -77,57 +80,25 @@ func setup(player: Player) -> void:
 	_player = player
 	visible = true
 
-	# Load card background and insert behind character image
-	_card_bg_texture = CardImageMapper.load_texture("res://remake character/card_background.png")
-	if _card_bg_texture and character_image:
-		var parent = character_image.get_parent()
-		var idx = character_image.get_index()
-		var card_size = character_image.custom_minimum_size
-		if card_size == Vector2.ZERO:
-			card_size = Vector2(80, 112)
+	# Load card background into pre-built BgRect
+	var bg_texture = CardImageMapper.load_texture("res://remake character/card_background.png")
+	if bg_texture:
+		bg_rect.texture = bg_texture
 
-		# Create container to hold bg + character + shine
-		_card_container = Control.new()
-		_card_container.custom_minimum_size = card_size
-		_card_container.pivot_offset = card_size / 2.0
+	# Load shine shader into pre-built ShineOverlay
+	var shine_shader = load("res://assets/shaders/card_3d_tilt.gdshader") as Shader
+	if shine_shader:
+		var mat = ShaderMaterial.new()
+		mat.shader = shine_shader
+		shine_overlay.material = mat
 
-		# Remove character_image from parent and re-add inside container
-		parent.remove_child(character_image)
-		parent.add_child(_card_container)
-		parent.move_child(_card_container, idx)
+	# Connect hover signals on pre-built card_container
+	card_container.mouse_entered.connect(_on_card_hover_enter)
+	card_container.mouse_exited.connect(_on_card_hover_exit)
+	card_container.gui_input.connect(_on_card_gui_input)
 
-		# Background layer
-		_bg_rect = TextureRect.new()
-		_bg_rect.texture = _card_bg_texture
-		_bg_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		_bg_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		_bg_rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-		_card_container.add_child(_bg_rect)
-
-		# Character layer on top
-		character_image.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-		_card_container.add_child(character_image)
-
-		# Shine overlay for 3D tilt effect
-		_shine_overlay = ColorRect.new()
-		_shine_overlay.color = Color(0, 0, 0, 0)
-		_shine_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-		_shine_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		var shine_shader = load("res://assets/shaders/card_3d_tilt.gdshader") as Shader
-		if shine_shader:
-			var mat = ShaderMaterial.new()
-			mat.shader = shine_shader
-			_shine_overlay.material = mat
-		_card_container.add_child(_shine_overlay)
-
-		# Connect hover signals
-		_card_container.mouse_entered.connect(_on_card_hover_enter)
-		_card_container.mouse_exited.connect(_on_card_hover_exit)
-		_card_container.gui_input.connect(_on_card_gui_input)
-		_card_container.mouse_filter = Control.MOUSE_FILTER_STOP
-
-		# Start floating
-		_float_tween = AnimationHelper.start_floating(_card_container)
+	# Start floating animation
+	_float_tween = AnimationHelper.start_floating(card_container)
 
 	update_display()
 
@@ -137,12 +108,20 @@ func get_player() -> Player:
 	return _player
 
 
+## Switch the displayed player (local hot-seat or online — ensures panel shows correct player)
+func switch_player(player: Player) -> void:
+	if player == null or player == _player:
+		return
+	_player = player
+	update_display()
+
+
 ## Refresh all display elements
 func update_display() -> void:
 	if _player == null:
 		return
 
-	# Player label with color
+	# Player label (shown under the card)
 	player_label.text = PlayerColors.get_label(_player)
 	player_label.add_theme_color_override("font_color", PlayerColors.get_color(_player.id))
 
@@ -155,7 +134,7 @@ func update_display() -> void:
 	else:
 		character_image.visible = false
 
-	# HP
+	# HP with color coding
 	hp_label.text = "HP: %d/%d" % [_player.hp, _player.hp_max]
 	if _player.hp <= _player.hp_max * 0.3:
 		hp_label.add_theme_color_override("font_color", Color(1.0, 0.3, 0.3))
@@ -163,6 +142,22 @@ func update_display() -> void:
 		hp_label.add_theme_color_override("font_color", Color(1.0, 0.8, 0.3))
 	else:
 		hp_label.add_theme_color_override("font_color", Color(0.5, 1.0, 0.5))
+
+	# Victory condition (derived from faction)
+	var faction_victory: Dictionary = {
+		"hunter": "Victoire : éliminer toutes les Ombres",
+		"shadow": "Victoire : éliminer tous les Chasseurs",
+		"neutral": "Victoire : objectif personnel",
+	}
+	victory_label.text = faction_victory.get(_player.faction, "")
+
+	# Skill description (from ability_data)
+	var skill_name: String = _player.ability_data.get("name", "")
+	var skill_desc: String = _player.ability_data.get("description", "")
+	if skill_name and skill_desc:
+		skill_label.text = "%s : %s" % [skill_name, skill_desc]
+	else:
+		skill_label.text = skill_desc
 
 	# Hand cards
 	_update_hand()
@@ -241,37 +236,33 @@ func _update_equipment() -> void:
 # -----------------------------------------------------------------------------
 
 func _on_card_hover_enter() -> void:
-	if _card_container == null:
-		return
-	var tween = _card_container.create_tween()
+	var tween = card_container.create_tween()
 	tween.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
-	tween.tween_property(_card_container, "scale", Vector2(1.08, 1.08), 0.2)
-	if _shine_overlay and _shine_overlay.material:
-		_shine_overlay.material.set_shader_parameter("active", true)
+	tween.tween_property(card_container, "scale", Vector2(1.08, 1.08), 0.2)
+	if shine_overlay and shine_overlay.material:
+		shine_overlay.material.set_shader_parameter("active", true)
 
 
 func _on_card_hover_exit() -> void:
-	if _card_container == null:
-		return
-	var tween = _card_container.create_tween()
+	var tween = card_container.create_tween()
 	tween.set_parallel(true)
 	tween.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
-	tween.tween_property(_card_container, "scale", Vector2(1.0, 1.0), 0.25)
-	tween.tween_property(_card_container, "rotation", 0.0, 0.25)
-	if _shine_overlay and _shine_overlay.material:
-		_shine_overlay.material.set_shader_parameter("active", false)
+	tween.tween_property(card_container, "scale", Vector2(1.0, 1.0), 0.25)
+	tween.tween_property(card_container, "rotation", 0.0, 0.25)
+	if shine_overlay and shine_overlay.material:
+		shine_overlay.material.set_shader_parameter("active", false)
 
 
 func _on_card_gui_input(event: InputEvent) -> void:
-	if not event is InputEventMouseMotion or _card_container == null:
+	if not event is InputEventMouseMotion:
 		return
-	var local_pos = _card_container.get_local_mouse_position()
-	var card_size = _card_container.custom_minimum_size
+	var local_pos = card_container.get_local_mouse_position()
+	var card_size = card_container.custom_minimum_size
 	var tilt_x = clampf((local_pos.x / card_size.x - 0.5) * 2.0, -1.0, 1.0)
 	var tilt_y = clampf((local_pos.y / card_size.y - 0.5) * 2.0, -1.0, 1.0)
-	_card_container.rotation = lerpf(_card_container.rotation, -tilt_x * deg_to_rad(4.0), 0.3)
-	if _shine_overlay and _shine_overlay.material:
-		_shine_overlay.material.set_shader_parameter("tilt", Vector2(tilt_x, tilt_y))
+	card_container.rotation = lerpf(card_container.rotation, -tilt_x * deg_to_rad(4.0), 0.3)
+	if shine_overlay and shine_overlay.material:
+		shine_overlay.material.set_shader_parameter("tilt", Vector2(tilt_x, tilt_y))
 
 
 # -----------------------------------------------------------------------------

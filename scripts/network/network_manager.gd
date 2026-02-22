@@ -298,6 +298,10 @@ func _setup_network_game(room: Dictionary) -> void:
 		var serialized: Array = _serialize_initial_players(players, my_idx)
 		_rpc_game_started.rpc_id(peer_id, serialized, my_idx)
 
+	# 6. Server also transitions to GAME scene to run GameBoard and process client RPCs
+	GameState.my_network_player_index = -1  # dedicated server has no local player
+	GameModeStateMachine.transition_to(GameModeStateMachine.GameMode.GAME)
+
 
 ## Serialize all players for initial state, filtering private data per viewer
 func _serialize_initial_players(players: Array, viewer_idx: int) -> Array:

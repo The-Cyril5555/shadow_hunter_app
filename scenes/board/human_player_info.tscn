@@ -3,93 +3,162 @@
 [ext_resource type="Script" path="res://scripts/board/human_player_info.gd" id="1_info"]
 
 [node name="HumanPlayerInfo" type="PanelContainer"]
-custom_minimum_size = Vector2(0, 180)
+custom_minimum_size = Vector2(0, 160)
 layout_mode = 2
 script = ExtResource("1_info")
 
 [node name="MarginContainer" type="MarginContainer" parent="."]
 layout_mode = 2
-theme_override_constants/margin_left = 16
+theme_override_constants/margin_left = 12
 theme_override_constants/margin_top = 8
-theme_override_constants/margin_right = 16
+theme_override_constants/margin_right = 12
 theme_override_constants/margin_bottom = 8
 
-[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer"]
+[node name="MainHBox" type="HBoxContainer" parent="MarginContainer"]
 layout_mode = 2
 theme_override_constants/separation = 16
 alignment = 1
 
-[node name="PlayerLabel" type="Label" parent="MarginContainer/HBoxContainer"]
+[node name="CardVBox" type="VBoxContainer" parent="MarginContainer/MainHBox"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 28
-text = "J1"
-vertical_alignment = 1
+theme_override_constants/separation = 4
 
-[node name="CharacterImage" type="TextureRect" parent="MarginContainer/HBoxContainer"]
-custom_minimum_size = Vector2(120, 170)
+[node name="CardContainer" type="Control" parent="MarginContainer/MainHBox/CardVBox"]
+custom_minimum_size = Vector2(90, 126)
 layout_mode = 2
-expand_mode = 3
+pivot_offset = Vector2(45, 63)
+mouse_filter = 0
+
+[node name="BgRect" type="TextureRect" parent="MarginContainer/MainHBox/CardVBox/CardContainer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+expand_mode = 1
 stretch_mode = 5
 
-[node name="InfoVBox" type="VBoxContainer" parent="MarginContainer/HBoxContainer"]
+[node name="CharacterImage" type="TextureRect" parent="MarginContainer/MainHBox/CardVBox/CardContainer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ShineOverlay" type="ColorRect" parent="MarginContainer/MainHBox/CardVBox/CardContainer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0, 0, 0, 0)
+mouse_filter = 2
+
+[node name="PlayerLabel" type="Label" parent="MarginContainer/MainHBox/CardVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "J1"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="VSep1" type="VSeparator" parent="MarginContainer/MainHBox"]
+layout_mode = 2
+
+[node name="Col1VBox" type="VBoxContainer" parent="MarginContainer/MainHBox"]
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_stretch_ratio = 2.0
 theme_override_constants/separation = 6
 
-[node name="HPLabel" type="Label" parent="MarginContainer/HBoxContainer/InfoVBox"]
+[node name="HPLabel" type="Label" parent="MarginContainer/MainHBox/Col1VBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "HP: 14/14"
 
-[node name="HandLabel" type="Label" parent="MarginContainer/HBoxContainer/InfoVBox"]
+[node name="VictoryLabel" type="Label" parent="MarginContainer/MainHBox/Col1VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.9, 0.75, 0.2, 1)
+text = "Victoire : ..."
+
+[node name="SkillLabel" type="Label" parent="MarginContainer/MainHBox/Col1VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.6, 0.6, 0.6, 1)
+text = ""
+autowrap_mode = 3
+clip_contents = true
+
+[node name="VSep2" type="VSeparator" parent="MarginContainer/MainHBox"]
+layout_mode = 2
+
+[node name="Col2VBox" type="VBoxContainer" parent="MarginContainer/MainHBox"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="HandTitleLabel" type="Label" parent="MarginContainer/MainHBox/Col2VBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 13
 theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
 text = "Main :"
 
-[node name="HandContainer" type="HBoxContainer" parent="MarginContainer/HBoxContainer/InfoVBox"]
+[node name="HandContainer" type="VBoxContainer" parent="MarginContainer/MainHBox/Col2VBox"]
 layout_mode = 2
-theme_override_constants/separation = 6
+theme_override_constants/separation = 4
 
-[node name="EquipLabel" type="Label" parent="MarginContainer/HBoxContainer/InfoVBox"]
+[node name="VSep3" type="VSeparator" parent="MarginContainer/MainHBox"]
+layout_mode = 2
+
+[node name="Col3VBox" type="VBoxContainer" parent="MarginContainer/MainHBox"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="EquipTitleLabel" type="Label" parent="MarginContainer/MainHBox/Col3VBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 13
 theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
 text = "Équipement :"
 
-[node name="EquipmentContainer" type="HBoxContainer" parent="MarginContainer/HBoxContainer/InfoVBox"]
+[node name="EquipmentContainer" type="HBoxContainer" parent="MarginContainer/MainHBox/Col3VBox"]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="ButtonGrid" type="GridContainer" parent="MarginContainer/HBoxContainer"]
+[node name="VSep4" type="VSeparator" parent="MarginContainer/MainHBox"]
+layout_mode = 2
+
+[node name="ButtonsCenter" type="CenterContainer" parent="MarginContainer/MainHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ButtonGrid" type="GridContainer" parent="MarginContainer/MainHBox/ButtonsCenter"]
 layout_mode = 2
 theme_override_constants/h_separation = 8
 theme_override_constants/v_separation = 8
 columns = 2
 
-[node name="RevealButton" type="Button" parent="MarginContainer/HBoxContainer/ButtonGrid"]
-custom_minimum_size = Vector2(110, 48)
+[node name="RevealButton" type="Button" parent="MarginContainer/MainHBox/ButtonsCenter/ButtonGrid"]
+custom_minimum_size = Vector2(120, 42)
 layout_mode = 2
 theme_override_font_sizes/font_size = 14
 text = "Se révéler"
 disabled = true
 
-[node name="AbilityButton" type="Button" parent="MarginContainer/HBoxContainer/ButtonGrid"]
-custom_minimum_size = Vector2(110, 48)
+[node name="AbilityButton" type="Button" parent="MarginContainer/MainHBox/ButtonsCenter/ButtonGrid"]
+custom_minimum_size = Vector2(120, 42)
 layout_mode = 2
 theme_override_font_sizes/font_size = 14
 text = "Compétence"
 disabled = true
 
-[node name="AttackButton" type="Button" parent="MarginContainer/HBoxContainer/ButtonGrid"]
-custom_minimum_size = Vector2(110, 48)
+[node name="AttackButton" type="Button" parent="MarginContainer/MainHBox/ButtonsCenter/ButtonGrid"]
+custom_minimum_size = Vector2(120, 42)
 layout_mode = 2
 theme_override_font_sizes/font_size = 14
 text = "Attaquer"
 disabled = true
 
-[node name="EndTurnButton" type="Button" parent="MarginContainer/HBoxContainer/ButtonGrid"]
-custom_minimum_size = Vector2(110, 48)
+[node name="EndTurnButton" type="Button" parent="MarginContainer/MainHBox/ButtonsCenter/ButtonGrid"]
+custom_minimum_size = Vector2(120, 42)
 layout_mode = 2
 theme_override_font_sizes/font_size = 14
 text = "Fin de tour"

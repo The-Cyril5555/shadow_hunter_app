@@ -33,6 +33,7 @@ var config_file_path: String = "res://data/polish_config.json"
 # -----------------------------------------------------------------------------
 
 func _ready() -> void:
+	_apply_font_theme()
 	load_config()
 	print("[PolishConfig] Loaded %d configuration values" % config_data.size())
 
@@ -141,6 +142,18 @@ func get_particle_count(base_count: int) -> int:
 # -----------------------------------------------------------------------------
 # Private Helpers
 # -----------------------------------------------------------------------------
+
+## Apply Press Start 2P pixel font as global theme
+func _apply_font_theme() -> void:
+	var font: FontFile = load("res://assets/fonts/PressStart2P-Regular.ttf")
+	if font == null:
+		push_warning("[PolishConfig] Could not load PressStart2P font")
+		return
+	var theme := Theme.new()
+	theme.set_default_font(font)
+	theme.default_font_size = 16
+	get_tree().get_root().theme = theme
+
 
 ## Check if reduced motion mode is enabled
 ## Safely checks for UserSettings autoload existence (Story 5.6 dependency)

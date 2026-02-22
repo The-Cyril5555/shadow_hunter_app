@@ -161,8 +161,9 @@ func _ready() -> void:
 	if GameModeStateMachine.current_mode == GameModeStateMachine.GameMode.TUTORIAL:
 		_start_tutorial()
 
-	# Trigger initial phase handling (signal was connected after phase was set)
-	_on_phase_changed(GameState.current_phase)
+	# Trigger initial phase handling — skip on server (clients self-initialize from _rpc_game_started)
+	if not (GameState.is_network_game and multiplayer.is_server()):
+		_on_phase_changed(GameState.current_phase)
 
 	print("[GameBoard] Game started with %d players" % GameState.players.size())
 
@@ -171,8 +172,13 @@ func _ready() -> void:
 # Helpers
 # -----------------------------------------------------------------------------
 
-## Get the first human player (local player for bottom panel)
+## Get the local human player for the bottom panel
 func _get_local_human_player() -> Player:
+	if GameState.is_network_game:
+		var idx = GameState.my_network_player_index
+		if idx >= 0 and idx < GameState.players.size():
+			return GameState.players[idx]
+		return null  # dedicated server has no local player
 	for player in GameState.players:
 		if player.is_human:
 			return player
@@ -338,6 +344,12 @@ func _on_phase_changed(new_phase: GameState.TurnPhase) -> void:
 			_instant_card_pending = false
 		if _net:
 			_net.broadcast_public_state()
+			_net.send_all_private_states()
+		return
+
+	# Client in network mode: let _net_update_client_ui handle all phase-based UI
+	if GameState.is_network_game and not multiplayer.is_server():
+		_net_update_client_ui()
 		return
 
 	match new_phase:
@@ -359,6 +371,7 @@ func _on_phase_changed(new_phase: GameState.TurnPhase) -> void:
 				human_player_info.show_waiting_prompt(current_player.display_name)
 				_execute_bot_turn()
 			else:
+				human_player_info.switch_player(current_player)
 				human_player_info.show_movement_prompt(current_player)
 				var has_compass = _has_active_equipment(current_player, "double_dice_roll")
 				dice_roll_popup.show_for_player(current_player, has_compass)
