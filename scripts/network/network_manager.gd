@@ -41,6 +41,9 @@ var _rooms: Dictionary = {}
 # Client-side only: current room info
 var _current_room: Dictionary = {}
 
+# Health check TCP server (headless/server mode only)
+var _health_server: TCPServer = null
+
 
 # -----------------------------------------------------------------------------
 # Lifecycle
@@ -58,6 +61,7 @@ func _ready() -> void:
 		if env_port != "":
 			port = int(env_port)
 		start_server(port)
+		_start_health_server()
 
 
 # -----------------------------------------------------------------------------
@@ -335,6 +339,31 @@ func _serialize_initial_players(players: Array, viewer_idx: int) -> Array:
 			p_dict["ability_data"] = {}
 		result.append(p_dict)
 	return result
+
+
+func _start_health_server() -> void:
+	_health_server = TCPServer.new()
+	var err = _health_server.listen(8079)
+	if err != OK:
+		push_warning("[NetworkManager] Health server failed on port 8079: %s" % error_string(err))
+	else:
+		print("[NetworkManager] Health server on port 8079")
+
+
+func _process(_delta: float) -> void:
+	if not is_instance_valid(_health_server):
+		return
+	if not _health_server.is_listening():
+		return
+	if not _health_server.is_connection_available():
+		return
+	var conn: StreamPeerTCP = _health_server.take_connection()
+	conn.poll()
+	if conn.get_available_bytes() > 0:
+		conn.get_data(conn.get_available_bytes())  # consume request
+	var response := "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 2\r\nConnection: close\r\n\r\nOK"
+	conn.put_data(response.to_utf8_buffer())
+	conn.disconnect_from_host()
 
 
 func _generate_room_code() -> String:
