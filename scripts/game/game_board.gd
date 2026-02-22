@@ -42,6 +42,7 @@ var _instant_card: Card = null  # Instant card being resolved
 var _instant_card_player: Player = null  # Player who drew the instant card
 var _combat_target: Player = null  # Target awaiting combat dice result
 var _reveal_choice_pending: bool = false  # True when waiting for human reveal confirmation
+var _last_movement_key: String = ""  # Tracks last MOVEMENT phase shown to avoid duplicate dice popups
 
 signal _reveal_choice_made(confirmed: bool)
 
@@ -1557,12 +1558,18 @@ func _net_update_client_ui() -> void:
 	var player: Player = current
 	match GameState.current_phase:
 		GameState.TurnPhase.MOVEMENT:
-			has_drawn_this_turn = false
-			has_rolled_this_turn = false
-			has_attacked_this_turn = false
-			human_player_info.show_movement_prompt(player)
-			var has_compass: bool = _has_active_equipment(player, "double_dice_roll")
-			dice_roll_popup.show_for_player(player, has_compass)
+			# Only reset flags and show dice popup for a genuinely new movement phase.
+			# Duplicate broadcasts (e.g. from concurrent bot async execution) must not
+			# reset the popup while the player is already picking a zone.
+			var move_key := "%d_%d" % [GameState.current_player_index, GameState.turn_count]
+			if move_key != _last_movement_key:
+				_last_movement_key = move_key
+				has_drawn_this_turn = false
+				has_rolled_this_turn = false
+				has_attacked_this_turn = false
+				human_player_info.show_movement_prompt(player)
+				var has_compass: bool = _has_active_equipment(player, "double_dice_roll")
+				dice_roll_popup.show_for_player(player, has_compass)
 		GameState.TurnPhase.ACTION:
 			const DECK_ZONES = ["hermit", "church", "cemetery"]
 			if not has_drawn_this_turn and player.position_zone in DECK_ZONES:
@@ -2296,6 +2303,9 @@ func _find_player_token(player: Player) -> PlayerToken:
 
 ## Play card strike animation: attacker card lunges toward target card
 func _play_card_strike_animation(attacker: Player, target: Player, damage: int) -> void:
+	# Skip on headless server (no display, ParticlePool not initialized)
+	if GameState.is_network_game and multiplayer.is_server():
+		return
 	var attacker_card = character_cards_row.get_card_panel(attacker.id)
 	var target_card = character_cards_row.get_card_panel(target.id)
 
