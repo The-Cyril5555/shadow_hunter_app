@@ -25,8 +25,8 @@ WORKDIR /app
 # Copy project files (heavy assets excluded via .dockerignore)
 COPY . .
 
-# Generate .godot/ import cache then quit
-RUN godot --headless --path /app --quit 2>&1 ; exit 0
+# Generate .godot/ import cache in editor mode (required for class_name registration)
+RUN godot --headless --editor --path /app --quit 2>&1 ; exit 0
 
 # nginx: proxy WebSocket to Godot + respond to health checks
 RUN mkdir -p /etc/nginx/templates
