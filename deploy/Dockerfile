@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Download Godot 4.6 Linux x86_64
-ARG GODOT_VERSION=4.6
+ARG GODOT_VERSION=4.5
 RUN wget -q \
     "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip" \
     -O /tmp/godot.zip \

@@ -49,6 +49,7 @@ var _health_server: TCPServer = null
 # Lifecycle
 # -----------------------------------------------------------------------------
 func _ready() -> void:
+	print("[NetworkManager] _ready() starting...")
 	multiplayer.peer_connected.connect(_on_peer_connected)
 	multiplayer.peer_disconnected.connect(_on_peer_disconnected)
 	multiplayer.connected_to_server.connect(_on_connected_to_server)

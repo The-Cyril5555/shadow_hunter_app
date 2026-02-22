@@ -43,6 +43,9 @@ var _effect_presets: Dictionary = {}
 # =============================================================================
 
 func _ready() -> void:
+	if DisplayServer.get_name() == "headless":
+		print("[ParticlePool] Headless mode — skipping particle pool initialization")
+		return
 	_initialize_presets()
 	_create_initial_pool()
 	print("[ParticlePool] Initialized with %d particles" % INITIAL_POOL_SIZE)
