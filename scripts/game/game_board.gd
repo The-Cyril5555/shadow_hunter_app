@@ -78,8 +78,12 @@ func _ready() -> void:
 		_net = GameNetworkBridge.new()
 		_net.name = "GameNetworkBridge"
 		add_child(_net)
-		# Build peer→player map from room data stored in NetworkManager
-		var room_players = NetworkManager._current_room.get("players", [])
+		# Build peer→player map — server reads from _rooms, clients read from _current_room
+		var room_players: Array
+		if multiplayer.is_server():
+			room_players = NetworkManager.get_started_room_players()
+		else:
+			room_players = NetworkManager._current_room.get("players", [])
 		_net.setup_peer_map(room_players)
 		_net.set_my_player_index(GameState.my_network_player_index)
 		# Connect network signals
@@ -333,8 +337,7 @@ func _on_phase_changed(new_phase: GameState.TurnPhase) -> void:
 	print("[GameBoard] Phase changed to: %s" % new_phase)
 	_update_display()
 
-	# Server in network mode: reset per-turn flags on MOVEMENT, then broadcast.
-	# All UI is handled client-side via _on_net_public_state.
+	# Server in network mode: reset per-turn flags on MOVEMENT, broadcast, then handle bots.
 	if GameState.is_network_game and multiplayer.is_server():
 		if new_phase == GameState.TurnPhase.MOVEMENT:
 			has_drawn_this_turn = false
@@ -342,6 +345,19 @@ func _on_phase_changed(new_phase: GameState.TurnPhase) -> void:
 			has_attacked_this_turn = false
 			_pending_ability = false
 			_instant_card_pending = false
+			var cp = GameState.get_current_player()
+			if cp:
+				if cp.has_meta("shielded"):
+					cp.set_meta("shielded", false)
+				if cp.has_meta("damage_immune"):
+					cp.set_meta("damage_immune", false)
+			# If current player is a bot, server auto-plays their turn
+			if cp and not cp.is_human:
+				if _net:
+					_net.broadcast_public_state()
+					_net.send_all_private_states()
+				_execute_bot_turn()
+				return
 		if _net:
 			_net.broadcast_public_state()
 			_net.send_all_private_states()

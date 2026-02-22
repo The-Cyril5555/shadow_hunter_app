@@ -30,6 +30,9 @@ var _back_btn: Button
 var _main_panel: Control
 var _lobby_panel: Control
 var _custom_url_input: LineEdit
+var _bot_row: Control
+var _bot_count_label: Label
+var _bot_total_label: Label
 
 
 # -----------------------------------------------------------------------------
@@ -37,6 +40,8 @@ var _custom_url_input: LineEdit
 # -----------------------------------------------------------------------------
 var _is_host: bool = false
 var _connected: bool = false
+var _bot_count: int = 0
+var _current_player_count: int = 0
 var _ping_http: HTTPRequest
 var _ping_timer: Timer
 var _retry_timer: Timer
@@ -249,6 +254,55 @@ func _build_lobby_panel() -> PanelContainer:
 	_player_list.add_theme_constant_override("separation", 6)
 	vbox.add_child(_player_list)
 
+	# Bot count section (host only, hidden by default)
+	_bot_row = VBoxContainer.new()
+	_bot_row.add_theme_constant_override("separation", 8)
+	_bot_row.visible = false
+	vbox.add_child(_bot_row)
+
+	var bot_sep = HSeparator.new()
+	_bot_row.add_child(bot_sep)
+
+	var bot_lbl = Label.new()
+	bot_lbl.text = "Bots IA :"
+	bot_lbl.add_theme_font_size_override("font_size", 16)
+	bot_lbl.add_theme_color_override("font_color", Color(0.7, 0.7, 0.9))
+	bot_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+	var bot_dec_btn = Button.new()
+	bot_dec_btn.text = "−"
+	bot_dec_btn.custom_minimum_size = Vector2(36, 36)
+	bot_dec_btn.add_theme_font_size_override("font_size", 20)
+	bot_dec_btn.pressed.connect(_on_decrease_bots)
+
+	_bot_count_label = Label.new()
+	_bot_count_label.text = "0"
+	_bot_count_label.custom_minimum_size = Vector2(28, 0)
+	_bot_count_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_bot_count_label.add_theme_font_size_override("font_size", 20)
+	_bot_count_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.3))
+
+	var bot_inc_btn = Button.new()
+	bot_inc_btn.text = "+"
+	bot_inc_btn.custom_minimum_size = Vector2(36, 36)
+	bot_inc_btn.add_theme_font_size_override("font_size", 20)
+	bot_inc_btn.pressed.connect(_on_increase_bots)
+
+	_bot_total_label = Label.new()
+	_bot_total_label.text = "Total : 1/8"
+	_bot_total_label.add_theme_font_size_override("font_size", 13)
+	_bot_total_label.add_theme_color_override("font_color", Color(0.6, 0.6, 0.7))
+
+	# Assemble controls row: label | − | count | + | total
+	var bot_inner = HBoxContainer.new()
+	bot_inner.add_theme_constant_override("separation", 8)
+	bot_inner.add_child(bot_lbl)
+	bot_inner.add_child(bot_dec_btn)
+	bot_inner.add_child(_bot_count_label)
+	bot_inner.add_child(bot_inc_btn)
+	bot_inner.add_child(_bot_total_label)
+	_bot_row.add_child(bot_inner)
+
 	# Start button (host only)
 	_start_btn = Button.new()
 	_start_btn.text = "Lancer la partie"
@@ -274,6 +328,7 @@ func _connect_network_signals() -> void:
 	NetworkManager.room_join_failed.connect(_on_room_join_failed)
 	NetworkManager.lobby_updated.connect(_on_lobby_updated)
 	NetworkManager.game_started.connect(_on_game_started)
+	NetworkManager.bot_count_updated.connect(_on_bot_count_updated)
 
 
 func _disconnect_network_signals() -> void:
@@ -295,6 +350,8 @@ func _disconnect_network_signals() -> void:
 		NetworkManager.lobby_updated.disconnect(_on_lobby_updated)
 	if NetworkManager.game_started.is_connected(_on_game_started):
 		NetworkManager.game_started.disconnect(_on_game_started)
+	if NetworkManager.bot_count_updated.is_connected(_on_bot_count_updated):
+		NetworkManager.bot_count_updated.disconnect(_on_bot_count_updated)
 
 
 # -----------------------------------------------------------------------------
@@ -388,7 +445,9 @@ func _on_room_created(code: String) -> void:
 	_main_panel.visible = false
 	_lobby_panel.visible = true
 	_start_btn.visible = true
-	_start_btn.disabled = true  # Wait for minimum players
+	_start_btn.disabled = true  # Wait for minimum 4 total players
+	_bot_row.visible = true
+	_bot_count = 0
 	_set_status("Salon créé ! Partagez le code avec vos amis.", Color(0.5, 1.0, 0.5))
 	_update_player_list([{"name": _name_input.text.strip_edges(), "id": multiplayer.get_unique_id()}])
 
@@ -418,9 +477,23 @@ func _on_room_join_failed(reason: String) -> void:
 
 func _on_lobby_updated(players: Array) -> void:
 	_update_player_list(players)
-	# Enable start if host and >= 2 players
-	if _is_host:
-		_start_btn.disabled = players.size() < 2
+
+
+func _on_bot_count_updated(count: int) -> void:
+	_bot_count = count
+	_update_bot_ui()
+	_update_start_button()
+
+
+func _on_decrease_bots() -> void:
+	if _bot_count > 0:
+		NetworkManager.request_set_bot_count(_bot_count - 1)
+
+
+func _on_increase_bots() -> void:
+	var max_bots = 8 - _current_player_count
+	if _bot_count < max_bots:
+		NetworkManager.request_set_bot_count(_bot_count + 1)
 
 
 func _on_game_started(initial_players: Array, my_player_index: int) -> void:
@@ -442,6 +515,7 @@ func _on_game_started(initial_players: Array, my_player_index: int) -> void:
 # UI Helpers
 # -----------------------------------------------------------------------------
 func _update_player_list(players: Array) -> void:
+	_current_player_count = players.size()
 	for child in _player_list.get_children():
 		child.queue_free()
 
@@ -470,9 +544,23 @@ func _update_player_list(players: Array) -> void:
 
 		_player_list.add_child(row)
 
-	# Enable start when >= 2 players (host only)
-	if _is_host and is_instance_valid(_start_btn):
-		_start_btn.disabled = players.size() < 2
+	_update_bot_ui()
+	_update_start_button()
+
+
+func _update_bot_ui() -> void:
+	if is_instance_valid(_bot_count_label):
+		_bot_count_label.text = str(_bot_count)
+	if is_instance_valid(_bot_total_label):
+		var total = _current_player_count + _bot_count
+		_bot_total_label.text = "Total : %d/8" % total
+
+
+func _update_start_button() -> void:
+	if not _is_host or not is_instance_valid(_start_btn):
+		return
+	var total = _current_player_count + _bot_count
+	_start_btn.disabled = total < 4 or total > 8
 
 
 func _set_status(text: String, color: Color = Color.WHITE) -> void:

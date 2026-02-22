@@ -17,6 +17,7 @@ signal room_joined(code: String, players: Array)
 signal room_join_failed(reason: String)
 signal lobby_updated(players: Array)
 signal game_started(initial_players: Array, my_player_index: int)
+signal bot_count_updated(count: int)
 
 
 # -----------------------------------------------------------------------------
@@ -142,6 +143,19 @@ func request_start_game() -> void:
 	_rpc_start_game.rpc_id(1)
 
 
+## Request bot count change (host only, client → server)
+func request_set_bot_count(count: int) -> void:
+	_rpc_set_bot_count.rpc_id(1, count)
+
+
+## Server: return the players array of the room that has started (for peer map setup)
+func get_started_room_players() -> Array:
+	for code in _rooms:
+		if _rooms[code].started:
+			return _rooms[code].players
+	return []
+
+
 ## Broadcast a player action to the server (client → server)
 func send_action(action: Dictionary) -> void:
 	_rpc_player_action.rpc_id(1, action)
@@ -162,6 +176,7 @@ func _rpc_create_room(player_name: String) -> void:
 		"players": [{"id": sender_id, "name": player_name, "ready": false}],
 		"host_id": sender_id,
 		"started": false,
+		"bot_count": 0,
 	}
 	print("[NetworkManager] Room created: %s by peer %d" % [code, sender_id])
 	_rpc_room_created.rpc_id(sender_id, code)
@@ -208,11 +223,26 @@ func _rpc_start_game() -> void:
 	for code in _rooms:
 		var room = _rooms[code]
 		if room.host_id == sender_id and not room.started:
-			if room.peers.size() < 2:
+			var total_players = room.peers.size() + room.get("bot_count", 0)
+			if total_players < 4 or total_players > 8:
 				return
 			room.started = true
 			print("[NetworkManager] Game starting in room %s" % code)
 			_setup_network_game(room)
+			return
+
+
+@rpc("any_peer", "reliable", "call_remote")
+func _rpc_set_bot_count(count: int) -> void:
+	if not multiplayer.is_server():
+		return
+	var sender_id = multiplayer.get_remote_sender_id()
+	for code in _rooms:
+		var room = _rooms[code]
+		if room.host_id == sender_id and not room.started:
+			room["bot_count"] = clampi(count, 0, MAX_PLAYERS - room.peers.size())
+			for peer_id in room.peers:
+				_rpc_bot_count_updated.rpc_id(peer_id, room["bot_count"])
 			return
 
 
@@ -228,6 +258,12 @@ func _rpc_player_action(_action: Dictionary) -> void:
 @rpc("authority", "reliable", "call_local")
 func _rpc_room_created(code: String) -> void:
 	room_code = code
+	if not multiplayer.is_server():
+		_current_room = {
+			"code": code,
+			"players": [{"id": multiplayer.get_unique_id(), "name": local_player_name, "ready": false}],
+			"bot_count": 0,
+		}
 	room_created.emit(code)
 	print("[NetworkManager] Room created: %s" % code)
 
@@ -248,8 +284,15 @@ func _rpc_join_failed(reason: String) -> void:
 
 @rpc("authority", "reliable", "call_local")
 func _rpc_lobby_updated(players: Array) -> void:
+	if not _current_room.has("players"):
+		_current_room["players"] = []
 	_current_room["players"] = players
 	lobby_updated.emit(players)
+
+
+@rpc("authority", "reliable", "call_local")
+func _rpc_bot_count_updated(count: int) -> void:
+	bot_count_updated.emit(count)
 
 
 ## Sent to each peer individually with their full initial state
@@ -265,12 +308,21 @@ func _rpc_game_started(initial_players: Array, my_player_index: int) -> void:
 
 ## Server: create Player objects, distribute characters, send initial state to each peer
 func _setup_network_game(room: Dictionary) -> void:
-	# 1. Build Player objects
+	# 1. Build Player objects (human players first)
 	var players: Array = []
 	for i in range(room.players.size()):
 		var p_data = room.players[i]
 		var player = Player.new(i, p_data.get("name", "Joueur %d" % (i + 1)), true)
 		players.append(player)
+
+	# 1b. Add bot players
+	var bot_count = room.get("bot_count", 0)
+	var bot_names = ["Bot Alpha", "Bot Beta", "Bot Gamma", "Bot Delta", "Bot Epsilon", "Bot Zeta"]
+	for i in range(bot_count):
+		var bot_idx = room.players.size() + i
+		var bot = Player.new(bot_idx, bot_names[i % bot_names.size()], false)
+		players.append(bot)
+
 	GameState.reset()
 	GameState.players = players
 	GameState.is_network_game = true
@@ -278,6 +330,12 @@ func _setup_network_game(room: Dictionary) -> void:
 	# 2. Distribute characters using existing system
 	var player_count = players.size()
 	CharacterDistributor.distribute_characters(players, player_count, false)
+
+	# 2b. Assign personalities to bots
+	if bot_count > 0:
+		var personalities = PersonalityManager.load_personalities()
+		if not personalities.is_empty():
+			PersonalityManager.assign_personalities_to_bots(players, personalities)
 
 	# 3. Initialize decks
 	GameState.initialize_decks()
@@ -287,7 +345,7 @@ func _setup_network_game(room: Dictionary) -> void:
 	GameState.current_player_index = 0
 	GameState.current_phase = GameState.TurnPhase.MOVEMENT
 
-	print("[NetworkManager] Network game set up with %d players" % player_count)
+	print("[NetworkManager] Network game set up with %d players (%d human, %d bot)" % [player_count, room.players.size(), bot_count])
 
 	# 5. Send initial state to each peer individually
 	for i in range(room.peers.size()):
@@ -317,7 +375,7 @@ func _serialize_initial_players(players: Array, viewer_idx: int) -> Array:
 		var p_dict: Dictionary = {
 			"id": p.id,
 			"display_name": p.display_name,
-			"is_human": true,
+			"is_human": p.is_human,
 			"hp": p.hp,
 			"hp_max": p.hp_max,
 			"is_alive": true,
