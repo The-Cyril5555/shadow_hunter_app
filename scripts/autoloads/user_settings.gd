@@ -279,6 +279,8 @@ func set_fullscreen(enabled: bool) -> void:
 
 ## Apply fullscreen setting to the window
 func apply_fullscreen() -> void:
+	if DisplayServer.get_name() == "headless":
+		return
 	var mode = DisplayServer.WINDOW_MODE_FULLSCREEN if fullscreen else DisplayServer.WINDOW_MODE_MAXIMIZED
 	DisplayServer.window_set_mode(mode)
 
