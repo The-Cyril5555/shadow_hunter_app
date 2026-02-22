@@ -51,10 +51,10 @@ func _ready() -> void:
 	multiplayer.connected_to_server.connect(_on_connected_to_server)
 	multiplayer.connection_failed.connect(_on_connection_failed)
 	multiplayer.server_disconnected.connect(_on_server_disconnected)
-	# Auto-start in headless mode (Fly.io dedicated server)
+	# Auto-start in headless mode (dedicated server)
 	if DisplayServer.get_name() == "headless":
 		var port: int = DEFAULT_PORT
-		var env_port: String = OS.get_environment("PORT")
+		var env_port: String = OS.get_environment("GODOT_WS_PORT")
 		if env_port != "":
 			port = int(env_port)
 		start_server(port)
@@ -69,7 +69,8 @@ func start_server(port: int = DEFAULT_PORT) -> Error:
 	var peer = WebSocketMultiplayerPeer.new()
 	var err = peer.create_server(port)
 	if err != OK:
-		push_error("[NetworkManager] Failed to start server on port %d: %s" % [port, error_string(err)])
+		push_error("[NetworkManager] FATAL: Failed to start server on port %d: %s" % [port, error_string(err)])
+		get_tree().quit(1)  # Force visible crash so Render restarts the container
 		return err
 	multiplayer.multiplayer_peer = peer
 	is_server_mode = true
