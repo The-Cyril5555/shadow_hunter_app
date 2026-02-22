@@ -8,6 +8,10 @@ extends PanelContainer
 signal target_selected(target: Player)
 
 
+# State
+var _current_targets: Array = []
+
+
 # References @onready
 @onready var targets_container: VBoxContainer = $MarginContainer/VBoxContainer/TargetsContainer
 @onready var title_label: Label = $MarginContainer/VBoxContainer/TitleLabel
@@ -28,6 +32,7 @@ func _ready() -> void:
 
 ## Show target selection panel with valid targets
 func show_targets(valid_targets: Array, title: String = "", button_text: String = "Attaquer") -> void:
+	_current_targets = valid_targets
 	# Clear previous targets
 	for child in targets_container.get_children():
 		child.queue_free()
@@ -84,6 +89,17 @@ func show_targets(valid_targets: Array, title: String = "", button_text: String 
 	cancel_button.visible = true
 	visible = true
 	print("[TargetSelection] Showing %d targets" % valid_targets.size())
+
+
+## Return the targets currently shown in the panel
+func get_current_targets() -> Array:
+	return _current_targets
+
+
+## Programmatically emit a target selection (used by server to relay client choice)
+func _emit_selection(target: Player) -> void:
+	target_selected.emit(target)
+	hide_panel()
 
 
 ## Hide the panel

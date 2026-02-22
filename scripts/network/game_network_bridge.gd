@@ -12,6 +12,7 @@ extends Node
 signal public_state_received(state: Dictionary)
 signal private_state_received(data: Dictionary)
 signal remote_action_received(player_idx: int, action: Dictionary)
+signal target_selection_requested(target_ids: Array)
 
 
 # -----------------------------------------------------------------------------
@@ -144,6 +145,26 @@ func _rpc_game_over(winning_faction: String) -> void:
 	if multiplayer.is_server():
 		return
 	GameState.game_over.emit(winning_faction)
+
+
+## Server: return the network peer_id for a given player index
+func get_peer_for_player(player_idx: int) -> int:
+	for peer_id in _peer_to_player:
+		if _peer_to_player[peer_id] == player_idx:
+			return peer_id
+	return -1
+
+
+## Server: send an RPC to a specific client asking them to pick a target
+func request_target_selection_from_peer(peer_id: int, target_ids: Array) -> void:
+	if not multiplayer.is_server():
+		return
+	_rpc_request_target_selection.rpc_id(peer_id, target_ids)
+
+
+@rpc("authority", "reliable", "call_remote")
+func _rpc_request_target_selection(target_ids: Array) -> void:
+	target_selection_requested.emit(target_ids)
 
 
 # -----------------------------------------------------------------------------

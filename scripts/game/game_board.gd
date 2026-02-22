@@ -90,6 +90,7 @@ func _ready() -> void:
 		_net.remote_action_received.connect(_on_net_remote_action)
 		_net.public_state_received.connect(_on_net_public_state)
 		_net.private_state_received.connect(_on_net_private_state)
+		_net.target_selection_requested.connect(_on_net_target_selection_requested)
 		print("[GameBoard] Network bridge active — I am player %d" % GameState.my_network_player_index)
 
 	# Initialize decks (server always, client only if not network)
@@ -416,9 +417,17 @@ func _on_phase_changed(new_phase: GameState.TurnPhase) -> void:
 ## Show the action prompt with context
 func _show_action_prompt(player: Player) -> void:
 	var zone_id = player.position_zone
-	var deck = GameState.get_deck_for_zone(zone_id)
-	var can_draw = not has_drawn_this_turn and deck != null and deck.get_card_count() > 0
-	var deck_type = deck.deck_type if deck != null else ""
+	var can_draw: bool
+	var deck_type: String
+	if GameState.is_network_game and not multiplayer.is_server():
+		# Decks are not initialized on client — check zone type statically
+		const DECK_ZONES = ["hermit", "church", "cemetery"]
+		can_draw = not has_drawn_this_turn and zone_id in DECK_ZONES
+		deck_type = zone_id if zone_id in DECK_ZONES else ""
+	else:
+		var deck = GameState.get_deck_for_zone(zone_id)
+		can_draw = not has_drawn_this_turn and deck != null and deck.get_card_count() > 0
+		deck_type = deck.deck_type if deck != null else ""
 	var target_count = get_valid_targets().size()
 	human_player_info.show_action_prompt(player, can_draw, deck_type, target_count, has_attacked_this_turn)
 
@@ -431,6 +440,7 @@ func _on_action_prompt_chosen(action: String) -> void:
 	if GameState.is_network_game and not multiplayer.is_server() and _net:
 		match action:
 			"draw":
+				has_drawn_this_turn = true
 				_net.send_draw_card()
 			"attack":
 				# Client picks target locally, then sends attack+target to server
@@ -1502,7 +1512,15 @@ func _on_net_remote_action(player_idx: int, action: Dictionary) -> void:
 				target_selection_panel._emit_selection(target)
 		"reveal_choice":
 			_reveal_choice_made.emit(action.get("confirmed", false))
-	# Broadcast after synchronous action
+	# After synchronous action: check if target selection is now pending
+	# If so, delegate to the acting client rather than broadcasting immediately
+	if (_instant_card_pending or _pending_ability) and _net:
+		var peer_id = _net.get_peer_for_player(player_idx)
+		if peer_id > 0:
+			var target_ids: Array = target_selection_panel.get_current_targets().map(func(p): return p.id)
+			_net.request_target_selection_from_peer(peer_id, target_ids)
+		return  # broadcast will happen after target is selected and card resolves
+	# Normal broadcast
 	if _net:
 		_net.broadcast_public_state()
 		_net.send_all_private_states()
@@ -1546,11 +1564,11 @@ func _net_update_client_ui() -> void:
 			var has_compass: bool = _has_active_equipment(player, "double_dice_roll")
 			dice_roll_popup.show_for_player(player, has_compass)
 		GameState.TurnPhase.ACTION:
-			var deck = GameState.get_deck_for_zone(player.position_zone)
-			var zone_has_deck: bool = deck != null and deck.get_card_count() > 0
-			if not has_drawn_this_turn and (zone_has_deck or _zone_has_effect(player.position_zone)):
-				# Show action prompt — player clicks "Draw Card" which sends draw_card to server
-				_show_action_prompt(player)
+			const DECK_ZONES = ["hermit", "church", "cemetery"]
+			if not has_drawn_this_turn and player.position_zone in DECK_ZONES:
+				# Mirror local auto-draw: send draw_card to server immediately
+				has_drawn_this_turn = true
+				_net.send_draw_card()
 			else:
 				_show_action_prompt(player)
 		GameState.TurnPhase.END:
@@ -1564,6 +1582,19 @@ func _on_net_private_state(_data: Dictionary) -> void:
 	# Private state already applied by GameNetworkBridge._apply_private_state
 	# Refresh hand display if human_player_info shows hand cards
 	human_player_info.update_display()
+
+
+## Client: server requests that we show a target selection panel (for instant cards / abilities)
+func _on_net_target_selection_requested(target_ids: Array) -> void:
+	if multiplayer.is_server():
+		return
+	var targets: Array = []
+	for tid in target_ids:
+		var p = _find_player_by_id(tid)
+		if p:
+			targets.append(p)
+	if not targets.is_empty():
+		target_selection_panel.show_targets(targets)
 
 
 ## Helper: find a player by their id
@@ -2126,9 +2157,11 @@ func _on_attack_button_pressed() -> void:
 
 ## Handle target selection
 func _on_target_selected(target: Player) -> void:
-	# Network client: relay to server — covers vision cards, instant cards, abilities
+	# Network client: relay to server only for server-initiated selections (instant/ability)
+	# Attack target is already handled via send_attack in _on_action_prompt_chosen
 	if GameState.is_network_game and not multiplayer.is_server() and _net:
-		_net.send_target_selected(target.id)
+		if _instant_card_pending or _pending_ability:
+			_net.send_target_selected(target.id)
 		return
 	# Vision card mode: reveal target instead of attacking
 	if _vision_pending:
