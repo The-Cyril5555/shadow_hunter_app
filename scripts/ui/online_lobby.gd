@@ -470,12 +470,9 @@ func _set_buttons_disabled(disabled: bool) -> void:
 
 
 func _get_server_url() -> String:
-	# Custom URL takes priority (ngrok, local host, etc.)
+	# Custom URL takes priority (use ws://localhost:9080 for local server)
 	if is_instance_valid(_custom_url_input):
 		var custom: String = _custom_url_input.text.strip_edges()
 		if custom != "":
 			return custom
-	# Use dev URL if running locally (editor or local export)
-	if OS.has_feature("editor") or OS.has_feature("debug"):
-		return SERVER_URL_DEV
 	return SERVER_URL_PROD
