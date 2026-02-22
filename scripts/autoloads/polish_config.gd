@@ -33,6 +33,9 @@ var config_file_path: String = "res://data/polish_config.json"
 # -----------------------------------------------------------------------------
 
 func _ready() -> void:
+	if DisplayServer.get_name() == "headless":
+		load_config()  # load JSON config, skip rendering calls
+		return
 	_apply_font_theme()
 	load_config()
 	print("[PolishConfig] Loaded %d configuration values" % config_data.size())

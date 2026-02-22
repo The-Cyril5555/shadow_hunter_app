@@ -11,6 +11,8 @@ const SERVER_URL_PROD: String = "wss://shadow-hunter-app.onrender.com"
 const SERVER_URL_DEV: String = "ws://localhost:9080"
 const HEALTH_URL: String = "https://shadow-hunter-app.onrender.com/health"
 const KEEPALIVE_INTERVAL: float = 600.0  # 10 minutes — prevent Render free-tier spin-down
+const RETRY_DELAY: float = 30.0
+const MAX_RETRIES: int = 4
 
 
 # -----------------------------------------------------------------------------
@@ -37,6 +39,8 @@ var _is_host: bool = false
 var _connected: bool = false
 var _ping_http: HTTPRequest
 var _ping_timer: Timer
+var _retry_timer: Timer
+var _retry_count: int = 0
 
 
 # -----------------------------------------------------------------------------
@@ -335,6 +339,9 @@ func _on_start_pressed() -> void:
 
 
 func _on_back_pressed() -> void:
+	_retry_count = 0
+	if is_instance_valid(_retry_timer):
+		_retry_timer.stop()
 	AudioManager.play_sfx("button_click")
 	NetworkManager.disconnect_from_server()
 	GameModeStateMachine.transition_to(GameModeStateMachine.GameMode.MAIN_MENU)
@@ -344,6 +351,7 @@ func _on_back_pressed() -> void:
 # Signal Handlers — Network
 # -----------------------------------------------------------------------------
 func _on_connected_to_server() -> void:
+	_retry_count = 0
 	_connected = true
 	var player_name = _name_input.text.strip_edges()
 	if _is_host:
@@ -357,8 +365,14 @@ func _on_connected_to_server() -> void:
 
 func _on_connection_failed() -> void:
 	_connected = false
-	_set_buttons_disabled(false)
-	_set_status("Impossible de se connecter au serveur.", Color(1.0, 0.4, 0.4))
+	if _retry_count < MAX_RETRIES:
+		_retry_count += 1
+		_set_status("Connexion échouée. Nouvelle tentative %d/%d dans 30s..." % [_retry_count, MAX_RETRIES], Color(1.0, 0.75, 0.3))
+		_start_retry_timer()
+	else:
+		_retry_count = 0
+		_set_buttons_disabled(false)
+		_set_status("Impossible de se connecter. Vérifiez votre connexion.", Color(1.0, 0.4, 0.4))
 
 
 func _on_server_disconnected() -> void:
@@ -481,6 +495,25 @@ func _get_server_url() -> String:
 		if custom != "":
 			return custom
 	return SERVER_URL_PROD
+
+
+# -----------------------------------------------------------------------------
+# Connection Retry — handles Render cold-start race condition
+# -----------------------------------------------------------------------------
+func _start_retry_timer() -> void:
+	if not is_instance_valid(_retry_timer):
+		_retry_timer = Timer.new()
+		_retry_timer.one_shot = true
+		_retry_timer.timeout.connect(_do_retry)
+		add_child(_retry_timer)
+	_retry_timer.start(RETRY_DELAY)
+
+
+func _do_retry() -> void:
+	if not is_visible_in_tree():
+		return
+	_set_status("Reconnexion en cours...", Color(0.7, 0.8, 1.0))
+	NetworkManager.connect_to_server(_get_server_url())
 
 
 # -----------------------------------------------------------------------------

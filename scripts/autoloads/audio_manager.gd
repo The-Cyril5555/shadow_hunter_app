@@ -55,6 +55,9 @@ var _bus_music_index: int = -1
 # =============================================================================
 
 func _ready() -> void:
+	if DisplayServer.get_name() == "headless":
+		print("[AudioManager] Headless mode — skipping audio initialization")
+		return
 	# Cache audio bus indices
 	_bus_sfx_index = AudioServer.get_bus_index(BUS_SFX)
 	_bus_music_index = AudioServer.get_bus_index(BUS_MUSIC)
