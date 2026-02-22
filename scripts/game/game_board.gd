@@ -2126,6 +2126,10 @@ func _on_attack_button_pressed() -> void:
 
 ## Handle target selection
 func _on_target_selected(target: Player) -> void:
+	# Network client: relay to server — covers vision cards, instant cards, abilities
+	if GameState.is_network_game and not multiplayer.is_server() and _net:
+		_net.send_target_selected(target.id)
+		return
 	# Vision card mode: reveal target instead of attacking
 	if _vision_pending:
 		_resolve_vision_card(target)
@@ -2576,6 +2580,9 @@ func _on_game_over(winning_faction: String) -> void:
 		return
 	_game_ended = true
 	print("[GameBoard] Game Over! %s wins!" % winning_faction)
+	# Network server: broadcast to all clients before transitioning
+	if GameState.is_network_game and multiplayer.is_server() and _net:
+		_net.broadcast_game_over(winning_faction)
 
 	# Hide action prompts
 	human_player_info.hide_prompt()

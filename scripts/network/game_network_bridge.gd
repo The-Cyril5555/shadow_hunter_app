@@ -132,6 +132,20 @@ func broadcast_toast(message: String, color: Color = Color.WHITE) -> void:
 	_rpc_show_toast.rpc(message, color)
 
 
+## Broadcast game over to all clients
+func broadcast_game_over(winning_faction: String) -> void:
+	if not multiplayer.is_server():
+		return
+	_rpc_game_over.rpc(winning_faction)
+
+
+@rpc("authority", "reliable", "call_local")
+func _rpc_game_over(winning_faction: String) -> void:
+	if multiplayer.is_server():
+		return
+	GameState.game_over.emit(winning_faction)
+
+
 # -----------------------------------------------------------------------------
 # RPC — Client → Server
 # -----------------------------------------------------------------------------

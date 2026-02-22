@@ -115,8 +115,9 @@ func _build_ui() -> void:
 	vbox.add_child(_main_buttons)
 
 	_add_button(_main_buttons, Tr.t("pause.resume"), _on_resume_pressed, "resume")
-	_add_button(_main_buttons, Tr.t("pause.save"), _on_save_pressed, "save")
-	_add_button(_main_buttons, Tr.t("pause.load"), _on_load_pressed, "load")
+	if not GameState.is_network_game:
+		_add_button(_main_buttons, Tr.t("pause.save"), _on_save_pressed, "save")
+		_add_button(_main_buttons, Tr.t("pause.load"), _on_load_pressed, "load")
 	_add_button(_main_buttons, Tr.t("pause.quit"), _on_quit_pressed, "quit")
 
 	# Save/Load panel (hidden by default)
