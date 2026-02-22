@@ -8,7 +8,6 @@ _bmad-output/
 # Heavy assets not needed by the headless server
 assets/sprites/
 assets/audio/
-assets/shaders/
 
 # UID files (editor-generated)
 *.uid
