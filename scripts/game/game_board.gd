@@ -251,9 +251,18 @@ func _get_zone_by_id(zone_id: String) -> Zone:
 
 ## Move player token from current zone to target zone with animation
 func _move_player_to_zone(player: Player, target_zone: Zone) -> void:
+	# Server: skip animation entirely — just update state and advance phase
+	if GameState.is_network_game and multiplayer.is_server():
+		player.position_zone = target_zone.zone_id
+		print("[GameBoard] Moved %s to %s" % [player.display_name, target_zone.zone_name])
+		GameState.advance_phase()
+		return
+
 	var current_zone = _get_zone_by_id(player.position_zone)
 	if current_zone == null:
 		push_error("[GameBoard] Current zone not found for player %s" % player.display_name)
+		player.position_zone = target_zone.zone_id
+		GameState.advance_phase()
 		return
 
 	var token = null
@@ -264,6 +273,8 @@ func _move_player_to_zone(player: Player, target_zone: Zone) -> void:
 
 	if token == null:
 		push_error("[GameBoard] Token not found for player %s" % player.display_name)
+		player.position_zone = target_zone.zone_id
+		GameState.advance_phase()
 		return
 
 	var end_pos = target_zone.token_container.global_position
@@ -2500,6 +2511,8 @@ func _show_floating_heal(world_pos: Vector2, amount: int) -> void:
 
 ## Play heal visual effects on a player's character card (particles + float number + green flash)
 func _play_heal_visual(player: Player, amount: int) -> void:
+	if GameState.is_network_game and multiplayer.is_server():
+		return
 	var card_panel = character_cards_row.get_card_panel(player.id)
 	if card_panel == null:
 		return
