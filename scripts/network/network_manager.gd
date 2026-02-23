@@ -367,8 +367,9 @@ func _setup_network_game(room: Dictionary) -> void:
 		_rpc_game_started.rpc_id(peer_id, serialized, my_idx, zone_positions)
 
 	# 6. Server also transitions to GAME scene to run GameBoard and process client RPCs
+	# Force reload even if already in GAME mode (e.g. second game on same server instance)
 	GameState.my_network_player_index = -1  # dedicated server has no local player
-	GameModeStateMachine.transition_to(GameModeStateMachine.GameMode.GAME)
+	GameModeStateMachine.transition_to(GameModeStateMachine.GameMode.GAME, true)
 
 
 ## Serialize all players for initial state, filtering private data per viewer

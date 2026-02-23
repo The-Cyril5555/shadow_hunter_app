@@ -51,15 +51,15 @@ func is_my_turn() -> bool:
 # -----------------------------------------------------------------------------
 
 func send_roll_dice() -> void:
-	_rpc_client_action.rpc_id(1, {"type": "roll_dice"})
+	_rpc_client_action.rpc_id(1, {"type": "roll_dice", "player_idx": _my_player_index})
 
 
 func send_draw_card() -> void:
-	_rpc_client_action.rpc_id(1, {"type": "draw_card"})
+	_rpc_client_action.rpc_id(1, {"type": "draw_card", "player_idx": _my_player_index})
 
 
 func send_attack(target_player_id: int) -> void:
-	_rpc_client_action.rpc_id(1, {"type": "attack", "target": target_player_id})
+	_rpc_client_action.rpc_id(1, {"type": "attack", "target": target_player_id, "player_idx": _my_player_index})
 
 
 func send_use_card(card_id: String, target_player_id: int) -> void:
@@ -67,32 +67,33 @@ func send_use_card(card_id: String, target_player_id: int) -> void:
 		"type": "use_card",
 		"card_id": card_id,
 		"target": target_player_id,
+		"player_idx": _my_player_index,
 	})
 
 
 func send_end_turn() -> void:
-	_rpc_client_action.rpc_id(1, {"type": "end_turn"})
+	_rpc_client_action.rpc_id(1, {"type": "end_turn", "player_idx": _my_player_index})
 
 
 ## Generic action for simple requests (attack prompt, ability prompt)
 func send_action_request(action_type: String) -> void:
-	_rpc_client_action.rpc_id(1, {"type": action_type})
+	_rpc_client_action.rpc_id(1, {"type": action_type, "player_idx": _my_player_index})
 
 
 func send_reveal() -> void:
-	_rpc_client_action.rpc_id(1, {"type": "reveal"})
+	_rpc_client_action.rpc_id(1, {"type": "reveal", "player_idx": _my_player_index})
 
 
 func send_reveal_choice(confirmed: bool) -> void:
-	_rpc_client_action.rpc_id(1, {"type": "reveal_choice", "confirmed": confirmed})
+	_rpc_client_action.rpc_id(1, {"type": "reveal_choice", "confirmed": confirmed, "player_idx": _my_player_index})
 
 
 func send_zone_choice(choice: Dictionary) -> void:
-	_rpc_client_action.rpc_id(1, {"type": "zone_choice", "choice": choice})
+	_rpc_client_action.rpc_id(1, {"type": "zone_choice", "choice": choice, "player_idx": _my_player_index})
 
 
 func send_target_selected(target_player_id: int) -> void:
-	_rpc_client_action.rpc_id(1, {"type": "target_selected", "target": target_player_id})
+	_rpc_client_action.rpc_id(1, {"type": "target_selected", "target": target_player_id, "player_idx": _my_player_index})
 
 
 # -----------------------------------------------------------------------------
@@ -175,15 +176,18 @@ func _rpc_request_target_selection(target_ids: Array) -> void:
 func _rpc_client_action(action: Dictionary) -> void:
 	if not multiplayer.is_server():
 		return
-	var sender_id = multiplayer.get_remote_sender_id()
-	var player_idx = _peer_to_player.get(sender_id, -1)
+	# Identify player: prefer explicit index in payload, fall back to peer ID lookup
+	var player_idx: int = action.get("player_idx", -1)
 	if player_idx < 0:
-		push_warning("[GameNetworkBridge] Unknown peer: %d" % sender_id)
+		var sender_id = multiplayer.get_remote_sender_id()
+		player_idx = _peer_to_player.get(sender_id, -1)
+	if player_idx < 0:
+		push_warning("[GameNetworkBridge] Cannot identify player for action: %s" % str(action))
 		return
 	# Validate turn ownership (except reveal_choice which can come from anyone)
 	var action_type = action.get("type", "")
 	if action_type != "reveal_choice" and player_idx != GameState.current_player_index:
-		push_warning("[GameNetworkBridge] Peer %d sent action out of turn" % sender_id)
+		push_warning("[GameNetworkBridge] Player %d sent action out of turn (expected %d)" % [player_idx, GameState.current_player_index])
 		return
 	remote_action_received.emit(player_idx, action)
 

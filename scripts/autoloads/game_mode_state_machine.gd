@@ -25,8 +25,8 @@ func _ready() -> void:
 	print("[GameModeStateMachine] Initialized")
 
 
-func transition_to(new_mode: GameMode) -> void:
-	if new_mode == current_mode:
+func transition_to(new_mode: GameMode, force: bool = false) -> void:
+	if new_mode == current_mode and not force:
 		print("[GameModeStateMachine] Already in mode: %s" % GameMode.keys()[new_mode])
 		return
 
