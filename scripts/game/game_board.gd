@@ -61,6 +61,10 @@ var _game_ended: bool = false
 ## Network bridge (non-null only in online mode)
 var _net: GameNetworkBridge = null
 
+## Online mode: per-player snapshots for client-side diff detection (indexed by player array index)
+var _net_prev_hp: Array = []
+var _net_prev_alive: Array = []
+
 
 # -----------------------------------------------------------------------------
 # Lifecycle
@@ -247,6 +251,40 @@ func _get_zone_by_id(zone_id: String) -> Zone:
 		if zone.zone_id == zone_id:
 			return zone
 	return null
+
+
+## Online client: find which zone a player's token is currently displayed in
+func _find_player_visual_zone(player: Player) -> Zone:
+	for zone in zones:
+		for child in zone.token_container.get_children():
+			if child.has_method("get_player") and child.get_player() == player:
+				return zone
+	return null
+
+
+## Online client: animate a player token from one zone to another (non-blocking via tween callback)
+func _net_animate_token(player: Player, from_zone: Zone, to_zone: Zone) -> void:
+	var token: Node = null
+	for child in from_zone.token_container.get_children():
+		if child.has_method("get_player") and child.get_player() == player:
+			token = child
+			break
+	if token == null:
+		from_zone.remove_player_token(player)
+		to_zone.add_player_token(player)
+		return
+	AudioManager.play_sfx("move_player")
+	var end_pos = to_zone.token_container.global_position
+	var tween = create_tween()
+	tween.set_trans(Tween.TRANS_CUBIC)
+	tween.set_ease(Tween.EASE_IN_OUT)
+	tween.tween_property(token, "global_position", end_pos, 0.6)
+	tween.tween_property(token, "scale", Vector2(1.1, 1.1), 0.1)
+	tween.tween_property(token, "scale", Vector2(1.0, 1.0), 0.1)
+	tween.tween_callback(func():
+		from_zone.remove_player_token(player)
+		to_zone.add_player_token(player)
+	)
 
 
 ## Move player token from current zone to target zone with animation
@@ -1619,15 +1657,54 @@ func _on_net_remote_action(player_idx: int, action: Dictionary) -> void:
 		_net.send_all_private_states()
 
 
-## Client: received updated public state from server — refresh UI then adapt to turn
+## Client: received updated public state from server — animate diffs, refresh UI, adapt to turn
 func _on_net_public_state(_state: Dictionary) -> void:
 	if multiplayer.is_server():
 		return
-	# State already applied by GameNetworkBridge._apply_public_state
+
+	# Detect per-player changes vs previous snapshot and animate/notify accordingly
+	for i in range(GameState.players.size()):
+		var player = GameState.players[i]
+
+		# Token animation: visual zone (token container) vs logical zone (already applied)
+		var visual_zone = _find_player_visual_zone(player)
+		if visual_zone != null and visual_zone.zone_id != player.position_zone:
+			var target_zone = _get_zone_by_id(player.position_zone)
+			if target_zone:
+				_net_animate_token(player, visual_zone, target_zone)
+				if toast:
+					var zd = ZoneData.get_zone_by_id(player.position_zone)
+					var zone_name = zd.get("name", player.position_zone.capitalize())
+					toast.show_toast(Tr.t("toast.player_moves", [player.display_name, zone_name]), Color(0.7, 0.8, 1.0))
+
+		# HP change: compare with snapshot
+		var prev_hp: int = _net_prev_hp[i] if i < _net_prev_hp.size() else player.hp
+		if prev_hp != player.hp and toast:
+			var diff = prev_hp - player.hp
+			if diff > 0:
+				toast.show_toast("%s -%d HP" % [player.display_name, diff], Color(1.0, 0.3, 0.3))
+			else:
+				toast.show_toast("%s +%d HP" % [player.display_name, -diff], Color(0.3, 1.0, 0.5))
+
+		# Death
+		var prev_alive: bool = _net_prev_alive[i] if i < _net_prev_alive.size() else true
+		if prev_alive and not player.is_alive:
+			damage_tracker.mark_player_dead(player)
+			_update_dead_player_ui(player)
+			character_cards_row.mark_dead(player)
+
+	# Update snapshots for next diff
+	_net_prev_hp.resize(GameState.players.size())
+	_net_prev_alive.resize(GameState.players.size())
+	for i in range(GameState.players.size()):
+		_net_prev_hp[i] = GameState.players[i].hp
+		_net_prev_alive[i] = GameState.players[i].is_alive
+
+	# Standard display refresh
 	_update_display()
 	damage_tracker.setup(GameState.players)
 	character_cards_row.setup(GameState.players)
-	# Show toast if any
+	# Show toast if any (server-broadcast events)
 	if _net and _net._last_toast_message != "":
 		if toast:
 			toast.show_toast(_net._last_toast_message, _net._last_toast_color)
