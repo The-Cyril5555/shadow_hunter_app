@@ -64,6 +64,7 @@ var _net: GameNetworkBridge = null
 ## Online mode: per-player snapshots for client-side diff detection (indexed by player array index)
 var _net_prev_hp: Array = []
 var _net_prev_alive: Array = []
+var _net_prev_revealed: Array = []
 
 
 # -----------------------------------------------------------------------------
@@ -96,6 +97,7 @@ func _ready() -> void:
 		_net.public_state_received.connect(_on_net_public_state)
 		_net.private_state_received.connect(_on_net_private_state)
 		_net.target_selection_requested.connect(_on_net_target_selection_requested)
+		_net.toast_received.connect(_on_net_toast_received)
 		print("[GameBoard] Network bridge active — I am player %d" % GameState.my_network_player_index)
 
 	# Initialize decks (server always, client only if not network)
@@ -336,7 +338,7 @@ func _move_player_to_zone(player: Player, target_zone: Zone) -> void:
 	set_process_input(true)
 
 	if toast:
-		toast.show_toast(Tr.t("toast.player_moves", [player.display_name, target_zone.zone_name]), Color(0.7, 0.8, 1.0))
+		_toast(Tr.t("toast.player_moves", [player.display_name, target_zone.zone_name]), Color(0.7, 0.8, 1.0))
 	print("[GameBoard] Moved %s to %s" % [player.display_name, target_zone.zone_name])
 
 	_notify_tutorial("move_to_zone")
@@ -556,7 +558,7 @@ func _on_popup_zone_selected(zone_id: String) -> void:
 	has_rolled_this_turn = true
 
 	if toast:
-		toast.show_toast(Tr.t("toast.dice_move", [last_dice_sum, zone.zone_name]), Color(0.8, 0.9, 1.0))
+		_toast(Tr.t("toast.dice_move", [last_dice_sum, zone.zone_name]), Color(0.8, 0.9, 1.0))
 
 	_notify_tutorial("roll_dice")
 	_move_player_to_zone(current_player, zone)
@@ -619,7 +621,7 @@ func _auto_draw_card(player: Player) -> void:
 		return
 
 	if toast:
-		toast.show_toast(Tr.t("toast.player_draws", [player.display_name, card.name]), Color(0.6, 1.0, 0.6))
+		_toast(Tr.t("toast.player_draws", [player.display_name, card.name]), Color(0.6, 1.0, 0.6))
 	print("[GameBoard] Auto-draw: %s drew '%s' from %s deck" % [player.display_name, card.name, deck.deck_type])
 
 	_update_deck_displays()
@@ -639,10 +641,10 @@ func _auto_draw_card(player: Player) -> void:
 		GameState.equipment_equipped.emit(player, card)
 		if card.faction_restriction != "" and player.faction != card.faction_restriction:
 			if toast:
-				toast.show_toast(Tr.t("toast.equipment_inactive", [player.display_name, card.name, card.faction_restriction]), Color(0.7, 0.7, 0.3))
+				_toast(Tr.t("toast.equipment_inactive", [player.display_name, card.name, card.faction_restriction]), Color(0.7, 0.7, 0.3))
 		else:
 			if toast:
-				toast.show_toast(Tr.t("toast.player_equips", [player.display_name, card.name]), Color(1.0, 0.9, 0.3))
+				_toast(Tr.t("toast.player_equips", [player.display_name, card.name]), Color(1.0, 0.9, 0.3))
 		human_player_info.update_display()
 	elif card.type == "vision":
 		_start_vision_card(player, card, deck)
@@ -668,12 +670,12 @@ func _show_zone_effect(player: Player) -> void:
 	# Fortune Brooch — immune to Weird Woods
 	if player.position_zone == "weird_woods" and _has_active_equipment(player, "immunity_weird_woods"):
 		if toast:
-			toast.show_toast(Tr.t("toast.fortune_brooch", [player.display_name]), Color(0.3, 0.9, 0.5))
+			_toast(Tr.t("toast.fortune_brooch", [player.display_name]), Color(0.3, 0.9, 0.5))
 		_show_action_prompt(player)
 		return
 	var zone_data = ZoneData.get_zone_by_id(player.position_zone)
 	if toast:
-		toast.show_toast(Tr.t("toast.zone_activates", [player.display_name, zone_data.name]), Color(0.8, 0.7, 1.0))
+		_toast(Tr.t("toast.zone_activates", [player.display_name, zone_data.name]), Color(0.8, 0.7, 1.0))
 	zone_effect_popup.show_effect(zone_data, player, GameState.players)
 
 
@@ -695,13 +697,13 @@ func _on_zone_effect_completed(result: Dictionary) -> void:
 				if died:
 					GameState.player_died.emit(target, current_player)
 				if toast:
-					toast.show_toast(Tr.t("toast.deals_damage", [current_player.display_name, 2, target.display_name]), Color(1.0, 0.5, 0.5))
+					_toast(Tr.t("toast.deals_damage", [current_player.display_name, 2, target.display_name]), Color(1.0, 0.5, 0.5))
 			elif action == "heal":
 				target.heal(1)
 				damage_tracker.update_player_hp(target)
 				_play_heal_visual(target, 1)
 				if toast:
-					toast.show_toast(Tr.t("toast.heals", [current_player.display_name, target.display_name, 1]), Color(0.5, 1.0, 0.5))
+					_toast(Tr.t("toast.heals", [current_player.display_name, target.display_name, 1]), Color(0.5, 1.0, 0.5))
 			_update_display()
 
 		"choose_deck":
@@ -725,17 +727,17 @@ func _on_zone_effect_completed(result: Dictionary) -> void:
 						GameState.equipment_equipped.emit(current_player, card)
 						if card.faction_restriction != "" and current_player.faction != card.faction_restriction:
 							if toast:
-								toast.show_toast(Tr.t("toast.equipment_inactive", [current_player.display_name, card.name, card.faction_restriction]), Color(0.7, 0.7, 0.3))
+								_toast(Tr.t("toast.equipment_inactive", [current_player.display_name, card.name, card.faction_restriction]), Color(0.7, 0.7, 0.3))
 						else:
 							if toast:
-								toast.show_toast(Tr.t("toast.player_equips", [current_player.display_name, card.name]), Color(1.0, 0.9, 0.3))
+								_toast(Tr.t("toast.player_equips", [current_player.display_name, card.name]), Color(1.0, 0.9, 0.3))
 						human_player_info.update_display()
 					elif card.type == "vision":
 						_start_vision_card(current_player, card, deck)
 						return  # Vision flow handles the rest
 			else:
 				if toast:
-					toast.show_toast(Tr.t("toast.deck_empty"), Color(1.0, 0.6, 0.3))
+					_toast(Tr.t("toast.deck_empty"), Color(1.0, 0.6, 0.3))
 
 		"steal_equipment":
 			var target: Player = result.target
@@ -748,7 +750,7 @@ func _on_zone_effect_completed(result: Dictionary) -> void:
 			current_player.equipment.append(card)
 			GameState.equipment_equipped.emit(current_player, card)
 			if toast:
-				toast.show_toast(Tr.t("toast.steals_equip", [current_player.display_name, card.name, target.display_name]), Color(1.0, 0.7, 0.2))
+				_toast(Tr.t("toast.steals_equip", [current_player.display_name, card.name, target.display_name]), Color(1.0, 0.7, 0.2))
 			_update_display()
 
 		"cancelled":
@@ -867,7 +869,7 @@ func _on_draw_card_pressed() -> void:
 		return
 
 	if toast:
-		toast.show_toast(Tr.t("toast.player_draws", [current_player.display_name, card.name]), Color(0.6, 1.0, 0.6))
+		_toast(Tr.t("toast.player_draws", [current_player.display_name, card.name]), Color(0.6, 1.0, 0.6))
 	print("[GameBoard] %s drew card '%s' from %s deck" % [current_player.display_name, card.name, deck.deck_type])
 
 	_update_deck_displays()
@@ -889,10 +891,10 @@ func _on_draw_card_pressed() -> void:
 		GameState.equipment_equipped.emit(current_player, card)
 		if card.faction_restriction != "" and current_player.faction != card.faction_restriction:
 			if toast:
-				toast.show_toast(Tr.t("toast.equipment_inactive", [current_player.display_name, card.name, card.faction_restriction]), Color(0.7, 0.7, 0.3))
+				_toast(Tr.t("toast.equipment_inactive", [current_player.display_name, card.name, card.faction_restriction]), Color(0.7, 0.7, 0.3))
 		else:
 			if toast:
-				toast.show_toast(Tr.t("toast.player_equips", [current_player.display_name, card.name]), Color(1.0, 0.9, 0.3))
+				_toast(Tr.t("toast.player_equips", [current_player.display_name, card.name]), Color(1.0, 0.9, 0.3))
 		human_player_info.update_display()
 	elif card.type == "vision":
 		_start_vision_card(current_player, card, deck)
@@ -1117,19 +1119,19 @@ func _apply_instant_card_effect(card: Card, player: Player) -> void:
 					if died:
 						GameState.player_died.emit(p, player)
 			if toast:
-				toast.show_toast(Tr.t("toast.deals_damage_all", [PlayerColors.get_label(player), effect_value]), Color(1.0, 0.5, 0.2))
+				_toast(Tr.t("toast.deals_damage_all", [PlayerColors.get_label(player), effect_value]), Color(1.0, 0.5, 0.2))
 			_log_card_effect(card, player, effect_type, effect_value)
 			return
 		"extra_turn":
 			player.set_meta("extra_turn", true)
 			if toast:
-				toast.show_toast(Tr.t("toast.extra_turn", [PlayerColors.get_label(player)]), Color(0.3, 0.8, 1.0))
+				_toast(Tr.t("toast.extra_turn", [PlayerColors.get_label(player)]), Color(0.3, 0.8, 1.0))
 			_log_card_effect(card, player, effect_type, 0)
 			return
 		"damage_immunity":
 			player.set_meta("damage_immune", true)
 			if toast:
-				toast.show_toast(Tr.t("toast.guardian_angel", [PlayerColors.get_label(player)]), Color(0.3, 0.9, 1.0))
+				_toast(Tr.t("toast.guardian_angel", [PlayerColors.get_label(player)]), Color(0.3, 0.9, 1.0))
 			_log_card_effect(card, player, effect_type, 0)
 			return
 		"force_shadow_reveal":
@@ -1137,10 +1139,10 @@ func _apply_instant_card_effect(card: Card, player: Player) -> void:
 				player.is_revealed = true
 				GameState.player_revealed.emit(player)
 				if toast:
-					toast.show_toast(Tr.t("toast.forced_reveal", [player.character_name]), Color(1.0, 0.3, 0.3))
+					_toast(Tr.t("toast.forced_reveal", [player.character_name]), Color(1.0, 0.3, 0.3))
 			else:
 				if toast:
-					toast.show_toast(Tr.t("toast.no_effect"), Color(0.5, 0.5, 0.5))
+					_toast(Tr.t("toast.no_effect"), Color(0.5, 0.5, 0.5))
 			_log_card_effect(card, player, effect_type, 0)
 			return
 		"aoe_dice_damage":
@@ -1151,14 +1153,14 @@ func _apply_instant_card_effect(card: Card, player: Player) -> void:
 			var dmg = card.effect.get("damage", 3)
 			if zone_id == "":
 				if toast:
-					toast.show_toast(Tr.t("toast.dynamite_no_zone", [d6, d4, dice_sum]), Color(0.5, 0.5, 0.5))
+					_toast(Tr.t("toast.dynamite_no_zone", [d6, d4, dice_sum]), Color(0.5, 0.5, 0.5))
 			else:
 				var hit_count = 0
 				for p in GameState.players:
 					if p.is_alive and p.position_zone == zone_id:
 						if _has_active_equipment(p, "immunity_black_cards"):
 							if toast:
-								toast.show_toast(Tr.t("toast.talisman_protects", [PlayerColors.get_label(p)]), Color(0.3, 0.9, 0.5))
+								_toast(Tr.t("toast.talisman_protects", [PlayerColors.get_label(p)]), Color(0.3, 0.9, 0.5))
 							continue
 						var died = p.take_damage(dmg)
 						GameState.damage_dealt.emit(player, p, dmg)
@@ -1169,7 +1171,7 @@ func _apply_instant_card_effect(card: Card, player: Player) -> void:
 				if toast:
 					var zone_data = ZoneData.get_zone_by_id(zone_id)
 					var zone_name = zone_data.get("name", zone_id) if zone_data else zone_id
-					toast.show_toast(Tr.t("toast.dynamite_hit", [d6, d4, dice_sum, zone_name, hit_count]), Color(1.0, 0.4, 0.1))
+					_toast(Tr.t("toast.dynamite_hit", [d6, d4, dice_sum, zone_name, hit_count]), Color(1.0, 0.4, 0.1))
 			_log_card_effect(card, player, effect_type, 0)
 			return
 		"faction_reveal_heal":
@@ -1183,7 +1185,7 @@ func _apply_instant_card_effect(card: Card, player: Player) -> void:
 				GameState.damage_dealt.emit(player, player, 1)
 				damage_tracker.update_player_hp(player)
 				if toast:
-					toast.show_toast(Tr.t("toast.no_equipment_damage", [PlayerColors.get_label(player)]), Color(1.0, 0.3, 0.3))
+					_toast(Tr.t("toast.no_equipment_damage", [PlayerColors.get_label(player)]), Color(1.0, 0.3, 0.3))
 				if died:
 					GameState.player_died.emit(player, player)
 				human_player_info.update_display()
@@ -1211,7 +1213,7 @@ func _apply_instant_card_effect(card: Card, player: Player) -> void:
 		_apply_instant_card_on_target(card, player, target)
 	else:
 		if toast:
-			toast.show_toast(Tr.t("toast.no_targets"), Color(0.5, 0.5, 0.5))
+			_toast(Tr.t("toast.no_targets"), Color(0.5, 0.5, 0.5))
 
 
 ## Get popup title and button text for human instant card targeting
@@ -1251,7 +1253,7 @@ func _apply_instant_card_on_target(card: Card, player: Player, target: Player) -
 	# Talisman — target immune to black card damage effects
 	if effect_type in ["vampire_drain", "mutual_damage", "self_damage_gamble"] and _has_active_equipment(target, "immunity_black_cards"):
 		if toast:
-			toast.show_toast(Tr.t("toast.talisman_protects", [PlayerColors.get_label(target)]), Color(0.3, 0.9, 0.5))
+			_toast(Tr.t("toast.talisman_protects", [PlayerColors.get_label(target)]), Color(0.3, 0.9, 0.5))
 		human_player_info.update_display()
 		_update_display()
 		_log_card_effect(card, player, effect_type, effect_value)
@@ -1268,7 +1270,7 @@ func _apply_instant_card_on_target(card: Card, player: Player, target: Player) -
 			damage_tracker.update_player_hp(player)
 			_play_heal_visual(player, heal_amount)
 			if toast:
-				toast.show_toast(Tr.t("toast.drain", [PlayerColors.get_label(player), PlayerColors.get_label(target), dmg, heal_amount]), Color(0.8, 0.2, 0.2))
+				_toast(Tr.t("toast.drain", [PlayerColors.get_label(player), PlayerColors.get_label(target), dmg, heal_amount]), Color(0.8, 0.2, 0.2))
 			if died:
 				GameState.player_died.emit(target, player)
 
@@ -1282,7 +1284,7 @@ func _apply_instant_card_on_target(card: Card, player: Player, target: Player) -
 			GameState.damage_dealt.emit(player, player, self_dmg)
 			damage_tracker.update_player_hp(player)
 			if toast:
-				toast.show_toast(Tr.t("toast.mutual_damage", [PlayerColors.get_label(player), PlayerColors.get_label(target), dmg]), Color(0.8, 0.2, 0.2))
+				_toast(Tr.t("toast.mutual_damage", [PlayerColors.get_label(player), PlayerColors.get_label(target), dmg]), Color(0.8, 0.2, 0.2))
 			if target_died:
 				GameState.player_died.emit(target, player)
 			if self_died:
@@ -1297,7 +1299,7 @@ func _apply_instant_card_on_target(card: Card, player: Player, target: Player) -
 				GameState.damage_dealt.emit(player, target, dmg)
 				damage_tracker.update_player_hp(target)
 				if toast:
-					toast.show_toast(Tr.t("toast.gamble_target", [roll, PlayerColors.get_label(target), dmg]), Color(0.8, 0.2, 0.2))
+					_toast(Tr.t("toast.gamble_target", [roll, PlayerColors.get_label(target), dmg]), Color(0.8, 0.2, 0.2))
 				if died:
 					GameState.player_died.emit(target, player)
 			else:
@@ -1305,7 +1307,7 @@ func _apply_instant_card_on_target(card: Card, player: Player, target: Player) -
 				GameState.damage_dealt.emit(player, player, dmg)
 				damage_tracker.update_player_hp(player)
 				if toast:
-					toast.show_toast(Tr.t("toast.gamble_self", [roll, PlayerColors.get_label(player), dmg]), Color(1.0, 0.3, 0.3))
+					_toast(Tr.t("toast.gamble_self", [roll, PlayerColors.get_label(player), dmg]), Color(1.0, 0.3, 0.3))
 				if died:
 					GameState.player_died.emit(player, player)
 
@@ -1315,10 +1317,10 @@ func _apply_instant_card_on_target(card: Card, player: Player, target: Player) -
 				player.equipment.append(stolen_card)
 				GameState.equipment_equipped.emit(player, stolen_card)
 				if toast:
-					toast.show_toast(Tr.t("toast.steals_equip", [PlayerColors.get_label(player), stolen_card.name, PlayerColors.get_label(target)]), Color(0.6, 0.2, 0.8))
+					_toast(Tr.t("toast.steals_equip", [PlayerColors.get_label(player), stolen_card.name, PlayerColors.get_label(target)]), Color(0.6, 0.2, 0.8))
 			else:
 				if toast:
-					toast.show_toast(Tr.t("toast.no_equipment_to_steal"), Color(0.5, 0.5, 0.5))
+					_toast(Tr.t("toast.no_equipment_to_steal"), Color(0.5, 0.5, 0.5))
 
 		"give_equipment":
 			if not player.equipment.is_empty():
@@ -1326,7 +1328,7 @@ func _apply_instant_card_on_target(card: Card, player: Player, target: Player) -
 				target.equipment.append(given_card)
 				GameState.equipment_equipped.emit(target, given_card)
 				if toast:
-					toast.show_toast(Tr.t("toast.gives_equip", [PlayerColors.get_label(player), given_card.name, PlayerColors.get_label(target)]), Color(0.6, 0.6, 0.2))
+					_toast(Tr.t("toast.gives_equip", [PlayerColors.get_label(player), given_card.name, PlayerColors.get_label(target)]), Color(0.6, 0.6, 0.2))
 
 		"set_damage":
 			var target_damage = target.hp_max - target.hp
@@ -1340,7 +1342,7 @@ func _apply_instant_card_on_target(card: Card, player: Player, target: Player) -
 				GameState.damage_dealt.emit(player, target, dmg)
 			damage_tracker.update_player_hp(target)
 			if toast:
-				toast.show_toast(Tr.t("toast.damage_fixed", [PlayerColors.get_label(target), effect_value]), Color(0.3, 0.8, 0.3))
+				_toast(Tr.t("toast.damage_fixed", [PlayerColors.get_label(target), effect_value]), Color(0.3, 0.8, 0.3))
 
 		"heal_d6":
 			var roll = randi() % 6 + 1
@@ -1348,7 +1350,7 @@ func _apply_instant_card_on_target(card: Card, player: Player, target: Player) -
 			damage_tracker.update_player_hp(target)
 			_play_heal_visual(target, roll)
 			if toast:
-				toast.show_toast(Tr.t("toast.heal_roll", [roll, PlayerColors.get_label(target), roll]), Color(0.3, 0.8, 0.3))
+				_toast(Tr.t("toast.heal_roll", [roll, PlayerColors.get_label(target), roll]), Color(0.3, 0.8, 0.3))
 
 	human_player_info.update_display()
 	_update_display()
@@ -1372,7 +1374,7 @@ func _apply_faction_reveal_heal(card: Card, player: Player) -> void:
 
 	if not can_use:
 		if toast:
-			toast.show_toast(Tr.t("toast.condition_not_met"), Color(0.5, 0.5, 0.5))
+			_toast(Tr.t("toast.condition_not_met"), Color(0.5, 0.5, 0.5))
 		human_player_info.update_display()
 		return
 
@@ -1389,7 +1391,7 @@ func _apply_faction_reveal_heal(card: Card, player: Player) -> void:
 
 	if not wants_reveal:
 		if toast:
-			toast.show_toast(Tr.t("toast.condition_not_met"), Color(0.5, 0.5, 0.5))
+			_toast(Tr.t("toast.condition_not_met"), Color(0.5, 0.5, 0.5))
 		human_player_info.update_display()
 		return
 
@@ -1402,7 +1404,7 @@ func _apply_faction_reveal_heal(card: Card, player: Player) -> void:
 	if healed > 0:
 		_play_heal_visual(player, healed)
 	if toast:
-		toast.show_toast(Tr.t("toast.reveal_full_heal", [PlayerColors.get_label(player)]), Color(1.0, 0.85, 0.2))
+		_toast(Tr.t("toast.reveal_full_heal", [PlayerColors.get_label(player)]), Color(1.0, 0.85, 0.2))
 	human_player_info.update_display()
 
 
@@ -1494,14 +1496,14 @@ func _resolve_vision_card(target: Player) -> void:
 			"damage_target":
 				target.take_damage(value, current_player)
 				if toast:
-					toast.show_toast(Tr.t("toast.vision_trigger_damage", [target.display_name, value]), Color(1.0, 0.5, 0.5))
+					_toast(Tr.t("toast.vision_trigger_damage", [target.display_name, value]), Color(1.0, 0.5, 0.5))
 				damage_tracker.update_player_hp(target)
 			"heal_drawer":
 				current_player.heal(value)
 				damage_tracker.update_player_hp(current_player)
 				_play_heal_visual(current_player, value)
 				if toast:
-					toast.show_toast(Tr.t("toast.vision_trigger_heal", [current_player.display_name, value]), Color(0.5, 1.0, 0.5))
+					_toast(Tr.t("toast.vision_trigger_heal", [current_player.display_name, value]), Color(0.5, 1.0, 0.5))
 			"heal_or_damage":
 				# Heal target if possible, otherwise damage them
 				var current_damage = target.hp_max - target.hp
@@ -1509,11 +1511,11 @@ func _resolve_vision_card(target: Player) -> void:
 					target.heal(value)
 					_play_heal_visual(target, value)
 					if toast:
-						toast.show_toast(Tr.t("toast.vision_trigger_target_heal", [target.display_name, value]), Color(0.5, 1.0, 0.5))
+						_toast(Tr.t("toast.vision_trigger_target_heal", [target.display_name, value]), Color(0.5, 1.0, 0.5))
 				else:
 					target.take_damage(value, current_player)
 					if toast:
-						toast.show_toast(Tr.t("toast.vision_trigger_max_damage", [target.display_name, value]), Color(1.0, 0.5, 0.5))
+						_toast(Tr.t("toast.vision_trigger_max_damage", [target.display_name, value]), Color(1.0, 0.5, 0.5))
 				damage_tracker.update_player_hp(target)
 			"give_equipment_or_damage":
 				# Target must give equipment to drawer or take damage
@@ -1522,34 +1524,34 @@ func _resolve_vision_card(target: Player) -> void:
 					current_player.equipment.append(given_card)
 					GameState.equipment_equipped.emit(current_player, given_card)
 					if toast:
-						toast.show_toast(Tr.t("toast.vision_trigger_give_equip", [target.display_name, given_card.name, current_player.display_name]), Color(1.0, 0.7, 0.2))
+						_toast(Tr.t("toast.vision_trigger_give_equip", [target.display_name, given_card.name, current_player.display_name]), Color(1.0, 0.7, 0.2))
 				else:
 					target.take_damage(value, current_player)
 					if toast:
-						toast.show_toast(Tr.t("toast.vision_trigger_no_equip", [target.display_name, value]), Color(1.0, 0.5, 0.5))
+						_toast(Tr.t("toast.vision_trigger_no_equip", [target.display_name, value]), Color(1.0, 0.5, 0.5))
 					damage_tracker.update_player_hp(target)
 			"reveal_to_drawer":
 				# Target reveals character to drawer (info only)
 				if toast:
-					toast.show_toast(Tr.t("toast.vision_trigger_reveal", [target.display_name, target.character_name, target.faction]), Color(0.8, 0.6, 1.0))
+					_toast(Tr.t("toast.vision_trigger_reveal", [target.display_name, target.character_name, target.faction]), Color(0.8, 0.6, 1.0))
 			"steal_equipment":
 				if not target.equipment.is_empty():
 					var stolen_card = target.equipment.pop_back()
 					current_player.equipment.append(stolen_card)
 					GameState.equipment_equipped.emit(current_player, stolen_card)
 					if toast:
-						toast.show_toast(Tr.t("toast.vision_trigger_steal", [current_player.display_name, stolen_card.name, target.display_name]), Color(1.0, 0.7, 0.2))
+						_toast(Tr.t("toast.vision_trigger_steal", [current_player.display_name, stolen_card.name, target.display_name]), Color(1.0, 0.7, 0.2))
 				else:
 					if toast:
-						toast.show_toast(Tr.t("toast.vision_trigger_steal_none", [target.display_name]), Color(0.8, 0.6, 0.4))
+						_toast(Tr.t("toast.vision_trigger_steal_none", [target.display_name]), Color(0.8, 0.6, 0.4))
 			_:
 				if toast:
-					toast.show_toast(Tr.t("toast.vision_trigger_generic"), Color(0.8, 0.6, 1.0))
+					_toast(Tr.t("toast.vision_trigger_generic"), Color(0.8, 0.6, 1.0))
 		print("[GameBoard] Vision condition matched for %s" % target.display_name)
 	else:
 		# Condition does not match — no effect
 		if toast:
-			toast.show_toast(Tr.t("toast.vision_no_match", [target.display_name]), Color(0.7, 0.7, 0.7))
+			_toast(Tr.t("toast.vision_no_match", [target.display_name]), Color(0.7, 0.7, 0.7))
 		print("[GameBoard] Vision condition not matched for %s" % target.display_name)
 
 	_update_display()
@@ -1675,16 +1677,16 @@ func _on_net_public_state(_state: Dictionary) -> void:
 				if toast:
 					var zd = ZoneData.get_zone_by_id(player.position_zone)
 					var zone_name = zd.get("name", player.position_zone.capitalize())
-					toast.show_toast(Tr.t("toast.player_moves", [player.display_name, zone_name]), Color(0.7, 0.8, 1.0))
+					_toast(Tr.t("toast.player_moves", [player.display_name, zone_name]), Color(0.7, 0.8, 1.0))
 
 		# HP change: compare with snapshot
 		var prev_hp: int = _net_prev_hp[i] if i < _net_prev_hp.size() else player.hp
 		if prev_hp != player.hp and toast:
 			var diff = prev_hp - player.hp
 			if diff > 0:
-				toast.show_toast("%s -%d HP" % [player.display_name, diff], Color(1.0, 0.3, 0.3))
+				_toast("%s -%d HP" % [player.display_name, diff], Color(1.0, 0.3, 0.3))
 			else:
-				toast.show_toast("%s +%d HP" % [player.display_name, -diff], Color(0.3, 1.0, 0.5))
+				_toast("%s +%d HP" % [player.display_name, -diff], Color(0.3, 1.0, 0.5))
 
 		# Death
 		var prev_alive: bool = _net_prev_alive[i] if i < _net_prev_alive.size() else true
@@ -1693,24 +1695,41 @@ func _on_net_public_state(_state: Dictionary) -> void:
 			_update_dead_player_ui(player)
 			character_cards_row.mark_dead(player)
 
+		# Character reveal
+		var prev_revealed: bool = _net_prev_revealed[i] if i < _net_prev_revealed.size() else false
+		if not prev_revealed and player.is_revealed:
+			character_cards_row.reveal_character(player)
+
+		# Always keep damage tracker in sync
+		damage_tracker.update_player_hp(player)
+
 	# Update snapshots for next diff
 	_net_prev_hp.resize(GameState.players.size())
 	_net_prev_alive.resize(GameState.players.size())
+	_net_prev_revealed.resize(GameState.players.size())
 	for i in range(GameState.players.size()):
 		_net_prev_hp[i] = GameState.players[i].hp
 		_net_prev_alive[i] = GameState.players[i].is_alive
+		_net_prev_revealed[i] = GameState.players[i].is_revealed
 
 	# Standard display refresh
 	_update_display()
-	damage_tracker.setup(GameState.players)
-	character_cards_row.setup(GameState.players)
-	# Show toast if any (server-broadcast events)
-	if _net and _net._last_toast_message != "":
-		if toast:
-			toast.show_toast(_net._last_toast_message, _net._last_toast_color)
-		_net._last_toast_message = ""
 	# Show appropriate interactive UI based on current turn/phase
 	_net_update_client_ui()
+
+
+## Client: server broadcast a toast — show it immediately
+func _on_net_toast_received(message: String, color: Color) -> void:
+	if toast:
+		toast.show_toast(message, color)
+
+
+## Show a toast: broadcast to all clients in server network mode, otherwise local
+func _toast(message: String, color: Color = Color.WHITE) -> void:
+	if _net and multiplayer.is_server():
+		_net.broadcast_toast(message, color)
+	elif toast:
+		toast.show_toast(message, color)
 
 
 ## Client: show the right interactive UI when state is received from server
@@ -1862,7 +1881,7 @@ func _on_bot_action_completed(bot: Player, action_type: String, result: Variant)
 			var zone_data = ZoneData.get_zone_by_id(result) if result else {}
 			var zone_name: String = zone_data.get("name", str(result))
 			if toast:
-				toast.show_toast("%s → %s" % [PlayerColors.get_label(bot), zone_name], PlayerColors.get_color(bot.id))  # Bot move - no key needed, simple format
+				_toast("%s → %s" % [PlayerColors.get_label(bot), zone_name], PlayerColors.get_color(bot.id))  # Bot move - no key needed, simple format
 			_update_display()
 
 		"zone_effect":
@@ -1879,7 +1898,7 @@ func _on_bot_action_completed(bot: Player, action_type: String, result: Variant)
 			if result is Card:
 				var card: Card = result as Card
 				if toast:
-					toast.show_toast(Tr.t("toast.player_draws", [PlayerColors.get_label(bot), card.name]), PlayerColors.get_color(bot.id))
+					_toast(Tr.t("toast.player_draws", [PlayerColors.get_label(bot), card.name]), PlayerColors.get_color(bot.id))
 				if card.type == "instant":
 					_apply_instant_card_effect(card, bot)
 					var deck = GameState.get_deck_for_zone(bot.position_zone)
@@ -1903,14 +1922,14 @@ func _on_bot_action_completed(bot: Player, action_type: String, result: Variant)
 					var missed: bool = result.get("missed", false)
 					if missed:
 						if toast:
-							toast.show_toast(Tr.t("toast.bot_attack_miss", [PlayerColors.get_label(bot), PlayerColors.get_label(target)]), Color(1.0, 0.6, 0.3))
+							_toast(Tr.t("toast.bot_attack_miss", [PlayerColors.get_label(bot), PlayerColors.get_label(target)]), Color(1.0, 0.6, 0.3))
 					else:
 						await _play_card_strike_animation(bot, target, damage)
 						if toast:
 							var msg = Tr.t("toast.bot_attack_hit", [PlayerColors.get_label(bot), damage, PlayerColors.get_label(target)])
 							if not target.is_alive:
 								msg += Tr.t("toast.dead")
-							toast.show_toast(msg, Color(1.0, 0.5, 0.5))
+							_toast(msg, Color(1.0, 0.5, 0.5))
 						# Werewolf counterattack check
 						await _check_werewolf_counterattack(target, bot)
 						# Charles "Bloody Feast" re-attack check
@@ -1920,12 +1939,12 @@ func _on_bot_action_completed(bot: Player, action_type: String, result: Variant)
 					_update_display()
 				elif action == "reveal":
 					if toast:
-						toast.show_toast(Tr.t("toast.reveals", [PlayerColors.get_label(bot), bot.character_name]), Color(0.8, 0.6, 1.0))
+						_toast(Tr.t("toast.reveals", [PlayerColors.get_label(bot), bot.character_name]), Color(0.8, 0.6, 1.0))
 					_update_display()
 				elif action == "ability":
 					var ability_name: String = bot.ability_data.get("name", "Ability")
 					if toast:
-						toast.show_toast(Tr.t("toast.uses_ability", [PlayerColors.get_label(bot), ability_name]), PlayerColors.get_color(bot.id))
+						_toast(Tr.t("toast.uses_ability", [PlayerColors.get_label(bot), ability_name]), PlayerColors.get_color(bot.id))
 					_update_display()
 
 
@@ -1949,13 +1968,13 @@ func _apply_bot_zone_effect(bot: Player, result: Dictionary) -> void:
 				if died:
 					GameState.player_died.emit(target, bot)
 				if toast:
-					toast.show_toast(Tr.t("toast.weird_woods_damage", [PlayerColors.get_label(bot), PlayerColors.get_label(target)]), Color(1.0, 0.5, 0.5))
+					_toast(Tr.t("toast.weird_woods_damage", [PlayerColors.get_label(bot), PlayerColors.get_label(target)]), Color(1.0, 0.5, 0.5))
 			elif action == "heal":
 				target.heal(1)
 				damage_tracker.update_player_hp(target)
 				_play_heal_visual(target, 1)
 				if toast:
-					toast.show_toast(Tr.t("toast.weird_woods_heal", [PlayerColors.get_label(bot), PlayerColors.get_label(target)]), Color(0.5, 1.0, 0.5))
+					_toast(Tr.t("toast.weird_woods_heal", [PlayerColors.get_label(bot), PlayerColors.get_label(target)]), Color(0.5, 1.0, 0.5))
 
 		"choose_deck":
 			var deck_type: String = result.get("deck_type", "")
@@ -1965,7 +1984,7 @@ func _apply_bot_zone_effect(bot: Player, result: Dictionary) -> void:
 				if card:
 					_update_deck_displays()
 					if toast:
-						toast.show_toast(Tr.t("toast.bot_draws", [PlayerColors.get_label(bot), deck_type, card.name]), PlayerColors.get_color(bot.id))
+						_toast(Tr.t("toast.bot_draws", [PlayerColors.get_label(bot), deck_type, card.name]), PlayerColors.get_color(bot.id))
 					if card.type == "instant":
 						_apply_instant_card_effect(card, bot)
 						deck.discard_card(card)
@@ -1978,12 +1997,12 @@ func _apply_bot_zone_effect(bot: Player, result: Dictionary) -> void:
 						pass  # BotController handles vision resolution separately
 			else:
 				if toast:
-					toast.show_toast(Tr.t("toast.deck_type_empty", [deck_type]), Color(1.0, 0.6, 0.3))
+					_toast(Tr.t("toast.deck_type_empty", [deck_type]), Color(1.0, 0.6, 0.3))
 
 		"steal_equipment":
 			if result.get("skipped", false):
 				if toast:
-					toast.show_toast(Tr.t("toast.no_equipment_steal", [PlayerColors.get_label(bot)]), Color(0.5, 0.5, 0.5))
+					_toast(Tr.t("toast.no_equipment_steal", [PlayerColors.get_label(bot)]), Color(0.5, 0.5, 0.5))
 				return
 			var target: Player = result.get("target")
 			var card: Card = result.get("card")
@@ -1994,7 +2013,7 @@ func _apply_bot_zone_effect(bot: Player, result: Dictionary) -> void:
 				bot.equipment.append(card)
 				GameState.equipment_equipped.emit(bot, card)
 				if toast:
-					toast.show_toast(Tr.t("toast.steals_equip", [PlayerColors.get_label(bot), card.name, PlayerColors.get_label(target)]), Color(1.0, 0.7, 0.2))
+					_toast(Tr.t("toast.steals_equip", [PlayerColors.get_label(bot), card.name, PlayerColors.get_label(target)]), Color(1.0, 0.7, 0.2))
 
 	_update_display()
 
@@ -2024,25 +2043,25 @@ func _apply_bot_vision_result(bot: Player, result: Dictionary) -> void:
 				if died:
 					GameState.player_died.emit(target, bot)
 				if toast:
-					toast.show_toast(Tr.t("toast.vision_damage", [PlayerColors.get_label(bot), value, PlayerColors.get_label(target)]), Color(1.0, 0.5, 0.5))
+					_toast(Tr.t("toast.vision_damage", [PlayerColors.get_label(bot), value, PlayerColors.get_label(target)]), Color(1.0, 0.5, 0.5))
 			"heal_drawer":
 				bot.heal(value)
 				damage_tracker.update_player_hp(bot)
 				_play_heal_visual(bot, value)
 				if toast:
-					toast.show_toast(Tr.t("toast.vision_heal", [PlayerColors.get_label(bot), value]), Color(0.5, 1.0, 0.5))
+					_toast(Tr.t("toast.vision_heal", [PlayerColors.get_label(bot), value]), Color(0.5, 1.0, 0.5))
 			"heal_or_damage":
 				var current_damage = target.hp_max - target.hp
 				if current_damage > 0:
 					target.heal(value)
 					_play_heal_visual(target, value)
 					if toast:
-						toast.show_toast(Tr.t("toast.vision_target_heal", [PlayerColors.get_label(target), value]), Color(0.5, 1.0, 0.5))
+						_toast(Tr.t("toast.vision_target_heal", [PlayerColors.get_label(target), value]), Color(0.5, 1.0, 0.5))
 				else:
 					target.take_damage(value, bot)
 					GameState.damage_dealt.emit(bot, target, value)
 					if toast:
-						toast.show_toast(Tr.t("toast.vision_target_damage", [PlayerColors.get_label(target), value]), Color(1.0, 0.5, 0.5))
+						_toast(Tr.t("toast.vision_target_damage", [PlayerColors.get_label(target), value]), Color(1.0, 0.5, 0.5))
 				damage_tracker.update_player_hp(target)
 			"give_equipment_or_damage":
 				if not target.equipment.is_empty():
@@ -2050,26 +2069,26 @@ func _apply_bot_vision_result(bot: Player, result: Dictionary) -> void:
 					bot.equipment.append(given_card)
 					GameState.equipment_equipped.emit(bot, given_card)
 					if toast:
-						toast.show_toast(Tr.t("toast.vision_give_equip", [PlayerColors.get_label(target), given_card.name, PlayerColors.get_label(bot)]), Color(1.0, 0.7, 0.2))
+						_toast(Tr.t("toast.vision_give_equip", [PlayerColors.get_label(target), given_card.name, PlayerColors.get_label(bot)]), Color(1.0, 0.7, 0.2))
 				else:
 					target.take_damage(value, bot)
 					GameState.damage_dealt.emit(bot, target, value)
 					if toast:
-						toast.show_toast(Tr.t("toast.vision_target_damage", [PlayerColors.get_label(target), value]), Color(1.0, 0.5, 0.5))
+						_toast(Tr.t("toast.vision_target_damage", [PlayerColors.get_label(target), value]), Color(1.0, 0.5, 0.5))
 					damage_tracker.update_player_hp(target)
 			"reveal_to_drawer":
 				if toast:
-					toast.show_toast(Tr.t("toast.vision_reveal", [PlayerColors.get_label(bot), target.character_name, target.faction]), Color(0.8, 0.6, 1.0))
+					_toast(Tr.t("toast.vision_reveal", [PlayerColors.get_label(bot), target.character_name, target.faction]), Color(0.8, 0.6, 1.0))
 			"steal_equipment":
 				if not target.equipment.is_empty():
 					var stolen_card = target.equipment.pop_back()
 					bot.equipment.append(stolen_card)
 					GameState.equipment_equipped.emit(bot, stolen_card)
 					if toast:
-						toast.show_toast(Tr.t("toast.vision_steal", [PlayerColors.get_label(bot), stolen_card.name, PlayerColors.get_label(target)]), Color(1.0, 0.7, 0.2))
+						_toast(Tr.t("toast.vision_steal", [PlayerColors.get_label(bot), stolen_card.name, PlayerColors.get_label(target)]), Color(1.0, 0.7, 0.2))
 	else:
 		if toast:
-			toast.show_toast(Tr.t("toast.vision_no_effect", [PlayerColors.get_label(target)]), Color(0.7, 0.7, 0.7))
+			_toast(Tr.t("toast.vision_no_effect", [PlayerColors.get_label(target)]), Color(0.7, 0.7, 0.7))
 
 	# Discard vision card
 	if card and deck:
@@ -2129,14 +2148,14 @@ func _on_reveal_pressed() -> void:
 	# Daniel cannot voluntarily reveal (only via Scream on character death)
 	if current_player.character_id == "daniel":
 		if toast:
-			toast.show_toast(Tr.t("toast.daniel_cannot_reveal"), Color(1.0, 0.6, 0.3))
+			_toast(Tr.t("toast.daniel_cannot_reveal"), Color(1.0, 0.6, 0.3))
 		return
 
 	current_player.reveal()
 	GameState.character_revealed.emit(current_player, null, current_player.faction)
 
 	if toast:
-		toast.show_toast(Tr.t("toast.reveals", [current_player.display_name, current_player.character_name]), Color(0.8, 0.6, 1.0))
+		_toast(Tr.t("toast.reveals", [current_player.display_name, current_player.character_name]), Color(0.8, 0.6, 1.0))
 
 	# Re-show action buttons with reveal now disabled
 	var target_count = get_valid_targets().size()
@@ -2152,7 +2171,7 @@ func _on_ability_pressed() -> void:
 	var check = GameState.active_ability_system.can_activate_ability(player)
 	if not check.can_activate:
 		if toast:
-			toast.show_toast(check.reason, Color(1.0, 0.6, 0.3))
+			_toast(check.reason, Color(1.0, 0.6, 0.3))
 		return
 
 	var char_id = player.character_id
@@ -2170,7 +2189,7 @@ func _on_ability_pressed() -> void:
 			# Mother's Love: full heal, no target needed
 			GameState.active_ability_system.activate_ability(player, [])
 			if toast:
-				toast.show_toast(Tr.t("toast.mothers_love", [player.display_name]), Color(0.4, 1.0, 0.4))
+				_toast(Tr.t("toast.mothers_love", [player.display_name]), Color(0.4, 1.0, 0.4))
 			damage_tracker.update_player_hp(player)
 			_refresh_action_buttons(player)
 		"ellen":
@@ -2179,7 +2198,7 @@ func _on_ability_pressed() -> void:
 			var targets = _get_revealed_with_abilities(player)
 			if targets.is_empty():
 				if toast:
-					toast.show_toast(Tr.t("toast.no_ability_target"), Color(1.0, 0.6, 0.3))
+					_toast(Tr.t("toast.no_ability_target"), Color(1.0, 0.6, 0.3))
 				_pending_ability = false
 				return
 			target_selection_panel.show_targets(targets, Tr.t("popup.disable_ability"), Tr.t("popup.disable_btn"))
@@ -2191,32 +2210,32 @@ func _on_ability_pressed() -> void:
 			# Shield self until next turn
 			GameState.active_ability_system.activate_ability(player, [])
 			if toast:
-				toast.show_toast(Tr.t("toast.spectral_barrier", [player.display_name]), Color(0.4, 0.8, 1.0))
+				_toast(Tr.t("toast.spectral_barrier", [player.display_name]), Color(0.4, 0.8, 1.0))
 			_refresh_action_buttons(player)
 		"wight":
 			# Gain extra turns
 			var result = GameState.active_ability_system.activate_ability(player, [])
 			if result and toast:
 				var extra = player.get_meta("extra_turns", 0)
-				toast.show_toast(Tr.t("toast.extra_turns", [player.display_name, extra]), Color(0.7, 0.5, 1.0))
+				_toast(Tr.t("toast.extra_turns", [player.display_name, extra]), Color(0.7, 0.5, 1.0))
 			_refresh_action_buttons(player)
 		"ultra_soul":
 			# Damage all players in Underworld
 			var underworld_players = _get_players_in_zone("underworld", player)
 			GameState.active_ability_system.activate_ability(player, underworld_players)
 			if toast:
-				toast.show_toast(Tr.t("toast.murder_ray", [underworld_players.size()]), Color(1.0, 0.3, 0.3))
+				_toast(Tr.t("toast.murder_ray", [underworld_players.size()]), Color(1.0, 0.3, 0.3))
 			_update_display()
 			_refresh_action_buttons(player)
 		"agnes":
 			# Swap target direction
 			GameState.active_ability_system.activate_ability(player, [])
 			if toast:
-				toast.show_toast(Tr.t("toast.capriccio", [player.display_name]), Color(0.9, 0.5, 0.8))
+				_toast(Tr.t("toast.capriccio", [player.display_name]), Color(0.9, 0.5, 0.8))
 			_refresh_action_buttons(player)
 		_:
 			if toast:
-				toast.show_toast(Tr.t("toast.ability_unavailable"), Color(1.0, 0.6, 0.3))
+				_toast(Tr.t("toast.ability_unavailable"), Color(1.0, 0.6, 0.3))
 
 	# Server network mode: auto-select target for abilities that need one
 	if GameState.is_network_game and multiplayer.is_server() and _pending_ability:
@@ -2246,22 +2265,22 @@ func _resolve_ability_on_target(target: Player) -> void:
 		match char_id:
 			"franklin":
 				if toast:
-					toast.show_toast(Tr.t("toast.lightning", [player.display_name, target.display_name]), Color(1.0, 1.0, 0.3))
+					_toast(Tr.t("toast.lightning", [player.display_name, target.display_name]), Color(1.0, 1.0, 0.3))
 				damage_tracker.update_player_hp(target)
 			"george":
 				if toast:
-					toast.show_toast(Tr.t("toast.demolish", [player.display_name, target.display_name]), Color(1.0, 0.6, 0.2))
+					_toast(Tr.t("toast.demolish", [player.display_name, target.display_name]), Color(1.0, 0.6, 0.2))
 				damage_tracker.update_player_hp(target)
 			"fuka":
 				if toast:
-					toast.show_toast(Tr.t("toast.set_damage_7", [player.display_name, target.display_name]), Color(1.0, 0.4, 0.6))
+					_toast(Tr.t("toast.set_damage_7", [player.display_name, target.display_name]), Color(1.0, 0.4, 0.6))
 				damage_tracker.update_player_hp(target)
 			"ellen":
 				if toast:
-					toast.show_toast(Tr.t("toast.curse_ability", [player.display_name, target.display_name]), Color(0.6, 0.2, 0.8))
+					_toast(Tr.t("toast.curse_ability", [player.display_name, target.display_name]), Color(0.6, 0.2, 0.8))
 	else:
 		if toast:
-			toast.show_toast(Tr.t("toast.ability_failed"), Color(1.0, 0.5, 0.3))
+			_toast(Tr.t("toast.ability_failed"), Color(1.0, 0.5, 0.3))
 
 	_update_display()
 	_refresh_action_buttons(player)
@@ -2387,7 +2406,7 @@ func _on_combat_roll_completed(total_damage: int) -> void:
 	if total_damage == 0:
 		# Missed attack (D6 == D4)
 		if toast:
-			toast.show_toast(Tr.t("toast.attack_missed"), Color(1.0, 0.6, 0.3))
+			_toast(Tr.t("toast.attack_missed"), Color(1.0, 0.6, 0.3))
 	else:
 		# Play card strike animation
 		await _play_card_strike_animation(attacker, target, total_damage)
@@ -2404,7 +2423,7 @@ func _on_combat_roll_completed(total_damage: int) -> void:
 			var msg = "%s inflige %d dégâts à %s" % [attacker.display_name, total_damage, target.display_name]
 			if not target.is_alive:
 				msg += " — Mort !"
-			toast.show_toast(msg, Color(1.0, 0.5, 0.5))
+			_toast(msg, Color(1.0, 0.5, 0.5))
 
 		# Machine Gun — AoE attack: hit all other valid targets in attack zone
 		if _has_active_equipment(attacker, "aoe_attack"):
@@ -2421,7 +2440,7 @@ func _on_combat_roll_completed(total_damage: int) -> void:
 					var aoe_msg = "Machine Gun : %s subit %d dégâts" % [aoe_target.display_name, total_damage]
 					if not aoe_target.is_alive:
 						aoe_msg += " — Mort !"
-					toast.show_toast(aoe_msg, Color(1.0, 0.5, 0.5))
+					_toast(aoe_msg, Color(1.0, 0.5, 0.5))
 
 		# Werewolf counterattack check
 		await _check_werewolf_counterattack(target, attacker)
@@ -2618,7 +2637,7 @@ func _check_charles_reattack(attacker: Player, target: Player) -> void:
 		return  # Would kill self, skip
 
 	if toast:
-		toast.show_toast(Tr.t("toast.bloody_feast", [attacker.display_name]), Color(0.8, 0.3, 0.3))
+		_toast(Tr.t("toast.bloody_feast", [attacker.display_name]), Color(0.8, 0.3, 0.3))
 
 	# Self-damage
 	attacker.hp -= 2
@@ -2636,7 +2655,7 @@ func _check_charles_reattack(attacker: Player, target: Player) -> void:
 	if result.missed:
 		await get_tree().create_timer(0.5).timeout
 		if toast:
-			toast.show_toast(Tr.t("toast.reattack_missed"), Color(1.0, 0.6, 0.3))
+			_toast(Tr.t("toast.reattack_missed"), Color(1.0, 0.6, 0.3))
 	else:
 		await _play_card_strike_animation(attacker, target, result.total)
 		combat.apply_damage(attacker, target, result.total)
@@ -2647,7 +2666,7 @@ func _check_charles_reattack(attacker: Player, target: Player) -> void:
 			var msg = "Bloody Feast — %d dégâts à %s" % [result.total, target.display_name]
 			if not target.is_alive:
 				msg += " — Mort !"
-			toast.show_toast(msg, Color(0.8, 0.3, 0.3))
+			_toast(msg, Color(0.8, 0.3, 0.3))
 		_update_display()
 
 
@@ -2659,7 +2678,7 @@ func _check_werewolf_counterattack(target: Player, attacker: Player) -> void:
 		return
 
 	if toast:
-		toast.show_toast(Tr.t("toast.werewolf_counter"), Color(0.7, 0.4, 1.0))
+		_toast(Tr.t("toast.werewolf_counter"), Color(0.7, 0.4, 1.0))
 
 	# Calculate counterattack damage (always automatic)
 	var combat = CombatSystem.new()
@@ -2668,7 +2687,7 @@ func _check_werewolf_counterattack(target: Player, attacker: Player) -> void:
 	if result.missed:
 		await get_tree().create_timer(0.5).timeout
 		if toast:
-			toast.show_toast(Tr.t("toast.counter_missed"), Color(1.0, 0.6, 0.3))
+			_toast(Tr.t("toast.counter_missed"), Color(1.0, 0.6, 0.3))
 	else:
 		await _play_card_strike_animation(target, attacker, result.total)
 		combat.apply_damage(target, attacker, result.total)
@@ -2679,7 +2698,7 @@ func _check_werewolf_counterattack(target: Player, attacker: Player) -> void:
 			var msg = "Loup-Garou inflige %d dégâts à %s" % [result.total, attacker.display_name]
 			if not attacker.is_alive:
 				msg += " — Mort !"
-			toast.show_toast(msg, Color(0.7, 0.4, 1.0))
+			_toast(msg, Color(0.7, 0.4, 1.0))
 		_update_display()
 
 
@@ -2755,7 +2774,7 @@ func _force_card_use(player: Player, card: Card) -> void:
 		if valid_targets.is_empty():
 			# No valid targets - discard card without effect
 			if toast:
-				toast.show_toast(Tr.t("error.no_valid_targets"), Color(1.0, 0.3, 0.3))
+				_toast(Tr.t("error.no_valid_targets"), Color(1.0, 0.3, 0.3))
 			_discard_card_from_hand(player, card)
 			has_drawn_this_turn = true
 			_show_action_prompt(player)
@@ -2804,7 +2823,7 @@ func _on_game_over(winning_faction: String) -> void:
 
 	# Show victory toast
 	if toast:
-		toast.show_toast(Tr.t("toast.game_end", [winning_faction.capitalize()]), Color(1.0, 0.85, 0.0))
+		_toast(Tr.t("toast.game_end", [winning_faction.capitalize()]), Color(1.0, 0.85, 0.0))
 
 	# Wait for death/reveal animations to finish before transitioning
 	await get_tree().create_timer(2.5).timeout

@@ -13,6 +13,7 @@ signal public_state_received(state: Dictionary)
 signal private_state_received(data: Dictionary)
 signal remote_action_received(player_idx: int, action: Dictionary)
 signal target_selection_requested(target_ids: Array)
+signal toast_received(message: String, color: Color)
 
 
 # -----------------------------------------------------------------------------
@@ -222,14 +223,7 @@ func _rpc_sync_private(data: Dictionary) -> void:
 func _rpc_show_toast(message: String, color: Color) -> void:
 	if multiplayer.is_server():
 		return
-	# The GameBoard will listen to this via public_state_received or a dedicated signal
-	# For now, store last toast info in a property
-	_last_toast_message = message
-	_last_toast_color = color
-
-
-var _last_toast_message: String = ""
-var _last_toast_color: Color = Color.WHITE
+	toast_received.emit(message, color)
 
 
 # -----------------------------------------------------------------------------
