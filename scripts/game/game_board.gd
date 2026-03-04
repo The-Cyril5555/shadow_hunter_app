@@ -97,6 +97,7 @@ func _ready() -> void:
 		_net.public_state_received.connect(_on_net_public_state)
 		_net.private_state_received.connect(_on_net_private_state)
 		_net.target_selection_requested.connect(_on_net_target_selection_requested)
+		_net.ability_choice_requested.connect(_on_net_ability_choice_requested)
 		_net.toast_received.connect(_on_net_toast_received)
 		print("[GameBoard] Network bridge active — I am player %d" % GameState.my_network_player_index)
 
@@ -413,6 +414,20 @@ func _on_phase_changed(new_phase: GameState.TurnPhase) -> void:
 					_net.send_all_private_states()
 				_execute_bot_turn()
 				return
+			# Emi "Téléportation" — send choice to client before broadcasting
+			if cp and cp.character_id == "emi" and not cp.ability_disabled and _net:
+				var paired_zone_id = _get_emi_paired_zone(cp.position_zone)
+				if paired_zone_id != "":
+					var peer_id = _net.get_peer_for_player(cp.id)
+					if peer_id > 0:
+						_net.broadcast_public_state()
+						_net.send_all_private_states()
+						var pz = _get_zone_by_id(paired_zone_id)
+						_net.request_ability_choice_from_peer(peer_id,
+							Tr.t("emi.teleport_title"),
+							Tr.t("emi.teleport_text", [pz.zone_name if pz else paired_zone_id]),
+							Tr.t("emi.teleport_yes"), Tr.t("emi.teleport_no"))
+						return  # Attend ability_choice (téléport) ou roll_dice (dé normal)
 		elif new_phase == GameState.TurnPhase.ACTION:
 			# Server auto-applies zone effects for human players in effect zones
 			var cp = GameState.get_current_player()
@@ -1430,7 +1445,15 @@ func _apply_faction_reveal_heal(card: Card, player: Player) -> void:
 
 
 ## Generic binary choice dialog for human players — reuses _reveal_choice_made signal
-func _ask_binary_choice(title: String, text: String, yes_text: String, no_text: String) -> bool:
+func _ask_binary_choice(title: String, text: String, yes_text: String, no_text: String, player: Player = null) -> bool:
+	# Online server: delegate to the responsible client peer
+	if GameState.is_network_game and multiplayer.is_server():
+		var peer_id: int = _net.get_peer_for_player(player.id) if player and _net else -1
+		if peer_id > 0:
+			_net.request_ability_choice_from_peer(peer_id, title, text, yes_text, no_text)
+			return await _reveal_choice_made
+		return false  # bot ou peer introuvable
+	# Local / offline: dialog normal
 	var dialog = ConfirmationDialog.new()
 	dialog.title = title
 	dialog.dialog_text = text
@@ -1498,7 +1521,7 @@ func _start_vision_card(player: Player, card: Card, deck: DeckManager) -> void:
 	# In server network mode: auto-select a target (no UI)
 	if GameState.is_network_game and multiplayer.is_server():
 		var auto_target: Player = targets[randi() % targets.size()]
-		_resolve_vision_card(auto_target)
+		await _resolve_vision_card(auto_target)
 		return
 
 	target_selection_panel.show_targets(targets, Tr.t("popup.vision_title"), Tr.t("popup.vision_send"))
@@ -1516,8 +1539,8 @@ func _resolve_vision_card(target: Player) -> void:
 		if not condition_factions.is_empty() and target.faction in condition_factions:
 			# The card would affect Unknown due to their real faction
 			if target.is_human:
-				_show_unknown_deceit_choice(target, current_player, effect)
-				return  # Dialog handles completion
+				await _show_unknown_deceit_choice(target, current_player, effect)
+				return
 			else:
 				# Bot Unknown always lies to avoid faction-based effects
 				if toast:
@@ -1705,6 +1728,25 @@ func _on_net_remote_action(player_idx: int, action: Dictionary) -> void:
 				target_selection_panel._emit_selection(target)
 		"reveal_choice":
 			_reveal_choice_made.emit(action.get("confirmed", false))
+		"ability_choice":
+			var choice: bool = action.get("confirmed", false)
+			# Cas Emi : téléportation directe (pas de coroutine en attente)
+			if player and player.character_id == "emi" and GameState.current_phase == GameState.TurnPhase.MOVEMENT:
+				if choice:
+					var paired_zone_id = _get_emi_paired_zone(player.position_zone)
+					var zone = _get_zone_by_id(paired_zone_id)
+					if zone:
+						has_rolled_this_turn = true
+						_toast(Tr.t("toast.emi_teleports", [player.display_name, zone.zone_name]), Color(0.5, 0.8, 1.0))
+						await _move_player_to_zone(player, zone)
+						if _net:
+							_net.broadcast_public_state()
+							_net.send_all_private_states()
+				# NO → le client envoie roll_dice via le dice popup déjà visible
+				return
+			# Cas général (Bob/Charles/Loup-Garou/Inconnu) : débloque la coroutine
+			_reveal_choice_made.emit(choice)
+			return
 	# After synchronous action: check if target selection is now pending
 	# If so, delegate to the acting client rather than broadcasting immediately
 	if (_instant_card_pending or _pending_ability) and _net:
@@ -1850,6 +1892,27 @@ func _on_net_target_selection_requested(target_ids: Array) -> void:
 			targets.append(p)
 	if not targets.is_empty():
 		target_selection_panel.show_targets(targets)
+
+
+## Client: server requests a binary ability choice (Bob/Charles/Loup-Garou/Inconnu/Emi)
+func _on_net_ability_choice_requested(title: String, text: String, yes_text: String, no_text: String) -> void:
+	if multiplayer.is_server():
+		return
+	var dialog = ConfirmationDialog.new()
+	dialog.title = title
+	dialog.dialog_text = text
+	dialog.ok_button_text = yes_text
+	dialog.cancel_button_text = no_text
+	add_child(dialog)
+	dialog.confirmed.connect(func():
+		dialog.queue_free()
+		_net.send_ability_choice(true)
+	, CONNECT_ONE_SHOT)
+	dialog.canceled.connect(func():
+		dialog.queue_free()
+		_net.send_ability_choice(false)
+	, CONNECT_ONE_SHOT)
+	dialog.popup_centered()
 
 
 ## Helper: find a player by their id
@@ -2436,7 +2499,7 @@ func _on_target_selected(target: Player) -> void:
 		return
 	# Vision card mode: reveal target instead of attacking
 	if _vision_pending:
-		_resolve_vision_card(target)
+		await _resolve_vision_card(target)
 		return
 
 	# Instant card mode: apply targeted card effect
@@ -2493,7 +2556,8 @@ func _on_combat_roll_completed(total_damage: int) -> void:
 						Tr.t("bob.robbery_title"),
 						Tr.t("bob.robbery_text", [target.display_name]),
 						Tr.t("bob.robbery_yes"),
-						Tr.t("bob.robbery_no")
+						Tr.t("bob.robbery_no"),
+						attacker
 					)
 				else:
 					chose_steal = true  # Bot Bob always steals if possible
@@ -2736,7 +2800,8 @@ func _check_charles_reattack(attacker: Player, target: Player) -> void:
 			Tr.t("charles.reattack_title"),
 			Tr.t("charles.reattack_text", [target.display_name]),
 			Tr.t("charles.reattack_yes"),
-			Tr.t("charles.reattack_no")
+			Tr.t("charles.reattack_no"),
+			attacker
 		)
 		if not will_reattack:
 			return
@@ -2781,30 +2846,22 @@ func _check_charles_reattack(attacker: Player, target: Player) -> void:
 
 ## Show Unknown "Duperie" choice dialog — lie about identity or reveal truth
 func _show_unknown_deceit_choice(target: Player, drawer: Player, effect: Dictionary) -> void:
-	var dialog = ConfirmationDialog.new()
-	dialog.title = Tr.t("unknown.deceit_title")
-	dialog.dialog_text = Tr.t("unknown.deceit_text", [drawer.display_name])
-	dialog.ok_button_text = Tr.t("unknown.deceit_lie")
-	dialog.cancel_button_text = Tr.t("unknown.deceit_truth")
-	add_child(dialog)
-
-	var t_ref = target
-	var d_ref = drawer
-	var e_ref = effect
-	dialog.confirmed.connect(func():
-		dialog.queue_free()
-		# Unknown lies — card condition "misses" (fake faction not in condition)
+	var will_lie = await _ask_binary_choice(
+		Tr.t("unknown.deceit_title"),
+		Tr.t("unknown.deceit_text", [drawer.display_name]),
+		Tr.t("unknown.deceit_lie"),
+		Tr.t("unknown.deceit_truth"),
+		target
+	)
+	if will_lie:
+		# Unknown lies — card condition "misses"
 		if toast:
 			_toast(Tr.t("toast.vision_deceit_lied"), Color(0.5, 0.5, 0.8))
 		_update_display()
-		_finish_vision_card(d_ref)
-	, CONNECT_ONE_SHOT)
-	dialog.canceled.connect(func():
-		dialog.queue_free()
+		_finish_vision_card(drawer)
+	else:
 		# Unknown reveals truth — apply card effect normally
-		_apply_vision_card_effect(t_ref, d_ref, e_ref)
-	, CONNECT_ONE_SHOT)
-	dialog.popup_centered()
+		_apply_vision_card_effect(target, drawer, effect)
 
 
 ## Get zone paired with Emi's current zone for teleportation
@@ -2886,7 +2943,8 @@ func _check_werewolf_counterattack(target: Player, attacker: Player) -> void:
 			Tr.t("werewolf.counter_title"),
 			Tr.t("werewolf.counter_text", [attacker.display_name]),
 			Tr.t("werewolf.counter_yes"),
-			Tr.t("werewolf.counter_no")
+			Tr.t("werewolf.counter_no"),
+			target
 		)
 		if not will_counter:
 			return

@@ -13,6 +13,7 @@ signal public_state_received(state: Dictionary)
 signal private_state_received(data: Dictionary)
 signal remote_action_received(player_idx: int, action: Dictionary)
 signal target_selection_requested(target_ids: Array)
+signal ability_choice_requested(title: String, text: String, yes_text: String, no_text: String)
 signal toast_received(message: String, color: Color)
 
 
@@ -97,6 +98,10 @@ func send_target_selected(target_player_id: int) -> void:
 	_rpc_client_action.rpc_id(1, {"type": "target_selected", "target": target_player_id, "player_idx": _my_player_index})
 
 
+func send_ability_choice(confirmed: bool) -> void:
+	_rpc_client_action.rpc_id(1, {"type": "ability_choice", "confirmed": confirmed, "player_idx": _my_player_index})
+
+
 # -----------------------------------------------------------------------------
 # Public — Server broadcasts state
 # -----------------------------------------------------------------------------
@@ -169,6 +174,18 @@ func _rpc_request_target_selection(target_ids: Array) -> void:
 	target_selection_requested.emit(target_ids)
 
 
+## Server: send an RPC to a specific client asking them to make a binary ability choice
+func request_ability_choice_from_peer(peer_id: int, title: String, text: String, yes_text: String, no_text: String) -> void:
+	if not multiplayer.is_server():
+		return
+	_rpc_request_ability_choice.rpc_id(peer_id, title, text, yes_text, no_text)
+
+
+@rpc("authority", "reliable", "call_remote")
+func _rpc_request_ability_choice(title: String, text: String, yes_text: String, no_text: String) -> void:
+	ability_choice_requested.emit(title, text, yes_text, no_text)
+
+
 # -----------------------------------------------------------------------------
 # RPC — Client → Server
 # -----------------------------------------------------------------------------
@@ -187,7 +204,7 @@ func _rpc_client_action(action: Dictionary) -> void:
 		return
 	# Validate turn ownership (except reveal_choice which can come from anyone)
 	var action_type = action.get("type", "")
-	if action_type != "reveal_choice" and player_idx != GameState.current_player_index:
+	if action_type != "reveal_choice" and action_type != "ability_choice" and player_idx != GameState.current_player_index:
 		push_warning("[GameNetworkBridge] Player %d sent action out of turn (expected %d)" % [player_idx, GameState.current_player_index])
 		return
 	remote_action_received.emit(player_idx, action)
