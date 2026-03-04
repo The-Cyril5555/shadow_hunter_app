@@ -61,15 +61,17 @@ func execute_bot_turn(bot: Player, scene_tree: SceneTree) -> void:
 	print("\n[BotController] ========== %s TURN START ==========" % bot.display_name)
 	print("[BotController] Personality: %s" % personality_name)
 
-	# Step 1: Roll dice
+	# Step 1: Roll dice (or Emi teleport)
 	await _action_delay(scene_tree)
-	var roll = bot_roll_dice(bot)
+	var zone: String
+	if bot.character_id == "emi" and not bot.ability_disabled:
+		zone = _bot_emi_teleport_or_roll(bot)
+	else:
+		var roll = bot_roll_dice(bot)
+		await _action_delay(scene_tree)
+		zone = bot_move_to_zone(bot, roll)
 
-	# Step 2: Move to zone
-	await _action_delay(scene_tree)
-	var zone = bot_move_to_zone(bot, roll)
-
-	# Step 3: Execute zone action (draw card)
+	# Step 2b: Execute zone action (draw card)
 	await _action_delay(scene_tree)
 	bot_execute_zone_action(bot, zone)
 
@@ -140,6 +142,40 @@ func bot_move_to_zone(bot: Player, roll: int) -> String:
 	print("[BotController] %s moved: %s -> %s (roll: %d)" % [bot.display_name, old_zone, target_zone, roll])
 
 	return target_zone
+
+
+## Emi decides to teleport or roll dice normally
+## @returns: String - zone ID Emi ends up in
+func _bot_emi_teleport_or_roll(bot: Player) -> String:
+	const ZONE_PAIRS = {
+		"hermit": "cemetery", "cemetery": "hermit",
+		"church": "weird_woods", "weird_woods": "church",
+		"altar": "underworld", "underworld": "altar"
+	}
+	var current_zone = bot.position_zone
+	var paired_zone = ZONE_PAIRS.get(current_zone, "")
+
+	# Decide: teleport if paired zone has a deck with cards, or if paired zone has useful effect
+	var should_teleport = false
+	if paired_zone != "":
+		var paired_deck = GameState.get_deck_for_zone(paired_zone)
+		if paired_deck != null and paired_deck.get_card_count() > 0:
+			should_teleport = true  # Paired zone has cards to draw
+		else:
+			var paired_data = ZoneData.get_zone_by_id(paired_zone)
+			if paired_data.has("effect") and paired_data.get("effect", "") != "":
+				should_teleport = true  # Paired zone has a useful effect
+
+	if should_teleport and paired_zone != "":
+		bot.position_zone = paired_zone
+		GameState.player_moved.emit(bot, paired_zone)
+		bot_action_completed.emit(bot, "move", paired_zone)
+		print("[BotController] Emi teleported: %s -> %s" % [current_zone, paired_zone])
+		return paired_zone
+	else:
+		# Fall back to normal dice roll
+		var roll = bot_roll_dice(bot)
+		return bot_move_to_zone(bot, roll)
 
 
 ## Bot executes zone action: zone effect OR draw, then optional attack/reveal/ability/pass
@@ -227,6 +263,17 @@ func _execute_bot_attack(bot: Player, context: Dictionary) -> void:
 	if result.missed:
 		print("[BotController] %s missed! (D6=%d == D4=%d)" % [bot.display_name, result.d6, result.d4])
 		bot_action_completed.emit(bot, "zone_action", {"action": "attack", "target": target, "damage": 0, "missed": true})
+		return
+
+	# Bob "Pillage" — steal equipment instead of dealing damage if possible
+	if bot.character_id == "bob" and not bot.ability_disabled and result.total >= 2 and not target.equipment.is_empty():
+		var stolen_card: Card = target.equipment.back()
+		var stolen_idx = target.equipment.size() - 1
+		target.equipment.remove_at(stolen_idx)
+		bot.equipment.append(stolen_card)
+		GameState.equipment_equipped.emit(bot, stolen_card)
+		print("[BotController] Bob stole %s from %s (Pillage)" % [stolen_card.name, target.display_name])
+		bot_action_completed.emit(bot, "zone_action", {"action": "attack", "target": target, "damage": 0, "missed": false, "robbery": true, "stolen": stolen_card.name})
 		return
 
 	var hp_before = target.hp
@@ -713,11 +760,22 @@ func _execute_bot_ability(bot: Player, context: Dictionary) -> void:
 			targets = []
 
 		"ultra_soul":
-			# Murder Ray: targets all at Underworld (handled by active_ability_system)
+			# Murder Ray: target one player at Underworld Gate
 			var underworld_players = GameState.players.filter(
 				func(p): return p.position_zone == "underworld" and p.is_alive and p != bot
 			)
-			targets = underworld_players
+			if underworld_players.is_empty():
+				print("[BotController] %s has no target at Underworld for Murder Ray" % bot.display_name)
+				bot_action_completed.emit(bot, "zone_action", null)
+				return
+			# Pick weakest enemy, fallback to any player there
+			var best = _pick_weakest(
+				underworld_players.filter(func(p): return not AIDecisionEngine._is_ally_static(bot, p)),
+				underworld_players.filter(func(p): return not p.is_revealed)
+			)
+			if best == null:
+				best = underworld_players[0]
+			targets = [best]
 
 		"agnes":
 			# Capriccio: no target needed (swap direction)

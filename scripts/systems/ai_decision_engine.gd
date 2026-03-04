@@ -159,13 +159,18 @@ static func build_action_context(bot: Player, players: Array) -> Dictionary:
 			defense_cards += 1
 	context["defense_cards_in_hand"] = defense_cards
 
-	# Agnes: right neighbor (never attack them — win condition)
+	# Agnes: right and left neighbors (win condition + Capriccio evaluation)
 	var bot_idx = players.find(bot)
 	if bot_idx != -1:
 		var right_idx = (bot_idx + 1) % players.size()
+		var left_idx = (bot_idx - 1 + players.size()) % players.size()
 		context["right_neighbor_id"] = players[right_idx].id
+		context["right_neighbor"] = players[right_idx]
+		context["left_neighbor"] = players[left_idx]
 	else:
 		context["right_neighbor_id"] = -1
+		context["right_neighbor"] = null
+		context["left_neighbor"] = null
 
 	# Ultra Soul: players at Underworld (Murder Ray targeting)
 	context["players_at_underworld"] = players.filter(
@@ -718,9 +723,19 @@ func _calculate_ability_utility(bot: Player, context: Dictionary) -> float:
 			return 0.0  # No targets at Underworld
 
 		"agnes":
-			# Capriccio (swap target direction) — use if right neighbor is losing
-			# Niche: only useful if left neighbor is winning instead
-			return 0.15  # Rarely worth using early
+			# Capriccio (swap win condition to left neighbor) — only useful if left is winning
+			var right_neighbor: Player = context.get("right_neighbor")
+			var left_neighbor: Player = context.get("left_neighbor")
+			if right_neighbor == null or left_neighbor == null:
+				return 0.1
+			var right_score = float(right_neighbor.hp) / right_neighbor.hp_max
+			var left_score = float(left_neighbor.hp) / left_neighbor.hp_max
+			# Switch if left neighbor is significantly healthier (more likely to win)
+			if left_score > right_score + 0.25:
+				return 0.65
+			if left_score > right_score + 0.1:
+				return 0.35
+			return 0.05  # Right neighbor is doing fine, keep current win condition
 
 		"david":
 			# Grave Digger (equipment from discard) — use if discard has good equipment

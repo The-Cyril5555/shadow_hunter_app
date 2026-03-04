@@ -3,12 +3,12 @@
 	"description": "Shadow Hunter card definitions - Complete 48-card set",
 	"decks": {
 		"hermit": {
-			"name": "Hermit",
-			"description": "Vision cards from the Hermit's Cabin",
+			"name": "Ermite",
+			"description": "Cartes de vision de la Cabane de l'Ermite",
 			"cards": [
 				{
 					"id": "hermit_aid",
-					"name": "Hermit's Aid",
+					"name": "Aide de l'Ermite",
 					"deck": "hermit",
 					"type": "vision",
 					"copies_in_deck": 1,
@@ -22,7 +22,7 @@
 				},
 				{
 					"id": "hermit_nurturance",
-					"name": "Hermit's Nurturance",
+					"name": "Soin de l'Ermite",
 					"deck": "hermit",
 					"type": "vision",
 					"copies_in_deck": 1,
@@ -36,7 +36,7 @@
 				},
 				{
 					"id": "hermit_huddle",
-					"name": "Hermit's Huddle",
+					"name": "Conseil de l'Ermite",
 					"deck": "hermit",
 					"type": "vision",
 					"copies_in_deck": 1,
@@ -50,7 +50,7 @@
 				},
 				{
 					"id": "hermit_blackmail",
-					"name": "Hermit's Blackmail",
+					"name": "Chantage de l'Ermite",
 					"deck": "hermit",
 					"type": "vision",
 					"copies_in_deck": 2,
@@ -64,7 +64,7 @@
 				},
 				{
 					"id": "hermit_anger",
-					"name": "Hermit's Anger",
+					"name": "Colère de l'Ermite",
 					"deck": "hermit",
 					"type": "vision",
 					"copies_in_deck": 2,
@@ -78,7 +78,7 @@
 				},
 				{
 					"id": "hermit_greed",
-					"name": "Hermit's Greed",
+					"name": "Cupidité de l'Ermite",
 					"deck": "hermit",
 					"type": "vision",
 					"copies_in_deck": 2,
@@ -92,7 +92,7 @@
 				},
 				{
 					"id": "hermit_slap",
-					"name": "Hermit's Slap",
+					"name": "Gifle de l'Ermite",
 					"deck": "hermit",
 					"type": "vision",
 					"copies_in_deck": 2,
@@ -106,7 +106,7 @@
 				},
 				{
 					"id": "hermit_spell",
-					"name": "Hermit's Spell",
+					"name": "Sort de l'Ermite",
 					"deck": "hermit",
 					"type": "vision",
 					"copies_in_deck": 1,
@@ -120,7 +120,7 @@
 				},
 				{
 					"id": "hermit_exorcism",
-					"name": "Hermit's Exorcism",
+					"name": "Exorcisme de l'Ermite",
 					"deck": "hermit",
 					"type": "vision",
 					"copies_in_deck": 1,
@@ -134,7 +134,7 @@
 				},
 				{
 					"id": "hermit_bully",
-					"name": "Hermit's Bully",
+					"name": "Brimade de l'Ermite",
 					"deck": "hermit",
 					"type": "vision",
 					"copies_in_deck": 1,
@@ -149,7 +149,7 @@
 				},
 				{
 					"id": "hermit_tough_love",
-					"name": "Hermit's Tough Love",
+					"name": "Dure Leçon de l'Ermite",
 					"deck": "hermit",
 					"type": "vision",
 					"copies_in_deck": 1,
@@ -164,7 +164,7 @@
 				},
 				{
 					"id": "hermit_prediction",
-					"name": "Hermit's Prediction",
+					"name": "Prédiction de l'Ermite",
 					"deck": "hermit",
 					"type": "vision",
 					"copies_in_deck": 1,
@@ -179,8 +179,8 @@
 			]
 		},
 		"white": {
-			"name": "White (Church)",
-			"description": "Beneficial cards from the Church",
+			"name": "Blanche (Église)",
+			"description": "Cartes bénéfiques de l'Église",
 			"cards": [
 				{
 					"id": "white_holy_water",
@@ -196,7 +196,7 @@
 				},
 				{
 					"id": "white_flare_judgment",
-					"name": "Flare of Judgment",
+					"name": "Éclat du Jugement",
 					"deck": "white",
 					"type": "instant",
 					"copies_in_deck": 1,
@@ -208,7 +208,7 @@
 				},
 				{
 					"id": "white_first_aid",
-					"name": "First Aid",
+					"name": "Premiers Secours",
 					"deck": "white",
 					"type": "instant",
 					"copies_in_deck": 1,
@@ -221,7 +221,7 @@
 				},
 				{
 					"id": "white_concealed_knowledge",
-					"name": "Concealed Knowledge",
+					"name": "Savoir Caché",
 					"deck": "white",
 					"type": "instant",
 					"copies_in_deck": 1,
@@ -233,7 +233,7 @@
 				},
 				{
 					"id": "white_guardian_angel",
-					"name": "Guardian Angel",
+					"name": "Ange Gardien",
 					"deck": "white",
 					"type": "instant",
 					"copies_in_deck": 1,
@@ -245,7 +245,7 @@
 				},
 				{
 					"id": "white_disenchant_mirror",
-					"name": "Disenchant Mirror",
+					"name": "Miroir Désenchanté",
 					"deck": "white",
 					"type": "instant",
 					"copies_in_deck": 1,
@@ -257,7 +257,7 @@
 				},
 				{
 					"id": "white_blessing",
-					"name": "Blessing",
+					"name": "Bénédiction",
 					"deck": "white",
 					"type": "instant",
 					"copies_in_deck": 1,
@@ -270,7 +270,7 @@
 				},
 				{
 					"id": "white_chocolate",
-					"name": "Chocolate",
+					"name": "Chocolat",
 					"deck": "white",
 					"type": "instant",
 					"copies_in_deck": 1,
@@ -284,7 +284,7 @@
 				},
 				{
 					"id": "white_advent",
-					"name": "Advent",
+					"name": "Avènement",
 					"deck": "white",
 					"type": "instant",
 					"copies_in_deck": 1,
@@ -298,14 +298,14 @@
 				},
 				{
 					"id": "white_fortune_brooch",
-					"name": "Fortune Brooch",
+					"name": "Broche de Fortune",
 					"deck": "white",
 					"type": "equipment",
 					"copies_in_deck": 1,
 							"effect": {
 						"type": "immunity_weird_woods",
 						"value": 0,
-						"description": "Vous ne subissez aucun dégât des Weird Woods."
+						"description": "Vous ne subissez aucun dégât de la Forêt Étrange."
 					}
 				},
 				{
@@ -317,12 +317,12 @@
 							"effect": {
 						"type": "immunity_black_cards",
 						"value": 0,
-						"description": "Immunisé contre Vampire Bat, Bloodthirsty Spider et Dynamite."
+						"description": "Immunisé contre Chauve-souris Vampire, Araignée Assoiffée de Sang et Dynamite."
 					}
 				},
 				{
 					"id": "white_mystic_compass",
-					"name": "Mystic Compass",
+					"name": "Boussole Mystique",
 					"deck": "white",
 					"type": "equipment",
 					"copies_in_deck": 1,
@@ -334,7 +334,7 @@
 				},
 				{
 					"id": "white_silver_rosary",
-					"name": "Silver Rosary",
+					"name": "Rosaire d'Argent",
 					"deck": "white",
 					"type": "equipment",
 					"copies_in_deck": 1,
@@ -359,7 +359,7 @@
 				},
 				{
 					"id": "white_holy_robe",
-					"name": "Holy Robe",
+					"name": "Robe Sacrée",
 					"deck": "white",
 					"type": "equipment",
 					"copies_in_deck": 1,
@@ -372,12 +372,12 @@
 			]
 		},
 		"black": {
-			"name": "Black (Cemetery)",
-			"description": "Harmful cards from the Cemetery",
+			"name": "Noire (Cimetière)",
+			"description": "Cartes maléfiques du Cimetière",
 			"cards": [
 				{
 					"id": "black_vampire_bat",
-					"name": "Vampire Bat",
+					"name": "Chauve-souris Vampire",
 					"deck": "black",
 					"type": "instant",
 					"copies_in_deck": 3,
@@ -391,7 +391,7 @@
 				},
 				{
 					"id": "black_moody_goblin",
-					"name": "Moody Goblin",
+					"name": "Gobelin Lunatique",
 					"deck": "black",
 					"type": "instant",
 					"copies_in_deck": 2,
@@ -404,7 +404,7 @@
 				},
 				{
 					"id": "black_bloodthirsty_spider",
-					"name": "Bloodthirsty Spider",
+					"name": "Araignée Assoiffée de Sang",
 					"deck": "black",
 					"type": "instant",
 					"copies_in_deck": 1,
@@ -418,7 +418,7 @@
 				},
 				{
 					"id": "black_spiritual_doll",
-					"name": "Spiritual Doll",
+					"name": "Poupée Spirituelle",
 					"deck": "black",
 					"type": "instant",
 					"copies_in_deck": 1,
@@ -444,7 +444,7 @@
 				},
 				{
 					"id": "black_banana_peel",
-					"name": "Banana Peel",
+					"name": "Peau de Banane",
 					"deck": "black",
 					"type": "instant",
 					"copies_in_deck": 1,
@@ -456,7 +456,7 @@
 				},
 				{
 					"id": "black_diabolic_ritual",
-					"name": "Diabolic Ritual",
+					"name": "Rituel Diabolique",
 					"deck": "black",
 					"type": "instant",
 					"copies_in_deck": 1,
@@ -470,7 +470,7 @@
 				},
 				{
 					"id": "black_chainsaw",
-					"name": "Chainsaw",
+					"name": "Tronçonneuse",
 					"deck": "black",
 					"type": "equipment",
 					"copies_in_deck": 1,
@@ -482,7 +482,7 @@
 				},
 				{
 					"id": "black_butcher_knife",
-					"name": "Butcher Knife",
+					"name": "Couteau de Boucher",
 					"deck": "black",
 					"type": "equipment",
 					"copies_in_deck": 1,
@@ -494,7 +494,7 @@
 				},
 				{
 					"id": "black_rusted_axe",
-					"name": "Rusted Broad Axe",
+					"name": "Hache Rouillée",
 					"deck": "black",
 					"type": "equipment",
 					"copies_in_deck": 1,
@@ -506,7 +506,7 @@
 				},
 				{
 					"id": "black_machine_gun",
-					"name": "Machine Gun",
+					"name": "Mitrailleuse",
 					"deck": "black",
 					"type": "equipment",
 					"copies_in_deck": 1,
@@ -518,7 +518,7 @@
 				},
 				{
 					"id": "black_handgun",
-					"name": "Handgun",
+					"name": "Pistolet",
 					"deck": "black",
 					"type": "equipment",
 					"copies_in_deck": 1,
@@ -530,7 +530,7 @@
 				},
 				{
 					"id": "black_cursed_sword",
-					"name": "Cursed Sword Masamune",
+					"name": "Épée Maudite Masamune",
 					"deck": "black",
 					"type": "equipment",
 					"copies_in_deck": 1,

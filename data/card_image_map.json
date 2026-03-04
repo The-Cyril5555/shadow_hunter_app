@@ -1,11 +1,11 @@
 {
 	"zone_images": {
-		"hermit": "res://images/area_cards/hermits_cabin.png",
-		"church": "res://images/area_cards/church.png",
-		"cemetery": "res://images/area_cards/cemetery.png",
-		"weird_woods": "res://images/area_cards/weird_woods.png",
-		"underworld": "res://images/area_cards/underworld_gate.png",
-		"altar": "res://images/area_cards/erstwhile_altar.png"
+		"hermit": "res://asset_remake/hermit_cabin.png",
+		"church": "res://asset_remake/church.png",
+		"cemetery": "res://asset_remake/cemetery.png",
+		"weird_woods": "res://asset_remake/weird_woods.png",
+		"underworld": "res://asset_remake/underworld_gate.png",
+		"altar": "res://asset_remake/erstwhile_altar.png"
 	},
 	"card_backs": {
 		"hermit": "res://images/hermit_cards/card_back.png",

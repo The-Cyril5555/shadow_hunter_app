@@ -47,8 +47,8 @@ func _update_tooltip() -> void:
 
 	if player.character_name != "" and player.is_revealed:
 		tip += "\nPersonnage: %s" % player.character_name
-		tip += "\nFaction: %s" % player.faction.capitalize()
-		tip += "\nHP: %d/%d" % [player.hp, player.hp_max]
+		tip += "\nFaction : %s" % player.faction.capitalize()
+		tip += "\nPV : %d/%d" % [player.hp, player.hp_max]
 
 	if player.equipment.size() > 0:
 		tip += "\n\nÉquipement:"

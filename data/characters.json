@@ -9,8 +9,8 @@
 			"hp_max": 8,
 			"is_expansion": false,
 			"ability": {
-				"name": "Teleport",
-				"description": "When moving, you may choose to move to the area card paired with your current one, instead of rolling the dice.",
+				"name": "Téléportation",
+				"description": "Lors de votre déplacement, vous pouvez choisir de vous téléporter vers la zone associée à la vôtre, sans lancer les dés.",
 				"type": "passive",
 				"trigger": "on_movement"
 			}
@@ -22,8 +22,8 @@
 			"hp_max": 12,
 			"is_expansion": false,
 			"ability": {
-				"name": "Lightning",
-				"description": "Once per game, when your turn starts, you can pick a player and damage them for the roll of a 6-sided die.",
+				"name": "Foudre",
+				"description": "Une fois par partie, au début de votre tour, vous pouvez choisir un joueur et lui infliger des dégâts égaux au résultat d'un dé à 6 faces.",
 				"type": "active",
 				"trigger": "on_turn_start",
 				"usage": "once"
@@ -36,8 +36,8 @@
 			"hp_max": 14,
 			"is_expansion": false,
 			"ability": {
-				"name": "Demolish",
-				"description": "Once per game, when your turn starts, you can pick a player and damage them for the roll of a 4-sided die.",
+				"name": "Démolition",
+				"description": "Une fois par partie, au début de votre tour, vous pouvez choisir un joueur et lui infliger des dégâts égaux au résultat d'un dé à 4 faces.",
 				"type": "active",
 				"trigger": "on_turn_start",
 				"usage": "once"
@@ -45,13 +45,13 @@
 		},
 		"unknown": {
 			"id": "unknown",
-			"name": "Unknown",
+			"name": "Inconnu",
 			"faction": "shadow",
 			"hp_max": 11,
 			"is_expansion": false,
 			"ability": {
-				"name": "Deceit",
-				"description": "When given a Hermit Card, you may lie about your identity. You do not have to reveal your identity to use this.",
+				"name": "Duperie",
+				"description": "Quand vous recevez une Carte Ermite, vous pouvez mentir sur votre identité. Vous n'avez pas besoin de vous révéler pour utiliser cette capacité.",
 				"type": "passive",
 				"trigger": "on_hermit_card"
 			}
@@ -63,21 +63,21 @@
 			"hp_max": 13,
 			"is_expansion": false,
 			"ability": {
-				"name": "Suck Blood",
-				"description": "If you attack a player and inflict damage, you heal 2 points of your own damage.",
+				"name": "Succion de Sang",
+				"description": "Si vous attaquez un joueur et lui infligez des dégâts, vous récupérez 2 points de dégâts.",
 				"type": "passive",
 				"trigger": "on_attack_hit"
 			}
 		},
 		"werewolf": {
 			"id": "werewolf",
-			"name": "Werewolf",
+			"name": "Loup-Garou",
 			"faction": "shadow",
 			"hp_max": 14,
 			"is_expansion": false,
 			"ability": {
-				"name": "Counterattack",
-				"description": "After you are attacked by a player, you can counterattack them immediately.",
+				"name": "Contre-attaque",
+				"description": "Après avoir été attaqué par un joueur, vous pouvez immédiatement le contre-attaquer.",
 				"type": "passive",
 				"trigger": "on_attacked"
 			}
@@ -88,10 +88,10 @@
 			"faction": "neutral",
 			"hp_max": 8,
 			"is_expansion": false,
-			"win_condition": "You're not dead when the game is over.",
+			"win_condition": "Vous êtes encore en vie à la fin de la partie.",
 			"ability": {
-				"name": "Mother's Love",
-				"description": "Once per game, you may fully heal your damage.",
+				"name": "Amour Maternel",
+				"description": "Une fois par partie, vous pouvez vous soigner complètement.",
 				"type": "active",
 				"trigger": "manual",
 				"usage": "once"
@@ -103,10 +103,10 @@
 			"faction": "neutral",
 			"hp_max": 10,
 			"is_expansion": false,
-			"win_condition": "You have 5 or more equipment cards.",
+			"win_condition": "Vous possédez 5 cartes équipement ou plus.",
 			"ability": {
-				"name": "Robbery",
-				"description": "If your attack inflicts 2 or more damage, you may steal an Equipment card instead of giving damage. (7-8 players: take all equipment from killed target.)",
+				"name": "Pillage",
+				"description": "Si votre attaque inflige 2 dégâts ou plus, vous pouvez voler une carte Équipement au lieu d'infliger des dégâts. (7-8 joueurs : prenez tout l'équipement de la cible tuée.)",
 				"type": "passive",
 				"trigger": "on_attack_hit"
 			}
@@ -117,10 +117,10 @@
 			"faction": "neutral",
 			"hp_max": 11,
 			"is_expansion": false,
-			"win_condition": "At the time you kill another character, the total number of dead characters is 3 or more.",
+			"win_condition": "Au moment où vous tuez un autre personnage, le nombre total de personnages morts est de 3 ou plus.",
 			"ability": {
-				"name": "Bloody Feast",
-				"description": "After you attack a character, you can attack the same character again by giving yourself 2 points of damage.",
+				"name": "Festin Sanglant",
+				"description": "Après avoir attaqué un personnage, vous pouvez l'attaquer à nouveau en vous infligeant 2 points de dégâts.",
 				"type": "passive",
 				"trigger": "on_attack"
 			}
@@ -131,10 +131,10 @@
 			"faction": "neutral",
 			"hp_max": 13,
 			"is_expansion": false,
-			"win_condition": "You must be the first player to kill, or be killed.",
+			"win_condition": "Vous devez être le premier joueur à tuer ou à être tué.",
 			"ability": {
-				"name": "Scream",
-				"description": "You must reveal your identity when another character dies. You cannot reveal your identity at any other time.",
+				"name": "Cri",
+				"description": "Vous devez révéler votre identité quand un autre personnage meurt. Vous ne pouvez pas vous révéler à tout autre moment.",
 				"type": "passive",
 				"trigger": "on_character_death"
 			}
@@ -146,8 +146,8 @@
 			"hp_max": 10,
 			"is_expansion": true,
 			"ability": {
-				"name": "Chain of Forbidden Curse",
-				"description": "Once per game, when your turn starts, you can choose a player and permanently void their special ability.",
+				"name": "Chaîne de Malédiction Interdite",
+				"description": "Une fois par partie, au début de votre tour, vous pouvez choisir un joueur et annuler définitivement sa capacité spéciale.",
 				"type": "active",
 				"trigger": "on_turn_start",
 				"usage": "once"
@@ -160,8 +160,8 @@
 			"hp_max": 12,
 			"is_expansion": true,
 			"ability": {
-				"name": "Dynamite Nurse",
-				"description": "Once per game, when your turn starts, you can set the damage of any player to 7.",
+				"name": "Infirmière Dynamite",
+				"description": "Une fois par partie, au début de votre tour, vous pouvez fixer les dégâts d'un joueur à 7.",
 				"type": "active",
 				"trigger": "on_turn_start",
 				"usage": "once"
@@ -174,8 +174,8 @@
 			"hp_max": 12,
 			"is_expansion": true,
 			"ability": {
-				"name": "Ghostly Barrier",
-				"description": "Once per game, prevent all damage until your next turn.",
+				"name": "Barrière Spectrale",
+				"description": "Une fois par partie, bloquez tous les dégâts jusqu'à votre prochain tour.",
 				"type": "active",
 				"trigger": "manual",
 				"usage": "once"
@@ -188,8 +188,8 @@
 			"hp_max": 11,
 			"is_expansion": true,
 			"ability": {
-				"name": "Murder Ray",
-				"description": "When your turn starts, you can give 3 damage to one player who is at the Underworld Gate.",
+				"name": "Rayon Meurtrier",
+				"description": "Au début de votre tour, vous pouvez infliger 3 dégâts à un joueur se trouvant à la Porte des Enfers.",
 				"type": "active",
 				"trigger": "on_turn_start"
 			}
@@ -201,21 +201,21 @@
 			"hp_max": 13,
 			"is_expansion": true,
 			"ability": {
-				"name": "Horn of War Outbreak",
-				"description": "When you attack, you only roll the 4-sided die and inflict the amount of damage rolled.",
+				"name": "Corne de Guerre",
+				"description": "Lors de vos attaques, vous ne lancez que le dé à 4 faces et infligez les dégâts obtenus.",
 				"type": "passive",
 				"trigger": "on_attack"
 			}
 		},
 		"wight": {
 			"id": "wight",
-			"name": "Wight",
+			"name": "Spectre",
 			"faction": "shadow",
 			"hp_max": 13,
 			"is_expansion": true,
 			"ability": {
 				"name": "Multiplication",
-				"description": "Once per game at turn end, gain extra turns equal to current dead character count.",
+				"description": "Une fois par partie, en fin de tour, gagnez des tours supplémentaires égaux au nombre de personnages morts.",
 				"type": "active",
 				"trigger": "manual",
 				"usage": "once"
@@ -227,10 +227,10 @@
 			"faction": "neutral",
 			"hp_max": 8,
 			"is_expansion": true,
-			"win_condition": "When the game is over, if the player to your immediate right wins, you also win.",
+			"win_condition": "À la fin de la partie, si le joueur à votre droite gagne, vous gagnez aussi.",
 			"ability": {
 				"name": "Capriccio",
-				"description": "Once per game at turn start, change win condition to favor the player on your left instead.",
+				"description": "Une fois par partie, au début de votre tour, changez votre condition de victoire pour favoriser le joueur à votre gauche.",
 				"type": "active",
 				"trigger": "on_turn_start",
 				"usage": "once"
@@ -242,10 +242,10 @@
 			"faction": "neutral",
 			"hp_max": 12,
 			"is_expansion": true,
-			"win_condition": "Eliminate a character with 13+ HP through direct attack, or be on the Erstwhile Altar when game ends.",
+			"win_condition": "Éliminez un personnage avec 13 PV ou plus via une attaque directe, ou soyez sur l'Autel Ancien à la fin de la partie.",
 			"ability": {
-				"name": "My GOD!!!",
-				"description": "Must reveal identity when killing characters with 12 or fewer health points via attack.",
+				"name": "Mon DIEU!!!",
+				"description": "Vous devez révéler votre identité quand vous tuez un personnage ayant 12 PV ou moins via une attaque.",
 				"type": "passive",
 				"trigger": "on_kill"
 			}
@@ -256,10 +256,10 @@
 			"faction": "neutral",
 			"hp_max": 11,
 			"is_expansion": true,
-			"win_condition": "Die first, or be one of the last two characters standing.",
+			"win_condition": "Mourez en premier, ou soyez l'un des deux derniers personnages en vie.",
 			"ability": {
-				"name": "Stigmata",
-				"description": "Each turn start, heal 1 damage point if applicable.",
+				"name": "Stigmates",
+				"description": "Au début de chaque tour, récupérez 1 point de dégât si applicable.",
 				"type": "passive",
 				"trigger": "on_turn_start"
 			}
@@ -270,10 +270,10 @@
 			"faction": "neutral",
 			"hp_max": 10,
 			"is_expansion": true,
-			"win_condition": "Equip three or more specific White cards simultaneously: Spear of Longinus, Holy Robe, Silver Rosary, or Talisman.",
+			"win_condition": "Équipez simultanément trois cartes Blanches ou plus parmi : Lance de Longinus, Robe Sacrée, Rosaire d'Argent, ou Talisman.",
 			"ability": {
-				"name": "Grave Digger",
-				"description": "Once per game, obtain any equipment card from discard piles, even outside your turn.",
+				"name": "Fossoyeur",
+				"description": "Une fois par partie, récupérez n'importe quelle carte équipement dans la défausse, même en dehors de votre tour.",
 				"type": "active",
 				"trigger": "manual",
 				"usage": "once"

@@ -3,7 +3,8 @@
 [ext_resource type="Script" path="res://scripts/board/zone.gd" id="1_zone"]
 
 [node name="Zone" type="PanelContainer"]
-custom_minimum_size = Vector2(160, 230)
+custom_minimum_size = Vector2(180, 288)
+size_flags_vertical = 8
 script = ExtResource("1_zone")
 
 [node name="ZoneBackground" type="TextureRect" parent="."]

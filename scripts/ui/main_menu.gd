@@ -18,7 +18,7 @@ func _ready() -> void:
 	tutorial_btn.custom_minimum_size = Vector2(250, 50)
 	tutorial_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	tutorial_btn.add_theme_font_size_override("font_size", 22)
-	tutorial_btn.text = "Tutorial"
+	tutorial_btn.text = "Tutoriel"
 	tutorial_btn.pressed.connect(_on_tutorial_pressed)
 	# Insert after LoadGameButton (index 1)
 	btn_container.add_child(tutorial_btn)

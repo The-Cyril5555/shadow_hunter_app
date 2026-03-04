@@ -189,7 +189,7 @@ func _apply_ability_effect(player: Player, targets: Array, character_id: String)
 			return _apply_wight_multiplication(player)
 
 		"ultra_soul":
-			return _apply_ultra_soul_murder_ray(player)
+			return _apply_ultra_soul_murder_ray(player, targets)
 
 		"agnes":
 			return _apply_agnes_capriccio(player)
@@ -346,22 +346,25 @@ func _apply_wight_multiplication(player: Player) -> Dictionary:
 	}
 
 
-## Ultra Soul "Murder Ray" - Inflict 3 damage to all characters at the Underworld
-func _apply_ultra_soul_murder_ray(player: Player) -> Dictionary:
-	var hit_players: Array = []
-	for p in GameState.players:
-		if p.position_zone == "underworld" and p.id != player.id and p.hp > 0:
-			p.take_damage(3, player)
-			hit_players.append(p.character_name if p.is_revealed else PlayerColors.get_label(p))
+## Ultra Soul "Murder Ray" - Inflict 3 damage to one character at the Underworld Gate
+func _apply_ultra_soul_murder_ray(player: Player, targets: Array) -> Dictionary:
+	if targets.size() != 1:
+		return {"success": false, "effect_type": "damage", "error": "Requires exactly 1 target at the Underworld Gate"}
 
-	print("[ActiveAbilitySystem] Ultra Soul's Murder Ray hit %d players at Underworld" % hit_players.size())
+	var target = targets[0] as Player
+	if not target or target.id == player.id or not target.is_alive:
+		return {"success": false, "effect_type": "damage", "error": "Invalid target"}
+
+	target.take_damage(3, player)
+	var target_label = target.character_name if target.is_revealed else PlayerColors.get_label(target)
+
+	print("[ActiveAbilitySystem] Ultra Soul's Murder Ray dealt 3 damage to %s at Underworld" % target_label)
 
 	return {
 		"success": true,
-		"effect_type": "area_damage",
+		"effect_type": "damage",
 		"damage": 3,
-		"hit_count": hit_players.size(),
-		"hit_players": hit_players
+		"target": target_label
 	}
 
 
@@ -386,6 +389,15 @@ func _apply_david_grave_digger(player: Player, targets: Array) -> Dictionary:
 	var card = targets[0]
 	if not card or not card is Card:
 		return {"success": false, "effect_type": "equip_discard", "error": "Invalid card"}
+
+	# Remove card from its discard pile
+	for deck in [GameState.white_deck, GameState.black_deck, GameState.hermit_deck]:
+		if deck == null:
+			continue
+		var idx = deck.discard_pile.find(card)
+		if idx >= 0:
+			deck.discard_pile.remove_at(idx)
+			break
 
 	# Equip the card directly
 	player.equipment.append(card)

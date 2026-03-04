@@ -10,48 +10,48 @@ extends RefCounted
 const ZONES: Array[Dictionary] = [
 	{
 		"id": "hermit",
-		"name": "Hermit's Cabin",
+		"name": "Cabane de l'Ermite",
 		"deck_type": "hermit",
 		"color": Color(0.6, 0.5, 0.3),
-		"description": "Draw from Hermit deck (Vision cards)"
+		"description": "Piochez du deck Ermite (cartes de vision)"
 	},
 	{
 		"id": "church",
-		"name": "Church",
+		"name": "Église",
 		"deck_type": "white",
 		"color": Color(0.9, 0.9, 0.9),
-		"description": "Draw from White deck (Beneficial cards)"
+		"description": "Piochez du deck Blanche (cartes bénéfiques)"
 	},
 	{
 		"id": "cemetery",
-		"name": "Cemetery",
+		"name": "Cimetière",
 		"deck_type": "black",
 		"color": Color(0.2, 0.2, 0.2),
-		"description": "Draw from Black deck (Harmful cards)"
+		"description": "Piochez du deck Noire (cartes maléfiques)"
 	},
 	{
 		"id": "weird_woods",
-		"name": "Weird Woods",
+		"name": "Forêt Étrange",
 		"deck_type": "",
 		"color": Color(0.2, 0.5, 0.2),
 		"effect": "damage_or_heal",
-		"description": "Choose a player: deal 2 damage OR heal 1 HP"
+		"description": "Choisissez un joueur : infligez 2 dégâts OU soignez 1 PV"
 	},
 	{
 		"id": "underworld",
-		"name": "Underworld Gate",
+		"name": "Porte des Enfers",
 		"deck_type": "",
 		"color": Color(0.5, 0.2, 0.5),
 		"effect": "choose_deck",
-		"description": "Choose any deck (Hermit, White, Black) to draw from"
+		"description": "Choisissez n'importe quel deck (Ermite, Blanche, Noire) pour piocher"
 	},
 	{
 		"id": "altar",
-		"name": "Erstwhile Altar",
+		"name": "Autel Ancien",
 		"deck_type": "",
 		"color": Color(0.7, 0.6, 0.4),
 		"effect": "steal_equipment",
-		"description": "Steal an equipment card from any player"
+		"description": "Volez une carte équipement à n'importe quel joueur"
 	}
 ]
 

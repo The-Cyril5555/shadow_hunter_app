@@ -135,7 +135,7 @@ func update_display() -> void:
 		character_image.visible = false
 
 	# HP with color coding
-	hp_label.text = "HP: %d/%d" % [_player.hp, _player.hp_max]
+	hp_label.text = "PV : %d/%d" % [_player.hp, _player.hp_max]
 	if _player.hp <= _player.hp_max * 0.3:
 		hp_label.add_theme_color_override("font_color", Color(1.0, 0.3, 0.3))
 	elif _player.hp <= _player.hp_max * 0.6:

@@ -60,6 +60,9 @@ func setup(players: Array) -> void:
 		var slot = _create_card_slot(player)
 		add_child(slot)
 
+	# Intro dissolve animations (same effect as main menu title)
+	_play_card_intro_animations(0.5)
+
 	# Start staggered floating animations
 	_start_idle_animations()
 
@@ -296,8 +299,8 @@ func _build_tooltip(player: Player) -> String:
 	var text = PlayerColors.get_label(player)
 	if player.is_revealed:
 		text += " — %s" % player.character_name
-		text += "\nFaction: %s" % player.faction.capitalize()
-		text += "\nHP: %d" % player.hp_max
+		text += "\nFaction : %s" % player.faction.capitalize()
+		text += "\nPV : %d" % player.hp_max
 		var char_data = GameState.get_character(player.character_id)
 		if char_data and char_data.has("ability"):
 			var ability = char_data.ability
@@ -338,6 +341,33 @@ func _create_skull_texture() -> ImageTexture:
 			img.set_pixel(x, y, w)
 
 	return ImageTexture.create_from_image(img)
+
+
+## Animate card appearance with title_intro shader (same dissolve effect as main menu title)
+func _play_card_intro_animations(base_delay: float) -> void:
+	if UserSettings.reduced_motion_enabled:
+		return
+	var shader_res = preload("res://assets/shaders/title_intro.gdshader")
+	var i := 0
+	for slot_data in _slots.values():
+		var bg: TextureRect = slot_data["bg"]
+		var panel: PanelContainer = slot_data["panel"]
+		var shader_mat = ShaderMaterial.new()
+		shader_mat.shader = shader_res
+		shader_mat.set_shader_parameter("progress", 0.0)
+		bg.material = shader_mat
+		panel.modulate = Color(1.0, 1.0, 1.0, 0.0)
+		var delay := base_delay + i * 0.12
+		var tween = panel.create_tween()
+		tween.tween_interval(delay)
+		tween.tween_property(panel, "modulate", Color.WHITE, 1.2) \
+			.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+		tween.parallel().tween_method(
+			func(v: float): shader_mat.set_shader_parameter("progress", v),
+			0.0, 1.0, 1.2
+		).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+		tween.chain().tween_callback(func(): bg.material = null)
+		i += 1
 
 
 ## Start idle floating animations on all cards (staggered)

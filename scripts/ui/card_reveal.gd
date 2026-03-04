@@ -48,9 +48,9 @@ func show_card(card: Card) -> void:
 
 	# Populate card data
 	card_name_label.text = card.name
-	card_type_label.text = "Type: %s" % card.type.capitalize()
+	card_type_label.text = "Type : %s" % card.type.capitalize()
 	effect_label.text = card.get_effect_description()
-	deck_label.text = "Deck: %s" % card.deck.capitalize()
+	deck_label.text = "Deck : %s" % card.deck.capitalize()
 
 	# Show with fade-in animation
 	visible = true

@@ -34,6 +34,27 @@ var is_highlighted: bool = false
 # Public Methods
 # -----------------------------------------------------------------------------
 
+## Animate zone appearance with title_intro shader (same dissolve effect as main menu title)
+func play_intro_animation(delay: float = 0.0) -> void:
+	if UserSettings.reduced_motion_enabled:
+		return
+	var shader_mat = ShaderMaterial.new()
+	shader_mat.shader = preload("res://assets/shaders/title_intro.gdshader")
+	shader_mat.set_shader_parameter("progress", 0.0)
+	zone_background.material = shader_mat
+	modulate = Color(1.0, 1.0, 1.0, 0.0)
+
+	var tween = create_tween()
+	tween.tween_interval(delay)
+	tween.tween_property(self, "modulate", Color.WHITE, 1.5) \
+		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tween.parallel().tween_method(
+		func(v: float): shader_mat.set_shader_parameter("progress", v),
+		0.0, 1.0, 1.5
+	).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tween.chain().tween_callback(func(): zone_background.material = null)
+
+
 ## Initialize zone with zone data from ZoneData
 func setup(zone_data: Dictionary, position_dice_range: Array = []) -> void:
 	zone_id = zone_data.get("id", "")
@@ -147,7 +168,7 @@ func _update_tooltip() -> void:
 	if dice_range.size() > 0:
 		text += " [%s]" % ZoneData.format_dice_range(dice_range)
 	if deck_type != "":
-		text += "\nDeck: %s" % deck_type.capitalize()
+		text += "\nDeck : %s" % deck_type.capitalize()
 	if zone_description != "":
 		text += "\n%s" % zone_description
 	if players_here.size() > 0:

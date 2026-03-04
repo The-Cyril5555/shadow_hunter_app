@@ -227,6 +227,7 @@ func _initialize_zones() -> void:
 		var zone = preload("res://scenes/board/zone.tscn").instantiate()
 		zones_container.add_child(zone)
 		zone.setup(zone_data, dice_range)
+		zone.play_intro_animation(i * 0.15)
 		zones.append(zone)
 
 	print("[GameBoard] Initialized %d zones in random positions" % zones.size())
@@ -450,8 +451,12 @@ func _on_phase_changed(new_phase: GameState.TurnPhase) -> void:
 			else:
 				human_player_info.switch_player(current_player)
 				human_player_info.show_movement_prompt(current_player)
-				var has_compass = _has_active_equipment(current_player, "double_dice_roll")
-				dice_roll_popup.show_for_player(current_player, has_compass)
+				# Emi "Teleportation" — offer teleport before dice roll
+				if current_player.character_id == "emi" and not current_player.ability_disabled:
+					_show_emi_teleport_choice(current_player)
+				else:
+					var has_compass = _has_active_equipment(current_player, "double_dice_roll")
+					dice_roll_popup.show_for_player(current_player, has_compass)
 
 		GameState.TurnPhase.ACTION:
 			var action_player = GameState.get_current_player()
@@ -594,6 +599,22 @@ func _on_end_turn_pressed() -> void:
 			GameState.advance_phase()  # → MOVEMENT (next)
 		GameState.TurnPhase.END:
 			GameState.advance_phase()  # → MOVEMENT (next)
+
+	# Wight "Multiplication" — consume extra turns before advancing to next player
+	var extra_turns = current_player.get_meta("extra_turns", 0) if current_player else 0
+	if extra_turns > 0:
+		current_player.set_meta("extra_turns", extra_turns - 1)
+		has_drawn_this_turn = false
+		has_rolled_this_turn = false
+		has_attacked_this_turn = false
+		_pending_ability = false
+		if toast:
+			_toast(Tr.t("toast.wight_extra_turn", [current_player.display_name, extra_turns - 1]), Color(0.7, 0.5, 1.0))
+		# Restart this player's turn without advancing player index
+		GameState.current_phase = GameState.TurnPhase.MOVEMENT
+		GameState.turn_started.emit(current_player, GameState.turn_count)
+		_on_phase_changed(GameState.TurnPhase.MOVEMENT)
+		return
 
 	has_drawn_this_turn = false
 	has_rolled_this_turn = false
@@ -1408,6 +1429,22 @@ func _apply_faction_reveal_heal(card: Card, player: Player) -> void:
 	human_player_info.update_display()
 
 
+## Generic binary choice dialog for human players — reuses _reveal_choice_made signal
+func _ask_binary_choice(title: String, text: String, yes_text: String, no_text: String) -> bool:
+	var dialog = ConfirmationDialog.new()
+	dialog.title = title
+	dialog.dialog_text = text
+	dialog.ok_button_text = yes_text
+	dialog.cancel_button_text = no_text
+	add_child(dialog)
+	dialog.confirmed.connect(_emit_reveal_choice.bind(true), CONNECT_ONE_SHOT)
+	dialog.canceled.connect(_emit_reveal_choice.bind(false), CONNECT_ONE_SHOT)
+	dialog.popup_centered()
+	var result = await _reveal_choice_made
+	dialog.queue_free()
+	return result
+
+
 ## Show confirmation dialog asking human player if they want to reveal
 func _ask_reveal_confirmation() -> bool:
 	var dialog = ConfirmationDialog.new()
@@ -1471,6 +1508,29 @@ func _start_vision_card(player: Player, card: Card, deck: DeckManager) -> void:
 func _resolve_vision_card(target: Player) -> void:
 	var current_player = GameState.get_current_player()
 	var effect = _vision_card.effect if _vision_card else {}
+	var condition_factions: Array = effect.get("condition_factions", [])
+	var condition_type: String = effect.get("condition_type", "")
+
+	# Unknown "Duperie" — intercept faction-based checks so Unknown can lie
+	if target.character_id == "unknown" and not target.is_revealed and not target.ability_disabled:
+		if not condition_factions.is_empty() and target.faction in condition_factions:
+			# The card would affect Unknown due to their real faction
+			if target.is_human:
+				_show_unknown_deceit_choice(target, current_player, effect)
+				return  # Dialog handles completion
+			else:
+				# Bot Unknown always lies to avoid faction-based effects
+				if toast:
+					_toast(Tr.t("toast.vision_deceit_bot"), Color(0.5, 0.5, 0.8))
+				_update_display()
+				_finish_vision_card(current_player)
+				return
+
+	_apply_vision_card_effect(target, current_player, effect)
+
+
+## Apply vision card effect after Unknown deceit check
+func _apply_vision_card_effect(target: Player, current_player: Player, effect: Dictionary) -> void:
 	var condition_factions: Array = effect.get("condition_factions", [])
 	var condition_type: String = effect.get("condition_type", "")
 	var action: String = effect.get("action", "")
@@ -1923,6 +1983,10 @@ func _on_bot_action_completed(bot: Player, action_type: String, result: Variant)
 					if missed:
 						if toast:
 							_toast(Tr.t("toast.bot_attack_miss", [PlayerColors.get_label(bot), PlayerColors.get_label(target)]), Color(1.0, 0.6, 0.3))
+					elif result.get("robbery", false):
+						# Bob "Pillage" — stole equipment instead of dealing damage
+						if toast:
+							_toast(Tr.t("toast.bob_robbery", [PlayerColors.get_label(bot), result.get("stolen", "?"), PlayerColors.get_label(target)]), Color(1.0, 0.7, 0.2))
 					else:
 						await _play_card_strike_animation(bot, target, damage)
 						if toast:
@@ -2220,13 +2284,17 @@ func _on_ability_pressed() -> void:
 				_toast(Tr.t("toast.extra_turns", [player.display_name, extra]), Color(0.7, 0.5, 1.0))
 			_refresh_action_buttons(player)
 		"ultra_soul":
-			# Damage all players in Underworld
+			# Damage one player at the Underworld Gate
 			var underworld_players = _get_players_in_zone("underworld", player)
-			GameState.active_ability_system.activate_ability(player, underworld_players)
-			if toast:
-				_toast(Tr.t("toast.murder_ray", [underworld_players.size()]), Color(1.0, 0.3, 0.3))
-			_update_display()
-			_refresh_action_buttons(player)
+			if underworld_players.is_empty():
+				if toast:
+					_toast(Tr.t("toast.ultra_soul_no_target"), Color(1.0, 0.6, 0.3))
+				return
+			elif underworld_players.size() == 1:
+				_resolve_ability_on_target(underworld_players[0])
+			else:
+				_pending_ability = true
+				target_selection_panel.show_targets(underworld_players, Tr.t("popup.murder_ray"), Tr.t("popup.murder_ray_btn"))
 		"agnes":
 			# Swap target direction
 			GameState.active_ability_system.activate_ability(player, [])
@@ -2245,6 +2313,8 @@ func _on_ability_pressed() -> void:
 				auto_targets = _get_all_alive_others(player)
 			"ellen":
 				auto_targets = _get_revealed_with_abilities(player)
+			"ultra_soul":
+				auto_targets = _get_players_in_zone("underworld", player)
 		if not auto_targets.is_empty():
 			_resolve_ability_on_target(auto_targets[randi() % auto_targets.size()])
 		else:
@@ -2275,6 +2345,12 @@ func _resolve_ability_on_target(target: Player) -> void:
 				if toast:
 					_toast(Tr.t("toast.set_damage_7", [player.display_name, target.display_name]), Color(1.0, 0.4, 0.6))
 				damage_tracker.update_player_hp(target)
+			"ultra_soul":
+				if toast:
+					_toast(Tr.t("toast.murder_ray_target", [player.display_name, target.display_name]), Color(1.0, 0.3, 0.3))
+				damage_tracker.update_player_hp(target)
+				if not target.is_alive:
+					_update_dead_player_ui(target)
 			"ellen":
 				if toast:
 					_toast(Tr.t("toast.curse_ability", [player.display_name, target.display_name]), Color(0.6, 0.2, 0.8))
@@ -2408,6 +2484,26 @@ func _on_combat_roll_completed(total_damage: int) -> void:
 		if toast:
 			_toast(Tr.t("toast.attack_missed"), Color(1.0, 0.6, 0.3))
 	else:
+		# Bob "Pillage" — offer to steal equipment instead of dealing damage
+		if attacker.character_id == "bob" and attacker.is_revealed and not attacker.ability_disabled:
+			if total_damage >= 2 and not target.equipment.is_empty():
+				var chose_steal: bool
+				if attacker.is_human:
+					chose_steal = await _ask_binary_choice(
+						Tr.t("bob.robbery_title"),
+						Tr.t("bob.robbery_text", [target.display_name]),
+						Tr.t("bob.robbery_yes"),
+						Tr.t("bob.robbery_no")
+					)
+				else:
+					chose_steal = true  # Bot Bob always steals if possible
+				if chose_steal:
+					_apply_bob_robbery(attacker, target)
+					await _check_werewolf_counterattack(target, attacker)
+					await _check_charles_reattack(attacker, target)
+					_update_display()
+					return
+
 		# Play card strike animation
 		await _play_card_strike_animation(attacker, target, total_damage)
 
@@ -2631,10 +2727,23 @@ func _check_charles_reattack(attacker: Player, target: Player) -> void:
 	if attacker.character_id != "charles" or not attacker.is_revealed or attacker.ability_disabled:
 		return
 
-	# Decision: bot always re-attacks if HP > 4, human auto-re-attacks too
-	# (Charles' identity is about aggression — 2 HP cost is the tradeoff)
 	if attacker.hp <= 2:
 		return  # Would kill self, skip
+
+	# Human Charles chooses whether to re-attack
+	if attacker.is_human:
+		var will_reattack = await _ask_binary_choice(
+			Tr.t("charles.reattack_title"),
+			Tr.t("charles.reattack_text", [target.display_name]),
+			Tr.t("charles.reattack_yes"),
+			Tr.t("charles.reattack_no")
+		)
+		if not will_reattack:
+			return
+	else:
+		# Bot always re-attacks if HP > 4
+		if attacker.hp <= 4:
+			return
 
 	if toast:
 		_toast(Tr.t("toast.bloody_feast", [attacker.display_name]), Color(0.8, 0.3, 0.3))
@@ -2670,12 +2779,117 @@ func _check_charles_reattack(attacker: Player, target: Player) -> void:
 		_update_display()
 
 
-## Trigger Werewolf counterattack if applicable
+## Show Unknown "Duperie" choice dialog — lie about identity or reveal truth
+func _show_unknown_deceit_choice(target: Player, drawer: Player, effect: Dictionary) -> void:
+	var dialog = ConfirmationDialog.new()
+	dialog.title = Tr.t("unknown.deceit_title")
+	dialog.dialog_text = Tr.t("unknown.deceit_text", [drawer.display_name])
+	dialog.ok_button_text = Tr.t("unknown.deceit_lie")
+	dialog.cancel_button_text = Tr.t("unknown.deceit_truth")
+	add_child(dialog)
+
+	var t_ref = target
+	var d_ref = drawer
+	var e_ref = effect
+	dialog.confirmed.connect(func():
+		dialog.queue_free()
+		# Unknown lies — card condition "misses" (fake faction not in condition)
+		if toast:
+			_toast(Tr.t("toast.vision_deceit_lied"), Color(0.5, 0.5, 0.8))
+		_update_display()
+		_finish_vision_card(d_ref)
+	, CONNECT_ONE_SHOT)
+	dialog.canceled.connect(func():
+		dialog.queue_free()
+		# Unknown reveals truth — apply card effect normally
+		_apply_vision_card_effect(t_ref, d_ref, e_ref)
+	, CONNECT_ONE_SHOT)
+	dialog.popup_centered()
+
+
+## Get zone paired with Emi's current zone for teleportation
+func _get_emi_paired_zone(zone_id: String) -> String:
+	match zone_id:
+		"hermit": return "cemetery"
+		"cemetery": return "hermit"
+		"church": return "weird_woods"
+		"weird_woods": return "church"
+		"altar": return "underworld"
+		"underworld": return "altar"
+		_: return ""
+
+
+## Show Emi teleport choice dialog (signal-based, no await needed)
+func _show_emi_teleport_choice(player: Player) -> void:
+	var paired_zone_id = _get_emi_paired_zone(player.position_zone)
+	var has_compass = _has_active_equipment(player, "double_dice_roll")
+
+	if paired_zone_id == "":
+		dice_roll_popup.show_for_player(player, has_compass)
+		return
+
+	var paired_zone = _get_zone_by_id(paired_zone_id)
+	var zone_name = paired_zone.zone_name if paired_zone else paired_zone_id
+
+	var dialog = ConfirmationDialog.new()
+	dialog.title = Tr.t("emi.teleport_title")
+	dialog.dialog_text = Tr.t("emi.teleport_text", [zone_name])
+	dialog.ok_button_text = Tr.t("emi.teleport_yes")
+	dialog.cancel_button_text = Tr.t("emi.teleport_no")
+	add_child(dialog)
+
+	var p_ref = player
+	var z_ref = paired_zone_id
+	var compass_ref = has_compass
+	dialog.confirmed.connect(func():
+		dialog.queue_free()
+		var zone = _get_zone_by_id(z_ref)
+		if zone:
+			has_rolled_this_turn = true
+			if toast:
+				_toast(Tr.t("toast.emi_teleports", [p_ref.display_name, zone.zone_name]), Color(0.5, 0.8, 1.0))
+			_move_player_to_zone(p_ref, zone)
+	, CONNECT_ONE_SHOT)
+	dialog.canceled.connect(func():
+		dialog.queue_free()
+		dice_roll_popup.show_for_player(p_ref, compass_ref)
+	, CONNECT_ONE_SHOT)
+	dialog.popup_centered()
+
+
+## Apply Bob "Pillage" — steal one equipment card instead of dealing damage
+func _apply_bob_robbery(attacker: Player, target: Player) -> void:
+	if target.equipment.is_empty():
+		return
+	# Steal the last equipment card (or find best one)
+	var stolen_card: Card = target.equipment.back()
+	var idx = target.equipment.size() - 1
+	target.equipment.remove_at(idx)
+	attacker.equipment.append(stolen_card)
+	GameState.equipment_equipped.emit(attacker, stolen_card)
+	if toast:
+		_toast(Tr.t("toast.bob_robbery", [attacker.display_name, stolen_card.name, target.display_name]), Color(1.0, 0.7, 0.2))
+	damage_tracker.update_player_hp(target)
+	_update_display()
+
+
+## Trigger Werewolf counterattack if applicable (optional for human players)
 func _check_werewolf_counterattack(target: Player, attacker: Player) -> void:
 	if not target.is_alive:
 		return
 	if target.character_id != "werewolf" or not target.is_revealed or target.ability_disabled:
 		return
+
+	# Human Werewolf chooses whether to counterattack
+	if target.is_human:
+		var will_counter = await _ask_binary_choice(
+			Tr.t("werewolf.counter_title"),
+			Tr.t("werewolf.counter_text", [attacker.display_name]),
+			Tr.t("werewolf.counter_yes"),
+			Tr.t("werewolf.counter_no")
+		)
+		if not will_counter:
+			return
 
 	if toast:
 		_toast(Tr.t("toast.werewolf_counter"), Color(0.7, 0.4, 1.0))

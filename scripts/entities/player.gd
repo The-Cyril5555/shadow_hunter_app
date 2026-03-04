@@ -56,6 +56,13 @@ func assign_character(char_data: Dictionary) -> void:
 
 ## Take damage, returns true if player died
 func take_damage(amount: int, _source: Player = null) -> bool:
+	# Gregor "Ghostly Barrier" — absorb all damage from any source
+	if has_meta("shielded") and get_meta("shielded"):
+		set_meta("shielded", false)
+		return false
+	# Guardian Angel — immune to damage until next turn
+	if has_meta("damage_immune") and get_meta("damage_immune"):
+		return false
 	hp = max(0, hp - amount)
 	if hp <= 0:
 		is_alive = false
