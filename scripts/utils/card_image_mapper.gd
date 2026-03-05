@@ -78,9 +78,6 @@ static func load_texture(path: String) -> Texture2D:
 	if _texture_cache.has(path):
 		return _texture_cache[path]
 
-	if not ResourceLoader.exists(path):
-		return null
-
 	var texture = load(path) as Texture2D
 	if texture != null:
 		_texture_cache[path] = texture
