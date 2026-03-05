@@ -64,8 +64,7 @@ func setup(zone_data: Dictionary, position_dice_range: Array = []) -> void:
 	dice_range = position_dice_range
 
 	# Load zone card image as primary visual
-	var img_path = CardImageMapper.get_zone_image_path(zone_id)
-	var texture = CardImageMapper.load_texture(img_path)
+	var texture = CardImageMapper.get_zone_texture(zone_id)
 	if texture != null:
 		zone_background.texture = texture
 		zone_background.visible = true

@@ -56,6 +56,18 @@ static func get_zone_image_path(zone_id: String) -> String:
 	return zone_images.get(zone_id, "")
 
 
+## Get zone texture directly via preload (web-compatible)
+static func get_zone_texture(zone_id: String) -> Texture2D:
+	match zone_id:
+		"hermit": return preload("res://asset_remake/hermit_cabin.png")
+		"church": return preload("res://asset_remake/church.png")
+		"cemetery": return preload("res://asset_remake/cemetery.png")
+		"weird_woods": return preload("res://asset_remake/weird_woods.png")
+		"underworld": return preload("res://asset_remake/underworld_gate.png")
+		"altar": return preload("res://asset_remake/erstwhile_altar.png")
+	return null
+
+
 ## Get HP score card image path for a variant key
 static func get_hp_score_card_path(variant: String) -> String:
 	_ensure_loaded()
