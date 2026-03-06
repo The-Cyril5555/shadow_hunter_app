@@ -2,9 +2,10 @@
 
 > Adaptation digitale du jeu de plateau **Shadow Hunter** — identités cachées, déduction stratégique, adversaires bots intelligents et rendu visuel inspiré de Balatro.
 
+[![Jouer en ligne](https://img.shields.io/badge/Jouer%20en%20ligne-GitHub%20Pages-success?logo=googlechrome&logoColor=white)](https://the-cyril5555.github.io/shadow_hunter_app/)
 ![Godot 4.5](https://img.shields.io/badge/Godot-4.5-478CBF?logo=godotengine&logoColor=white)
 ![GDScript](https://img.shields.io/badge/GDScript-Language-478CBF)
-![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS%20%7C%20Web-lightgrey)
 ![Resolution](https://img.shields.io/badge/Resolution-1920x1080-blue)
 
 <img width="3839" height="2022" alt="image" src="https://github.com/user-attachments/assets/b13fcddd-92b2-4280-b0ca-4d72c130bb2d" />
@@ -145,10 +146,18 @@ shadow_hunter_app/
 
 ## Demarrage rapide
 
-### Prérequis
+### Jouer directement dans le navigateur
+
+Aucune installation requise — accéder a la version web :
+
+**[Jouer maintenant](https://the-cyril5555.github.io/shadow_hunter_app/)**
+
+### Lancement local
+
+#### Prérequis
 - [Godot 4.5](https://godotengine.org/download/) ou supérieur
 
-### Lancement
+#### Lancement
 1. Cloner le dépôt
    ```bash
    git clone https://github.com/The-Cyril5555/shadow_hunter_app.git
