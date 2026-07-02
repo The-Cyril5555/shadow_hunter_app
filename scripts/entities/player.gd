@@ -14,6 +14,7 @@ var character_id: String = ""
 var character_name: String = ""
 var faction: String = ""  # "hunter", "shadow", "neutral"
 var ability_data: Dictionary = {}  # Full ability data from character JSON
+var win_condition: String = ""  # Victory condition text (neutral characters only)
 
 # Health
 var hp: int = 0
@@ -51,6 +52,7 @@ func assign_character(char_data: Dictionary) -> void:
 	hp_max = char_data.get("hp_max", 10)
 	hp = hp_max
 	ability_data = char_data.get("ability", {}).duplicate(true)  # Store defensive copy of ability data
+	win_condition = char_data.get("win_condition", "")
 	print("[Player] %s assigned character: %s (%s, ability: %s)" % [display_name, character_name, faction, ability_data.get("name", "None")])
 
 
@@ -113,8 +115,8 @@ func remove_equipment(card_id: String) -> bool:
 func get_attack_damage_bonus() -> int:
 	var bonus = 0
 	for card in equipment:
-		if card.faction_restriction != "" and faction != card.faction_restriction:
-			continue  # Card kept but effect inactive
+		if card.faction_restriction != "" and (faction != card.faction_restriction or not is_revealed):
+			continue  # Card kept but effect inactive (wrong faction or not yet revealed)
 		if card.get_effect_type() == "damage":
 			bonus += card.get_effect_value()
 	return bonus
@@ -124,8 +126,8 @@ func get_attack_damage_bonus() -> int:
 func get_defense_bonus() -> int:
 	var bonus = 0
 	for card in equipment:
-		if card.faction_restriction != "" and faction != card.faction_restriction:
-			continue  # Card kept but effect inactive
+		if card.faction_restriction != "" and (faction != card.faction_restriction or not is_revealed):
+			continue  # Card kept but effect inactive (wrong faction or not yet revealed)
 		if card.get_effect_type() == "defense":
 			bonus += card.get_effect_value()
 	return bonus
@@ -151,6 +153,7 @@ func to_dict() -> Dictionary:
 		"character_name": character_name,
 		"faction": faction,
 		"ability_data": ability_data,
+		"win_condition": win_condition,
 		"hp": hp,
 		"hp_max": hp_max,
 		"equipment": equipment_data,
@@ -174,6 +177,7 @@ static func from_dict(data: Dictionary) -> Player:
 	player.character_name = data.get("character_name", "")
 	player.faction = data.get("faction", "")
 	player.ability_data = data.get("ability_data", {})
+	player.win_condition = data.get("win_condition", "")
 	player.hp = data.get("hp", 0)
 	player.hp_max = data.get("hp_max", 0)
 	player.is_alive = data.get("is_alive", true)

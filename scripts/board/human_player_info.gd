@@ -143,13 +143,11 @@ func update_display() -> void:
 	else:
 		hp_label.add_theme_color_override("font_color", Color(0.5, 1.0, 0.5))
 
-	# Victory condition (derived from faction)
-	var faction_victory: Dictionary = {
-		"hunter": "Victoire : éliminer toutes les Ombres",
-		"shadow": "Victoire : éliminer tous les Chasseurs",
-		"neutral": "Victoire : objectif personnel",
-	}
-	victory_label.text = faction_victory.get(_player.faction, "")
+	# Victory condition
+	if _player.faction == "neutral" and not _player.win_condition.is_empty():
+		victory_label.text = Tr.t("info.victory_personal", [_player.win_condition])
+	else:
+		victory_label.text = Tr.t("info.victory_" + _player.faction)
 
 	# Skill description (from ability_data)
 	var skill_name: String = _player.ability_data.get("name", "")
@@ -335,7 +333,7 @@ func _set_disabled(disabled: bool) -> void:
 func force_card_use() -> void:
 	_must_use_card = true
 	end_turn_button.disabled = true
-	end_turn_button.tooltip_text = "Vous devez utiliser la carte piochée"
+	end_turn_button.tooltip_text = Tr.t("info.must_use_card")
 
 
 ## Reset after card use

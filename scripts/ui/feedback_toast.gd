@@ -86,8 +86,9 @@ func show_toast(message: String, color: Color = Color(1.0, 1.0, 1.0)) -> void:
 	# Fade in only (no auto-remove)
 	panel.modulate = Color(1, 1, 1, 0)
 	var tween = create_tween()
-	tween.tween_property(panel, "modulate", Color(1, 1, 1, 1), 0.2)
+	tween.tween_property(panel, "modulate", Color(1, 1, 1, 1), 0.35)
 
-	# Auto-scroll to bottom
+	# Auto-scroll to bottom (2 frames pour laisser le layout recalculer)
+	await get_tree().process_frame
 	await get_tree().process_frame
 	_scroll.scroll_vertical = int(_scroll.get_v_scroll_bar().max_value)

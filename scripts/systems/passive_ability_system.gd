@@ -8,6 +8,10 @@ extends Node
 signal passive_ability_triggered(player: Player, ability_name: String, effect: Dictionary)
 
 
+## Abilities whose effects are handled elsewhere (CombatSystem or game_board).
+## passive_ability_triggered is NOT emitted for these — feedback comes from their own code paths.
+const ABILITIES_FEEDBACK_ELSEWHERE: Array = ["werewolf", "vampire", "valkyrie", "charles", "unknown", "emi", "bob"]
+
 ## Valid trigger types for passive abilities
 const VALID_TRIGGERS = [
 	"on_attacked",
@@ -19,6 +23,7 @@ const VALID_TRIGGERS = [
 	"on_movement",
 	"on_hermit_card",
 	"on_character_death",
+	"on_reveal",
 ]
 
 
@@ -77,11 +82,13 @@ func _on_damage_dealt(attacker: Player, victim: Player, amount: int) -> void:
 		if reg.trigger == "on_attacked":
 			execute_ability(victim, {"trigger": "on_attacked", "attacker": attacker, "damage": amount})
 
-	# Check attacker for "on_attack" trigger
+	# Check attacker for "on_attack" or "on_attack_hit" trigger
 	if registered_abilities.has(attacker.id):
 		var reg = registered_abilities[attacker.id]
 		if reg.trigger == "on_attack":
 			execute_ability(attacker, {"trigger": "on_attack", "victim": victim, "damage": amount})
+		elif reg.trigger == "on_attack_hit":
+			execute_ability(attacker, {"trigger": "on_attack_hit", "victim": victim, "damage": amount})
 
 
 ## Handle turn_started signal - triggers "on_turn_start"
@@ -126,6 +133,11 @@ func _on_character_revealed(player: Player, character: Dictionary, faction: Stri
 
 ## Execute a passive ability effect
 func execute_ability(player: Player, trigger_context: Dictionary) -> void:
+	# Passive abilities require the player to be revealed
+	# Exceptions: bryan and daniel whose ability forces a reveal
+	if not player.is_revealed and player.character_id not in ["bryan", "daniel", "emi", "unknown"]:
+		return
+
 	var ability_name = player.ability_data.get("name", "Unknown")
 	print("[PassiveAbilitySystem] Executing %s's '%s' (trigger: %s)" % [player.display_name, ability_name, trigger_context.trigger])
 
@@ -154,8 +166,9 @@ func execute_ability(player: Player, trigger_context: Dictionary) -> void:
 		_:
 			push_warning("[PassiveAbilitySystem] No implementation for %s's ability" % player.character_id)
 
-	# Emit signal for UI/Audio feedback
-	passive_ability_triggered.emit(player, ability_name, trigger_context)
+	# Emit signal for UI/Audio feedback — skip abilities handled by CombatSystem or game_board
+	if player.character_id not in ABILITIES_FEEDBACK_ELSEWHERE:
+		passive_ability_triggered.emit(player, ability_name, trigger_context)
 
 
 ## Werewolf: "Counterattack" - After being attacked, can counterattack immediately

@@ -35,15 +35,18 @@ func calculate_attack_damage(attacker: Player, target: Player) -> Dictionary:
 
 	var equipment_bonus = attacker.get_attack_damage_bonus()
 	var defense_bonus = target.get_defense_bonus()
+	var attacker_defense = attacker.get_defense_bonus()
 	var total = 0
 	if not missed:
-		total = max(1, base_damage + equipment_bonus - defense_bonus)
+		total = max(1, base_damage + equipment_bonus - defense_bonus - attacker_defense)
 
 	if is_valkyrie:
 		print("[Combat] %s (Valkyrie) attacks %s: D4=%d +%d equip −%d def = %d" % [
 			attacker.display_name, target.display_name,
 			d4, equipment_bonus, defense_bonus, total
 		])
+		var ability_name = attacker.ability_data.get("name", "Corne de Guerre")
+		GameState.passive_ability_system.passive_ability_triggered.emit(attacker, ability_name, {"trigger": "on_attack", "victim": target, "damage": total})
 	else:
 		print("[Combat] %s attacks %s: D6=%d D4=%d → |%d−%d|=%d +%d equip −%d def = %d%s" % [
 			attacker.display_name, target.display_name,
@@ -88,6 +91,8 @@ func apply_damage(attacker: Player, target: Player, final_damage: int) -> void:
 	if attacker.character_id == "vampire" and attacker.is_revealed and not attacker.ability_disabled and final_damage > 0:
 		attacker.heal(2)
 		print("[Combat] Vampire's Suck Blood: healed 2 HP after dealing damage")
+		var ability_name = attacker.ability_data.get("name", "Succion de Sang")
+		GameState.passive_ability_system.passive_ability_triggered.emit(attacker, ability_name, {"trigger": "on_attack_hit", "victim": target, "damage": final_damage})
 
 	# Check for death
 	if target.hp <= 0:

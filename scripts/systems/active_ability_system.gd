@@ -216,7 +216,7 @@ func _apply_franklin_lightning(player: Player, targets: Array) -> Dictionary:
 
 	# Roll d6 for damage
 	var damage = randi() % 6 + 1
-	target.take_damage(damage, player)
+	_apply_ability_damage(player, target, damage)
 
 	print("[ActiveAbilitySystem] Franklin's Lightning dealt %d damage (d6) to %s" % [damage, target.character_name])
 
@@ -239,7 +239,7 @@ func _apply_george_demolish(player: Player, targets: Array) -> Dictionary:
 
 	# Roll d4 for damage
 	var damage = randi() % 4 + 1
-	target.take_damage(damage, player)
+	_apply_ability_damage(player, target, damage)
 
 	print("[ActiveAbilitySystem] George's Demolish dealt %d damage (d4) to %s" % [damage, target.character_name])
 
@@ -298,8 +298,14 @@ func _apply_fuka_dynamite_nurse(player: Player, targets: Array) -> Dictionary:
 
 	# Set damage to exactly 7: hp = hp_max - 7
 	var old_hp = target.hp
-	var new_hp = target.hp_max - 7
-	target.hp = max(0, new_hp)
+	var new_hp = max(0, target.hp_max - 7)
+	var effective_damage = old_hp - new_hp
+
+	if effective_damage > 0:
+		var died = target.take_damage(effective_damage, player)
+		GameState.damage_dealt.emit(player, target, effective_damage)
+		if died:
+			CombatSystem.new().process_death(target, player)
 
 	print("[ActiveAbilitySystem] Fuka set %s's damage to 7 (HP: %d -> %d)" % [
 		target.character_name, old_hp, target.hp
@@ -330,7 +336,7 @@ func _apply_gregor_ghostly_barrier(player: Player) -> Dictionary:
 func _apply_wight_multiplication(player: Player) -> Dictionary:
 	var dead_count = 0
 	for p in GameState.players:
-		if p.hp <= 0 and p.id != player.id:
+		if not p.is_alive and p.id != player.id:
 			dead_count += 1
 
 	player.set_meta("extra_turns", dead_count)
@@ -355,7 +361,7 @@ func _apply_ultra_soul_murder_ray(player: Player, targets: Array) -> Dictionary:
 	if not target or target.id == player.id or not target.is_alive:
 		return {"success": false, "effect_type": "damage", "error": "Invalid target"}
 
-	target.take_damage(3, player)
+	_apply_ability_damage(player, target, 3)
 	var target_label = target.character_name if target.is_revealed else PlayerColors.get_label(target)
 
 	print("[ActiveAbilitySystem] Ultra Soul's Murder Ray dealt 3 damage to %s at Underworld" % target_label)
@@ -414,6 +420,14 @@ func _apply_david_grave_digger(player: Player, targets: Array) -> Dictionary:
 # =============================================================================
 # UTILITY METHODS
 # =============================================================================
+
+## Apply ability damage, emit damage_dealt signal, and process death if it occurs
+func _apply_ability_damage(attacker: Player, target: Player, amount: int) -> void:
+	var died = target.take_damage(amount, attacker)
+	GameState.damage_dealt.emit(attacker, target, amount)
+	if died:
+		CombatSystem.new().process_death(target, attacker)
+
 
 ## Check if player has used their ability (for UI display)
 func has_used_ability(player: Player) -> bool:

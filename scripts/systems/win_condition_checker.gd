@@ -65,7 +65,10 @@ func check_win_conditions(context: Dictionary = {}) -> Dictionary:
 		if player.faction == "neutral" and check_neutral_victory(player, context):
 			neutral_winners.append(player)
 			# These neutrals actively trigger game end
-			if player.character_id in ["daniel", "charles", "bryan", "catherine", "bob", "david"]:
+			if player.character_id in ["daniel", "charles", "bryan", "bob", "david"]:
+				neutral_ends_game = true
+			# Catherine only triggers end via first-to-die (not last-2-standing which is passive)
+			elif player.character_id == "catherine" and not player.is_alive and _first_death_player_id == player.id:
 				neutral_ends_game = true
 			print("[WinConditionChecker] Neutral player %s won!" % player.display_name)
 
@@ -140,7 +143,7 @@ func check_neutral_victory(player: Player, context: Dictionary = {}) -> bool:
 		"bryan":
 			return _check_bryan(player, context)
 		"catherine":
-			return _check_catherine(player)
+			return _check_catherine(player, context)
 		"david":
 			return _check_david(player)
 		_:
@@ -221,14 +224,19 @@ func _check_bryan(player: Player, context: Dictionary) -> bool:
 
 
 ## Catherine: "Die first, or be one of the last two characters standing."
-func _check_catherine(player: Player) -> bool:
-	# First to die
+func _check_catherine(player: Player, context: Dictionary) -> bool:
+	var event = context.get("event", "")
+
+	# Active: first to die — triggers game end immediately
 	if not player.is_alive and _first_death_player_id == player.id:
 		return true
 
-	# Last 2 standing
-	var alive_count = GameState.players.filter(func(p): return p.is_alive).size()
-	return player.is_alive and alive_count <= 2
+	# Passive: last 2 standing — only checked when game is ending
+	if event == "game_ending" and player.is_alive:
+		var alive_count = GameState.players.filter(func(p): return p.is_alive).size()
+		return alive_count <= 2
+
+	return false
 
 
 ## David: "Equip 3+ specific White cards: Spear of Longinus, Holy Robe, Silver Rosary, Talisman."

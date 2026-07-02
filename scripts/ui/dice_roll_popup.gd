@@ -82,7 +82,7 @@ func show_for_player(player: Player, double_roll: bool = false) -> void:
 	visible = true
 	modulate.a = 0.0
 	var tween = create_tween()
-	tween.tween_property(self, "modulate:a", 1.0, 0.2)
+	tween.tween_property(self, "modulate:a", 1.0, 0.4)
 
 
 ## Show the popup for a combat dice roll (damage = |D6 - D4|)
@@ -107,13 +107,13 @@ func show_for_combat(attacker: Player, target: Player) -> void:
 	visible = true
 	modulate.a = 0.0
 	var tween = create_tween()
-	tween.tween_property(self, "modulate:a", 1.0, 0.2)
+	tween.tween_property(self, "modulate:a", 1.0, 0.4)
 
 
 ## Hide the popup with fade
 func hide_popup() -> void:
 	var tween = create_tween()
-	tween.tween_property(self, "modulate:a", 0.0, 0.15)
+	tween.tween_property(self, "modulate:a", 0.0, 0.3)
 	await tween.finished
 	visible = false
 
@@ -234,7 +234,7 @@ func _handle_movement_result(sum: int) -> void:
 	result_label.text = Tr.t("dice.result", [sum, zone_name])
 	result_label.visible = true
 
-	await get_tree().create_timer(1.2).timeout
+	await get_tree().create_timer(2.0).timeout
 	hide_popup()
 	if dest_zone_id != "":
 		zone_selected.emit(dest_zone_id)
@@ -329,20 +329,23 @@ func _handle_combat_result() -> void:
 	if not missed and _combat_attacker and _combat_target:
 		var equip_bonus = _combat_attacker.get_attack_damage_bonus()
 		var defense = _combat_target.get_defense_bonus()
-		if equip_bonus > 0 or defense > 0:
-			total_damage = max(1, base_damage + equip_bonus - defense)
+		var attacker_defense = _combat_attacker.get_defense_bonus()
+		if equip_bonus > 0 or defense > 0 or attacker_defense > 0:
+			total_damage = max(1, base_damage + equip_bonus - defense - attacker_defense)
 			var modifier_text = ""
 			if equip_bonus > 0:
 				modifier_text += Tr.t("dice.equip_bonus", [equip_bonus])
 			if defense > 0:
 				modifier_text += Tr.t("dice.defense_bonus", [defense])
+			if attacker_defense > 0:
+				modifier_text += Tr.t("dice.defense_bonus", [attacker_defense])
 			text += "\n%d%s = %d" % [base_damage, modifier_text, total_damage]
 
 	result_label.text = text
 	result_label.visible = true
 
 	# Auto-close and emit
-	await get_tree().create_timer(1.5).timeout
+	await get_tree().create_timer(2.5).timeout
 	hide_popup()
 
 	_mode = "movement"

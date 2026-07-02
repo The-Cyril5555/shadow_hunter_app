@@ -81,7 +81,7 @@ Les zones sont **positionnées aléatoirement** à chaque partie. Les dés (d6+d
 | Lance de Longinus | 1 | **+2 dégâts** en attaque | Hunter révélé seulement |
 | Holy Robe | 1 | **-1 dégât** infligé et reçu en combat | — |
 
-**Total : 18 cartes**
+**Total : 16 cartes**
 
 ---
 
@@ -110,7 +110,7 @@ Les zones sont **positionnées aléatoirement** à chaque partie. Les dés (d6+d
 | Handgun | 1 | Peut attaquer dans **toutes les zones** sauf la zone originale | |
 | Cursed Sword Masamune | 1 | **Doit attaquer** si possible — dégâts = **d4** au lieu du calcul normal | Malédiction |
 
-**Total : 19 cartes**
+**Total : 16 cartes**
 
 ---
 
@@ -119,6 +119,6 @@ Les zones sont **positionnées aléatoirement** à chaque partie. Les dés (d6+d
 | Deck | Cartes totales | Instantanées | Équipements |
 |------|---------------|-------------|-------------|
 | Hermite (Vert) | 16 | 16 (vision) | 0 |
-| Blanc (Lumière) | 18 | 9 | 6 |
-| Noir (Ténèbres) | 19 | 7 | 6 |
-| **Total** | **53** | **32** | **12** |
+| Blanc (Lumière) | 16 | 10 | 6 |
+| Noir (Ténèbres) | 16 | 10 | 6 |
+| **Total** | **48** | **36** | **12** |

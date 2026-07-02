@@ -48,9 +48,9 @@ func show_card(card: Card) -> void:
 
 	# Populate card data
 	card_name_label.text = card.name
-	card_type_label.text = "Type : %s" % card.type.capitalize()
+	card_type_label.text = Tr.t("card_reveal.type_label") % Tr.t("card_type.%s" % card.type)
 	effect_label.text = card.get_effect_description()
-	deck_label.text = "Deck : %s" % card.deck.capitalize()
+	deck_label.text = Tr.t("card_reveal.deck_label") % card.deck.capitalize()
 
 	# Show with fade-in animation
 	visible = true
@@ -69,6 +69,11 @@ func show_card(card: Card) -> void:
 # -----------------------------------------------------------------------------
 # Signal Handlers
 # -----------------------------------------------------------------------------
+
+func _gui_input(event: InputEvent) -> void:
+	if visible and event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		_on_continue_pressed()
+
 
 func _on_continue_pressed() -> void:
 	# Fade out
