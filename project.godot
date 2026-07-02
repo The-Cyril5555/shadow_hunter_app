@@ -37,6 +37,7 @@ ParticlePool="*res://scripts/systems/particle_pool.gd"
 Tr="*res://scripts/autoloads/tr.gd"
 IconLoader="*res://scripts/autoloads/icon_loader.gd"
 NetworkManager="*res://scripts/network/network_manager.gd"
+BeliefTracker="*res://scripts/systems/belief_tracker.gd"
 
 [display]
 

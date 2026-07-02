@@ -153,6 +153,7 @@ static func _build_save_data(save_name: String) -> Dictionary:
 		"timestamp": Time.get_unix_time_from_system(),
 		"date_string": Time.get_datetime_string_from_system(),
 		"game_state": GameState.to_dict(),
+		"belief_tracker": BeliefTracker.to_dict(),
 	}
 
 
@@ -209,6 +210,12 @@ static func _load_save_file(filename: String) -> bool:
 	# Restore game state
 	var game_data = data.get("game_state", {})
 	GameState.from_dict(game_data)
+
+	# Restore deduction beliefs (older saves rebuild priors on next turn)
+	if data.has("belief_tracker"):
+		BeliefTracker.from_dict(data["belief_tracker"])
+	else:
+		BeliefTracker.reset()
 
 	# Reset auto-save counter
 	reset_action_counter()

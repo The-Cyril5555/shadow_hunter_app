@@ -343,8 +343,8 @@ func _select_attack_target(bot: Player, enemies: Array, unknowns: Array, context
 			else:
 				return _pick_weakest(enemies, unknowns)
 		_:
-			# Default: attack revealed enemies first (weakest), then unknowns
-			return _pick_weakest(enemies, unknowns)
+			# Default: belief-driven targeting (probable enemies, Manipulateur bluff)
+			return _pick_belief_attack_target(bot, enemies, unknowns)
 
 
 ## Pick weakest target — prefer revealed enemies over unknowns
@@ -608,50 +608,75 @@ func _execute_bot_vision_card(bot: Player, card: Card, deck: DeckManager) -> Dic
 	return {"card": card, "deck": deck, "target": target, "condition_met": condition_met}
 
 
-## Pick best target for vision card based on effect action
+## Pick best target for vision card — belief-driven
 func _pick_vision_target(bot: Player, effect: Dictionary, targets: Array) -> Player:
 	var action: String = effect.get("action", "")
 
 	match action:
 		"damage_target":
-			# Target a likely enemy
+			# Revealed confirmed enemy first
 			for t in targets:
 				if t.is_revealed and not AIDecisionEngine._is_ally_static(bot, t):
 					return t
-			# Fallback: unknown player
-			return targets[randi() % targets.size()]
+			# Then: most probable hidden enemy according to beliefs
+			return _pick_highest_enemy_belief(bot, targets)
 		"heal_drawer", "heal_or_damage":
-			# Target someone likely to match condition (maximize chance of heal)
 			var condition_factions: Array = effect.get("condition_factions", [])
-			# If bot knows target's faction, pick matching one
 			for t in targets:
 				if t.is_revealed and t.faction in condition_factions:
 					return t
-			# Unknown: random guess
-			return targets[randi() % targets.size()]
+			# Hidden: target whose believed faction best matches the condition
+			return _pick_by_belief_faction(bot, targets, condition_factions)
 		"give_equipment_or_damage":
-			# Target enemy with equipment (force them to give it)
 			for t in targets:
 				if t.is_revealed and not AIDecisionEngine._is_ally_static(bot, t) and not t.equipment.is_empty():
 					return t
 			for t in targets:
 				if not t.equipment.is_empty():
 					return t
-			return targets[randi() % targets.size()]
+			return _pick_highest_enemy_belief(bot, targets)
 		"reveal_to_drawer":
-			# Target unknown player (info gathering)
-			for t in targets:
-				if not t.is_revealed:
-					return t
-			return targets[0]
+			# Pure information card: maximize expected information gain
+			return BeliefTracker.pick_max_entropy_target(bot, targets)
 		"steal_equipment":
-			# Target player with best equipment
 			for t in targets:
 				if not t.equipment.is_empty():
 					return t
 			return targets[randi() % targets.size()]
 		_:
-			return targets[randi() % targets.size()]
+			# Default: learn about the biggest mystery at the table
+			return BeliefTracker.pick_max_entropy_target(bot, targets)
+
+
+## Target with highest probability of being the bot's faction enemy
+func _pick_highest_enemy_belief(bot: Player, targets: Array) -> Player:
+	if targets.is_empty():
+		return null
+	var best: Player = targets[0]
+	var best_p: float = -1.0
+	for t in targets:
+		var p: float = BeliefTracker.p_enemy(bot, t)
+		if p > best_p:
+			best_p = p
+			best = t
+	return best
+
+
+## Target most likely to belong to one of the given factions
+func _pick_by_belief_faction(bot: Player, targets: Array, factions: Array) -> Player:
+	if targets.is_empty():
+		return null
+	var best: Player = targets[0]
+	var best_p: float = -1.0
+	for t in targets:
+		var probs: Dictionary = BeliefTracker.get_faction_probs(bot.id, t.id)
+		var p: float = 0.0
+		for f in factions:
+			p += probs.get(f, 0.0)
+		if p > best_p:
+			best_p = p
+			best = t
+	return best
 
 
 ## Check if vision condition is met for target
@@ -862,3 +887,48 @@ static func get_humans(players: Array) -> Array[Player]:
 		if player.is_human:
 			humans.append(player)
 	return humans
+
+
+## Belief-driven attack targeting + Manipulateur bluff
+func _pick_belief_attack_target(bot: Player, enemies: Array, unknowns: Array) -> Player:
+	# --- Manipulateur bluff: attack a probable ALLY to poison deductions ---
+	var personality: Dictionary = bot.get_meta("personality_data") if bot.has_meta("personality_data") else {}
+	var bluff: Dictionary = personality.get("bluff", {})
+	if bluff.get("enabled", false) and not bot.is_revealed \
+			and float(bot.hp) / float(bot.hp_max) >= bluff.get("min_hp_ratio", 0.5):
+		if not bot.has_meta("bluff_budget"):
+			bot.set_meta("bluff_budget", int(bluff.get("budget", 2)))
+		var budget: int = bot.get_meta("bluff_budget")
+		if budget > 0 and randf() < bluff.get("chance", 0.3):
+			var decoy: Player = null
+			var best_ally_p: float = bluff.get("ally_threshold", 0.6)
+			for t in unknowns:
+				var pa: float = BeliefTracker.p_ally(bot, t)
+				if pa >= best_ally_p:
+					best_ally_p = pa
+					decoy = t
+			if decoy != null:
+				bot.set_meta("bluff_budget", budget - 1)
+				print("[BotController] %s BLUFFS: attacking probable ally %s (p_ally=%.2f)" % [
+					bot.display_name, decoy.display_name, best_ally_p
+				])
+				return decoy
+
+	# --- Honest targeting: revealed enemies, then hidden probable enemies ---
+	if not enemies.is_empty():
+		return _pick_weakest(enemies, [])
+	if unknowns.is_empty():
+		return null
+	var suspects: Array = unknowns.filter(func(t): return BeliefTracker.p_enemy(bot, t) >= 0.45)
+	if not suspects.is_empty():
+		# Among suspects, finish the weakest
+		return _pick_weakest([], suspects)
+	# Nobody looks hostile: least-bad option = highest enemy probability
+	var best: Player = unknowns[0]
+	var best_p: float = -1.0
+	for t in unknowns:
+		var p: float = BeliefTracker.p_enemy(bot, t)
+		if p > best_p:
+			best_p = p
+			best = t
+	return best

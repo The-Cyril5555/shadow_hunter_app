@@ -1,6 +1,6 @@
 {
-  "version": "1.0",
-  "description": "AI personality definitions for bot players. Each personality has different decision weights that influence bot behavior.",
+  "version": "1.1",
+  "description": "AI personality definitions for bot players. Each personality has different decision weights that influence bot behavior. v1.1 adds 'manipulateur' (bluff-capable, belief-driven).",
   "personalities": {
     "aggressive": {
       "display_name": "Aggressive",
@@ -36,6 +36,25 @@
         "risk": 0.2,
         "card_draw": 0.2,
         "reveal": 0.2
+      }
+    },
+    "manipulateur": {
+      "display_name": "Manipulateur",
+      "description": "Master of deception. Occasionally attacks probable allies while hidden to poison everyone's deductions, then strikes with precision using belief-driven targeting.",
+      "color": "#AA55EE",
+      "decision_weights": {
+        "attack": 0.25,
+        "defense": 0.15,
+        "risk": 0.25,
+        "card_draw": 0.2,
+        "reveal": 0.05
+      },
+      "bluff": {
+        "enabled": true,
+        "budget": 2,
+        "chance": 0.3,
+        "min_hp_ratio": 0.5,
+        "ally_threshold": 0.6
       }
     }
   }
