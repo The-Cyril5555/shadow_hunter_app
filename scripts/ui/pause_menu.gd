@@ -231,7 +231,11 @@ func _on_back_pressed() -> void:
 
 func _on_quit_pressed() -> void:
 	hide_pause_menu()
+	# Online game: close the connection so the server hands us over to a bot
+	var was_network: bool = GameState.is_network_game
 	GameState.reset()
+	if was_network:
+		NetworkManager.disconnect_from_server()
 	GameModeStateMachine.transition_to(GameModeStateMachine.GameMode.MAIN_MENU)
 	quit_to_menu.emit()
 

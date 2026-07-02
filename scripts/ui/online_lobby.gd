@@ -329,6 +329,7 @@ func _connect_network_signals() -> void:
 	NetworkManager.lobby_updated.connect(_on_lobby_updated)
 	NetworkManager.game_started.connect(_on_game_started)
 	NetworkManager.bot_count_updated.connect(_on_bot_count_updated)
+	NetworkManager.start_failed.connect(_on_start_failed)
 
 
 func _disconnect_network_signals() -> void:
@@ -352,6 +353,8 @@ func _disconnect_network_signals() -> void:
 		NetworkManager.game_started.disconnect(_on_game_started)
 	if NetworkManager.bot_count_updated.is_connected(_on_bot_count_updated):
 		NetworkManager.bot_count_updated.disconnect(_on_bot_count_updated)
+	if NetworkManager.start_failed.is_connected(_on_start_failed):
+		NetworkManager.start_failed.disconnect(_on_start_failed)
 
 
 # -----------------------------------------------------------------------------
@@ -483,6 +486,16 @@ func _on_bot_count_updated(count: int) -> void:
 	_bot_count = count
 	_update_bot_ui()
 	_update_start_button()
+
+
+func _on_start_failed(reason: String) -> void:
+	if is_instance_valid(_start_btn):
+		_start_btn.disabled = false
+	match reason:
+		"server_busy":
+			_set_status("Une partie est déjà en cours sur le serveur. Réessayez plus tard.", Color(1.0, 0.6, 0.3))
+		_:
+			_set_status("Impossible de lancer la partie.", Color(1.0, 0.4, 0.4))
 
 
 func _on_decrease_bots() -> void:

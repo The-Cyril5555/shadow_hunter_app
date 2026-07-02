@@ -18,6 +18,7 @@ signal room_join_failed(reason: String)
 signal lobby_updated(players: Array)
 signal game_started(initial_players: Array, my_player_index: int, zone_positions: Array)
 signal bot_count_updated(count: int)
+signal start_failed(reason: String)
 
 
 # -----------------------------------------------------------------------------
@@ -156,6 +157,14 @@ func get_started_room_players() -> Array:
 	return []
 
 
+## Server: delete started rooms once the game is over so a new game can begin
+func end_started_rooms() -> void:
+	for code in _rooms.keys():
+		if _rooms[code].started:
+			_rooms.erase(code)
+			print("[NetworkManager] Room %s closed (game over)" % code)
+
+
 ## Broadcast a player action to the server (client → server)
 func send_action(action: Dictionary) -> void:
 	_rpc_player_action.rpc_id(1, action)
@@ -226,6 +235,12 @@ func _rpc_start_game() -> void:
 			var total_players = room.peers.size() + room.get("bot_count", 0)
 			if total_players < 4 or total_players > 8:
 				return
+			# The server hosts a single GameState — refuse a second concurrent game
+			for other_code in _rooms:
+				if _rooms[other_code].started:
+					print("[NetworkManager] Start refused for room %s: a game is already running" % code)
+					_rpc_start_failed.rpc_id(sender_id, "server_busy")
+					return
 			room.started = true
 			print("[NetworkManager] Game starting in room %s" % code)
 			_setup_network_game(room)
@@ -293,6 +308,12 @@ func _rpc_lobby_updated(players: Array) -> void:
 @rpc("authority", "reliable", "call_local")
 func _rpc_bot_count_updated(count: int) -> void:
 	bot_count_updated.emit(count)
+
+
+@rpc("authority", "reliable", "call_local")
+func _rpc_start_failed(reason: String) -> void:
+	start_failed.emit(reason)
+	print("[NetworkManager] Game start failed: %s" % reason)
 
 
 ## Sent to each peer individually with their full initial state

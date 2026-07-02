@@ -31,20 +31,21 @@ func _ready() -> void:
 # -----------------------------------------------------------------------------
 
 ## Show target selection panel with valid targets
-func show_targets(valid_targets: Array, title: String = "", button_text: String = "Attaquer") -> void:
+func show_targets(valid_targets: Array, title: String = "", button_text: String = "") -> void:
 	_current_targets = valid_targets
+	var resolved_button: String = button_text if button_text != "" else Tr.t("popup.btn_attack")
 	# Clear previous targets
 	for child in targets_container.get_children():
 		child.queue_free()
 
 	# Update title
 	if valid_targets.is_empty():
-		title_label.text = "Aucune cible disponible"
+		title_label.text = Tr.t("toast.no_targets")
 		cancel_button.visible = true
 		visible = true
 		return
 	else:
-		title_label.text = title if title != "" else "Choisissez votre cible"
+		title_label.text = title if title != "" else Tr.t("zone.choose_player")
 
 	# Create rich entry for each valid target
 	for target in valid_targets:
@@ -78,7 +79,7 @@ func show_targets(valid_targets: Array, title: String = "", button_text: String 
 
 		# Action button
 		var btn = Button.new()
-		btn.text = button_text
+		btn.text = resolved_button
 		btn.custom_minimum_size = Vector2(100, 40)
 		btn.add_theme_font_size_override("font_size", 14)
 		btn.pressed.connect(_on_target_button_pressed.bind(target))
@@ -88,7 +89,6 @@ func show_targets(valid_targets: Array, title: String = "", button_text: String 
 
 	cancel_button.visible = true
 	visible = true
-	print("[TargetSelection] Showing %d targets" % valid_targets.size())
 
 
 ## Return the targets currently shown in the panel
@@ -117,4 +117,5 @@ func _on_target_button_pressed(target: Player) -> void:
 
 
 func _on_cancel_pressed() -> void:
+	target_selected.emit(null)
 	hide_panel()

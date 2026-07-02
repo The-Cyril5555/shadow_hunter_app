@@ -43,6 +43,18 @@ func set_my_player_index(idx: int) -> void:
 	_my_player_index = idx
 
 
+## Server: return the player index controlled by a peer (-1 if unknown)
+func get_player_for_peer(peer_id: int) -> int:
+	return _peer_to_player.get(peer_id, -1)
+
+
+## Server: forget a disconnected peer so broadcasts stop targeting it
+func remove_peer(peer_id: int) -> void:
+	if _peer_to_player.has(peer_id):
+		_peer_to_player.erase(peer_id)
+		print("[GameNetworkBridge] Peer %d removed from map" % peer_id)
+
+
 ## Returns true if local peer controls the current active player
 func is_my_turn() -> bool:
 	return _my_player_index == GameState.current_player_index
@@ -102,6 +114,11 @@ func send_ability_choice(confirmed: bool) -> void:
 	_rpc_client_action.rpc_id(1, {"type": "ability_choice", "confirmed": confirmed, "player_idx": _my_player_index})
 
 
+## Client: send the resolved zone effect choice (Weird Woods / Underworld / Altar)
+func send_zone_effect_result(result: Dictionary) -> void:
+	_rpc_client_action.rpc_id(1, {"type": "zone_effect", "result": result, "player_idx": _my_player_index})
+
+
 # -----------------------------------------------------------------------------
 # Public — Server broadcasts state
 # -----------------------------------------------------------------------------
@@ -138,6 +155,13 @@ func broadcast_toast(message: String, color: Color = Color.WHITE) -> void:
 	if not multiplayer.is_server():
 		return
 	_rpc_show_toast.rpc(message, color)
+
+
+## Send a toast to a single peer (e.g. action rejected by validation)
+func send_toast_to_peer(peer_id: int, message: String, color: Color = Color.WHITE) -> void:
+	if not multiplayer.is_server() or peer_id <= 0:
+		return
+	_rpc_show_toast.rpc_id(peer_id, message, color)
 
 
 ## Broadcast game over to all clients
@@ -194,11 +218,11 @@ func _rpc_request_ability_choice(title: String, text: String, yes_text: String, 
 func _rpc_client_action(action: Dictionary) -> void:
 	if not multiplayer.is_server():
 		return
-	# Identify player: prefer explicit index in payload, fall back to peer ID lookup
-	var player_idx: int = action.get("player_idx", -1)
+	# Identify player from the actual sender peer (authoritative — payload can't spoof it)
+	var sender_id = multiplayer.get_remote_sender_id()
+	var player_idx: int = _peer_to_player.get(sender_id, -1)
 	if player_idx < 0:
-		var sender_id = multiplayer.get_remote_sender_id()
-		player_idx = _peer_to_player.get(sender_id, -1)
+		player_idx = action.get("player_idx", -1)
 	if player_idx < 0:
 		push_warning("[GameNetworkBridge] Cannot identify player for action: %s" % str(action))
 		return
@@ -292,6 +316,8 @@ func _build_private_state(player: Player) -> Dictionary:
 		"hp_max": player.hp_max,
 		"ability_data": player.ability_data,
 		"hand": hand_data,
+		# Deduction beliefs computed server-side for this observer (detective notebook)
+		"beliefs": BeliefTracker.get_observer_snapshot(player.id),
 	}
 
 
@@ -328,6 +354,13 @@ func _apply_public_state(state: Dictionary) -> void:
 	var phase_int: int = state.get("phase", 0)
 	GameState.current_phase = phase_int as GameState.TurnPhase
 
+	# Store deck counts — clients have no deck instances, only these counters
+	GameState.net_deck_counts = {
+		"hermit": state.get("hermit_count", 0),
+		"white": state.get("white_count", 0),
+		"black": state.get("black_count", 0),
+	}
+
 
 func _apply_private_state(data: Dictionary) -> void:
 	var player_id: int = data.get("player_id", -1)
@@ -344,3 +377,8 @@ func _apply_private_state(data: Dictionary) -> void:
 		var card = Card.new()
 		card.from_dict(card_data)
 		player.hand.append(card)
+
+	# Apply server-computed deduction beliefs for the local observer
+	var beliefs: Dictionary = data.get("beliefs", {})
+	if not beliefs.is_empty():
+		BeliefTracker.apply_observer_snapshot(player_id, beliefs)

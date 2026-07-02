@@ -67,6 +67,7 @@
 	"toast.vision_trigger_steal_none": "Effect triggered but %s has no equipment",
 	"toast.vision_trigger_generic": "Effect triggered!",
 	"toast.vision_no_match": "No effect on %s",
+	"toast.vision_false_bet": "Wrong bet! %s takes %d damage",
 	"toast.reveal_full_heal": "%s reveals and recovers full HP!",
 
 	"toast.daniel_cannot_reveal": "Daniel can only reveal when another character dies",
@@ -83,8 +84,10 @@
 	"toast.curse_ability": "%s curses %s — ability disabled!",
 	"toast.ability_failed": "Ability failed",
 	"toast.bloody_feast": "Bloody Feast — %s re-attacks! (-2 HP)",
+	"toast.bloody_feast_damage": "Bloody Feast — %d damage to %s",
 	"toast.reattack_missed": "Re-attack missed!",
 	"toast.werewolf_counter": "Werewolf counterattack!",
+	"toast.werewolf_counter_damage": "Werewolf deals %d damage to %s",
 	"toast.counter_missed": "Counterattack missed!",
 	"toast.game_end": "Game over — %s!",
 
@@ -198,6 +201,11 @@
 
 	"info.no_card": "No cards",
 	"info.no_equipment": "None",
+	"info.victory_hunter": "Victory: eliminate all Shadows",
+	"info.victory_shadow": "Victory: eliminate all Hunters",
+	"info.victory_neutral": "Victory: personal objective",
+	"info.victory_personal": "Victory: %s",
+	"info.must_use_card": "You must use the drawn card",
 
 	"validate.dice_phase": "Can only roll dice during Movement phase",
 	"validate.dice_used": "Dice already rolled this turn",
@@ -268,5 +276,54 @@
 	"tutorial.finish": "Finish",
 	"tutorial.waiting": "Waiting...",
 	"tutorial.skip_step": "Skip this step",
-	"tutorial.skip": "Skip tutorial"
+	"tutorial.skip": "Skip tutorial",
+
+	"card_reveal.type_label": "Type: %s",
+	"card_reveal.deck_label": "Deck: %s",
+	"card_type.instant": "Instant",
+	"card_type.equipment": "Equipment",
+	"card_type.vision": "Vision",
+
+	"toast.wight_extra_turn": "%s plays an extra turn (%d remaining)",
+	"toast.murder_ray_target": "%s — Murder Ray on %s!",
+	"toast.ultra_soul_no_target": "No player at the Underworld Gate",
+	"toast.bob_robbery": "%s steals %s from %s instead of dealing damage!",
+	"toast.emi_teleports": "%s teleports to %s!",
+	"toast.vision_deceit_lied": "The Unknown is lying about their identity...",
+	"toast.vision_deceit_bot": "The Unknown refuses to reveal their identity.",
+	"toast.david_no_discard": "No equipment in the discard piles",
+
+	"notebook.title": "🔍 Detective notebook  [N]",
+	"notebook.subtitle": "Deductions based on public evidence only",
+
+	"toast.player_disconnected": "%s disconnected — a bot takes over",
+	"toast.server_lost": "Connection to server lost — returning to menu...",
+
+	"popup.murder_ray": "Murder Ray — Choose a target at the Underworld Gate",
+	"popup.murder_ray_btn": "Strike",
+
+	"werewolf.counter_title": "Counterattack",
+	"werewolf.counter_text": "Do you want to counterattack %s?",
+	"werewolf.counter_yes": "Counterattack",
+	"werewolf.counter_no": "Pass",
+
+	"charles.reattack_title": "Bloody Feast",
+	"charles.reattack_text": "Attack %s again? (You take 2 damage)",
+	"charles.reattack_yes": "Re-attack",
+	"charles.reattack_no": "Pass",
+
+	"bob.robbery_title": "Robbery",
+	"bob.robbery_text": "Steal equipment from %s instead of dealing damage?",
+	"bob.robbery_yes": "Steal",
+	"bob.robbery_no": "Deal damage",
+
+	"emi.teleport_title": "Teleportation",
+	"emi.teleport_text": "Do you want to teleport to %s instead of rolling dice?",
+	"emi.teleport_yes": "Teleport",
+	"emi.teleport_no": "Roll dice",
+
+	"unknown.deceit_title": "Deceit",
+	"unknown.deceit_text": "A card targets you (%s is aiming at you). Do you want to lie about your identity?",
+	"unknown.deceit_lie": "Lie",
+	"unknown.deceit_truth": "Reveal the truth"
 }

@@ -86,6 +86,8 @@ func _determine_winner() -> Dictionary:
 	if not GameState.last_win_result.is_empty():
 		return GameState.last_win_result
 	# Fallback: re-calculate (only works for faction victories and passive neutrals)
+	if GameState.win_checker == null:
+		return {}
 	return GameState.win_checker.check_win_conditions({"event": "game_ending"})
 
 
@@ -143,6 +145,14 @@ func _create_winner_card(player: Player) -> HBoxContainer:
 	character_label.add_theme_font_size_override("font_size", 18)
 	character_label.add_theme_color_override("font_color", Color(0.8, 0.8, 0.8))
 	card.add_child(character_label)
+
+	# Win condition for neutral winners
+	if player.faction == "neutral" and not player.win_condition.is_empty():
+		var condition_label = Label.new()
+		condition_label.text = " (%s)" % player.win_condition
+		condition_label.add_theme_font_size_override("font_size", 14)
+		condition_label.add_theme_color_override("font_color", Color(0.7, 0.9, 0.7))
+		card.add_child(condition_label)
 
 	return card
 
@@ -249,8 +259,11 @@ func _display_statistics() -> void:
 func _on_return_menu_pressed() -> void:
 	print("[GameOver] Returning to main menu")
 
-	# Reset game state
+	# Online game: close the connection before leaving
+	var was_network: bool = GameState.is_network_game
 	GameState.reset()
+	if was_network:
+		NetworkManager.disconnect_from_server()
 
 	# Transition to main menu
 	GameModeStateMachine.transition_to(GameModeStateMachine.GameMode.MAIN_MENU)
@@ -259,8 +272,13 @@ func _on_return_menu_pressed() -> void:
 func _on_play_again_pressed() -> void:
 	print("[GameOver] Starting new game")
 
-	# Reset game state
+	# Online game: a rematch goes through the lobby (new room)
+	var was_network: bool = GameState.is_network_game
 	GameState.reset()
+	if was_network:
+		NetworkManager.disconnect_from_server()
+		GameModeStateMachine.transition_to(GameModeStateMachine.GameMode.ONLINE_LOBBY)
+		return
 
 	# Transition back to game setup
 	GameModeStateMachine.transition_to(GameModeStateMachine.GameMode.GAME_SETUP)

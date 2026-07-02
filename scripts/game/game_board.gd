@@ -66,6 +66,15 @@ var _net_prev_hp: Array = []
 var _net_prev_alive: Array = []
 var _net_prev_revealed: Array = []
 
+## Online client: true while the server awaits our target choice (instant/ability/vision)
+var _net_selection_requested: bool = false
+
+## Online server: peer owing a delegated target selection (-1 = none)
+var _net_pending_target_peer: int = -1
+
+## Online server: peer owing a pending binary choice (-1 = none)
+var _net_pending_choice_peer: int = -1
+
 
 # -----------------------------------------------------------------------------
 # Lifecycle
@@ -99,6 +108,11 @@ func _ready() -> void:
 		_net.target_selection_requested.connect(_on_net_target_selection_requested)
 		_net.ability_choice_requested.connect(_on_net_ability_choice_requested)
 		_net.toast_received.connect(_on_net_toast_received)
+		# Mid-game disconnect handling
+		if multiplayer.is_server():
+			NetworkManager.peer_disconnected.connect(_on_net_peer_disconnected)
+		else:
+			NetworkManager.server_disconnected.connect(_on_net_server_disconnected)
 		print("[GameBoard] Network bridge active — I am player %d" % GameState.my_network_player_index)
 
 	# Initialize decks (server always, client only if not network)
@@ -151,6 +165,9 @@ func _ready() -> void:
 	# Connect zone effect popup signal
 	zone_effect_popup.effect_completed.connect(_on_zone_effect_completed)
 
+	# Connect passive ability feedback signal
+	GameState.passive_ability_system.passive_ability_triggered.connect(_on_passive_ability_triggered)
+
 	# Connect human player info hand card clicks
 	human_player_info.hand_card_clicked.connect(_on_hand_card_clicked)
 
@@ -169,6 +186,11 @@ func _ready() -> void:
 	# Add feedback toast
 	toast = FeedbackToast.new()
 	add_child(toast)
+
+	# Detective notebook for the human player (toggle: N)
+	if not (GameState.is_network_game and multiplayer.is_server()):
+		var notebook := DetectiveNotebook.new()
+		add_child(notebook)
 
 	# Start tutorial if in tutorial mode
 	if GameModeStateMachine.current_mode == GameModeStateMachine.GameMode.TUTORIAL:
@@ -377,9 +399,18 @@ func _update_phase_display() -> void:
 
 ## Update deck count display
 func _update_deck_displays() -> void:
-	var h = GameState.hermit_deck.get_card_count() if GameState.hermit_deck else 0
-	var w = GameState.white_deck.get_card_count() if GameState.white_deck else 0
-	var b = GameState.black_deck.get_card_count() if GameState.black_deck else 0
+	var h: int
+	var w: int
+	var b: int
+	if GameState.is_network_game and not multiplayer.is_server():
+		# Clients have no deck instances — use the counters from the last broadcast
+		h = GameState.net_deck_counts.get("hermit", 0)
+		w = GameState.net_deck_counts.get("white", 0)
+		b = GameState.net_deck_counts.get("black", 0)
+	else:
+		h = GameState.hermit_deck.get_card_count() if GameState.hermit_deck else 0
+		w = GameState.white_deck.get_card_count() if GameState.white_deck else 0
+		b = GameState.black_deck.get_card_count() if GameState.black_deck else 0
 	deck_info_label.text = "Hermit: %d\nWhite: %d\nBlack: %d" % [h, w, b]
 
 
@@ -415,7 +446,7 @@ func _on_phase_changed(new_phase: GameState.TurnPhase) -> void:
 				_execute_bot_turn()
 				return
 			# Emi "Téléportation" — send choice to client before broadcasting
-			if cp and cp.character_id == "emi" and not cp.ability_disabled and _net:
+			if cp and cp.character_id == "emi" and cp.is_revealed and not cp.ability_disabled and _net:
 				var paired_zone_id = _get_emi_paired_zone(cp.position_zone)
 				if paired_zone_id != "":
 					var peer_id = _net.get_peer_for_player(cp.id)
@@ -428,13 +459,8 @@ func _on_phase_changed(new_phase: GameState.TurnPhase) -> void:
 							Tr.t("emi.teleport_text", [pz.zone_name if pz else paired_zone_id]),
 							Tr.t("emi.teleport_yes"), Tr.t("emi.teleport_no"))
 						return  # Attend ability_choice (téléport) ou roll_dice (dé normal)
-		elif new_phase == GameState.TurnPhase.ACTION:
-			# Server auto-applies zone effects for human players in effect zones
-			var cp = GameState.get_current_player()
-			if cp and cp.is_human and _zone_has_effect(cp.position_zone):
-				_server_auto_apply_zone_effect(cp)
-				# zone effect handler broadcasts after applying
-				return
+		# ACTION phase: nothing special server-side — the broadcast below lets the
+		# acting client open its zone effect popup and reply with a "zone_effect" action
 		if _net:
 			_net.broadcast_public_state()
 			_net.send_all_private_states()
@@ -467,7 +493,7 @@ func _on_phase_changed(new_phase: GameState.TurnPhase) -> void:
 				human_player_info.switch_player(current_player)
 				human_player_info.show_movement_prompt(current_player)
 				# Emi "Teleportation" — offer teleport before dice roll
-				if current_player.character_id == "emi" and not current_player.ability_disabled:
+				if current_player.character_id == "emi" and current_player.is_revealed and not current_player.ability_disabled:
 					_show_emi_teleport_choice(current_player)
 				else:
 					var has_compass = _has_active_equipment(current_player, "double_dice_roll")
@@ -591,7 +617,7 @@ func _on_popup_zone_selected(zone_id: String) -> void:
 func _on_end_turn_pressed() -> void:
 	var validation = validator.can_end_turn()
 	if not validation.valid:
-		error_message.show_error(validation.reason)
+		_show_action_error(validation.reason)
 		return
 
 	var current_player = GameState.get_current_player()
@@ -599,7 +625,7 @@ func _on_end_turn_pressed() -> void:
 	# Cursed Sword Masamune — must attack if targets available
 	if not has_attacked_this_turn and _has_active_equipment(current_player, "forced_attack"):
 		if not get_valid_targets().is_empty():
-			error_message.show_error(Tr.t("combat.cursed_sword_force"))
+			_show_action_error(Tr.t("combat.cursed_sword_force"))
 			return
 
 	print("[GameBoard] %s ending turn" % current_player.display_name)
@@ -721,6 +747,12 @@ func _on_zone_effect_completed(result: Dictionary) -> void:
 	if current_player == null:
 		return
 
+	# Network client: relay the choice to the server, which applies it authoritatively
+	if GameState.is_network_game and not multiplayer.is_server() and _net:
+		has_drawn_this_turn = true
+		_net.send_zone_effect_result(_serialize_zone_effect_result(result))
+		return
+
 	var effect_type = result.get("type", "")
 
 	match effect_type:
@@ -801,73 +833,46 @@ func _on_zone_effect_completed(result: Dictionary) -> void:
 		human_player_info.update_after_draw(current_player, target_count, has_attacked_this_turn)
 
 
-## Server (network): auto-apply a zone effect without player interaction
-func _server_auto_apply_zone_effect(player: Player) -> void:
-	var zone_data = ZoneData.get_zone_by_id(player.position_zone)
-	var effect_type: String = zone_data.get("effect", "")
-	has_drawn_this_turn = true
-
-	match effect_type:
+## Client: turn a zone effect popup result into a network-safe dictionary
+func _serialize_zone_effect_result(result: Dictionary) -> Dictionary:
+	var etype: String = result.get("type", "")
+	var data: Dictionary = {"etype": etype}
+	match etype:
 		"damage_or_heal":
-			var alive = GameState.players.filter(func(p): return p.is_alive)
-			if alive.is_empty():
-				_net_broadcast_after_zone_effect()
-				return
-			var target: Player = alive[randi() % alive.size()]
-			if randf() > 0.5:
-				var died = target.take_damage(2)
-				GameState.damage_dealt.emit(player, target, 2)
-				if died:
-					GameState.player_died.emit(target, player)
-				if _net:
-					_net.broadcast_toast(Tr.t("toast.weird_woods_damage", [player.display_name, target.display_name]), Color(1.0, 0.5, 0.5))
-			else:
-				target.heal(1)
-				if _net:
-					_net.broadcast_toast(Tr.t("toast.weird_woods_heal", [player.display_name, target.display_name]), Color(0.5, 1.0, 0.5))
-
+			var target: Player = result.get("target")
+			data["target_id"] = target.id if target else -1
+			data["action"] = result.get("action", "")
 		"choose_deck":
-			var deck_types = ["hermit", "white", "black"]
-			var deck_type: String = deck_types[randi() % deck_types.size()]
-			var deck = _get_deck_by_type(deck_type)
-			if deck and deck.get_card_count() > 0:
-				var card = deck.draw_card()
-				if card:
-					_update_deck_displays()
-					if card.type == "instant":
-						_apply_instant_card_effect(card, player)
-						deck.discard_card(card)
-						_update_deck_displays()
-						if _instant_card_pending:
-							return  # target selection will broadcast after resolution
-					elif card.type == "equipment":
-						player.equipment.append(card)
-						GameState.equipment_equipped.emit(player, card)
-					elif card.type == "vision":
-						_start_vision_card(player, card, deck)
-						return  # vision flow broadcasts after resolution
-
+			data["deck_type"] = result.get("deck_type", "")
 		"steal_equipment":
-			var targets_with_equip = GameState.players.filter(
-				func(p): return p.is_alive and p != player and not p.equipment.is_empty()
-			)
-			if not targets_with_equip.is_empty():
-				var target: Player = targets_with_equip[randi() % targets_with_equip.size()]
-				var card: Card = target.equipment[randi() % target.equipment.size()]
-				target.equipment.erase(card)
-				player.equipment.append(card)
-				GameState.equipment_equipped.emit(player, card)
-				if _net:
-					_net.broadcast_toast(Tr.t("toast.steals_equip", [player.display_name, card.name, target.display_name]), Color(1.0, 0.7, 0.2))
-
-	_net_broadcast_after_zone_effect()
+			var target: Player = result.get("target")
+			var card: Card = result.get("card")
+			data["target_id"] = target.id if target else -1
+			data["card_index"] = target.equipment.find(card) if target and card else -1
+	return data
 
 
-## Broadcast state after server auto-applies a zone effect
-func _net_broadcast_after_zone_effect() -> void:
-	if _net:
-		_net.broadcast_public_state()
-		_net.send_all_private_states()
+## Server: rebuild a zone effect result dict from a client's serialized choice
+func _deserialize_zone_effect_result(player: Player, data: Dictionary) -> Dictionary:
+	var etype: String = data.get("etype", "")
+	match etype:
+		"damage_or_heal":
+			var target = _find_player_by_id(data.get("target_id", -1))
+			var action: String = data.get("action", "")
+			if target and target.is_alive and action in ["damage", "heal"]:
+				return {"type": "damage_or_heal", "target": target, "action": action}
+		"choose_deck":
+			var deck_type: String = data.get("deck_type", "")
+			if deck_type in ["hermit", "white", "black"]:
+				return {"type": "choose_deck", "deck_type": deck_type}
+		"steal_equipment":
+			var target = _find_player_by_id(data.get("target_id", -1))
+			var card_index: int = data.get("card_index", -1)
+			if target and target != player and card_index >= 0 and card_index < target.equipment.size():
+				return {"type": "steal_equipment", "target": target, "card": target.equipment[card_index]}
+		"cancelled":
+			return {"type": "cancelled"}
+	return {"type": "cancelled"}
 
 
 ## Get deck by type name (hermit/white/black)
@@ -1058,15 +1063,15 @@ func _get_smart_card_target(player: Player, effect_type: String) -> Player:
 
 	match effect_type:
 		"heal_d6":
-			# Heal most damaged ally (or self)
-			var best: Player = player
-			var best_missing: int = player.hp_max - player.hp
+			# Blessing: targets another player only — heal most damaged ally
+			var best: Player = null
+			var best_missing: int = 0
 			for a in allies:
 				var missing = a.hp_max - a.hp
 				if missing > best_missing:
 					best = a
 					best_missing = missing
-			return best if best_missing > 0 else player
+			return best
 
 		"set_damage":
 			# Heal ally with damage > 7, or harm enemy with damage < 7
@@ -1159,7 +1164,7 @@ func _apply_instant_card_effect(card: Card, player: Player) -> void:
 			_log_card_effect(card, player, effect_type, effect_value)
 			return
 		"extra_turn":
-			player.set_meta("extra_turn", true)
+			player.set_meta("extra_turns", player.get_meta("extra_turns", 0) + 1)
 			if toast:
 				_toast(Tr.t("toast.extra_turn", [PlayerColors.get_label(player)]), Color(0.3, 0.8, 1.0))
 			_log_card_effect(card, player, effect_type, 0)
@@ -1185,8 +1190,14 @@ func _apply_instant_card_effect(card: Card, player: Player) -> void:
 			var d6 = randi() % 6 + 1
 			var d4 = randi() % 4 + 1
 			var dice_sum = d6 + d4
-			var zone_id = ZoneData.get_zone_for_dice_sum(dice_sum, GameState.zone_positions)
 			var dmg = card.effect.get("damage", 3)
+			# Dynamite rule: on a sum of 7, no characters are affected
+			if dice_sum == 7:
+				if toast:
+					_toast(Tr.t("toast.dynamite_no_zone", [d6, d4, dice_sum]), Color(0.5, 0.5, 0.5))
+				_log_card_effect(card, player, effect_type, 0)
+				return
+			var zone_id = ZoneData.get_zone_for_dice_sum(dice_sum, GameState.zone_positions)
 			if zone_id == "":
 				if toast:
 					_toast(Tr.t("toast.dynamite_no_zone", [d6, d4, dice_sum]), Color(0.5, 0.5, 0.5))
@@ -1257,9 +1268,7 @@ func _get_instant_card_popup_info(effect_type: String, card: Card) -> Dictionary
 	var all_others = _get_all_alive_others(GameState.get_current_player())
 	match effect_type:
 		"heal_d6":
-			# Blessing: can target self too
-			var targets = all_others + [GameState.get_current_player()]
-			return {"title": Tr.t("popup.heal_d6", [card.name]), "button": Tr.t("popup.btn_heal"), "targets": targets}
+			return {"title": Tr.t("popup.heal_d6", [card.name]), "button": Tr.t("popup.btn_heal"), "targets": all_others}
 		"set_damage":
 			var targets = all_others + [GameState.get_current_player()]
 			return {"title": Tr.t("popup.set_damage", [card.name, card.get_effect_value()]), "button": Tr.t("popup.btn_apply"), "targets": targets}
@@ -1287,7 +1296,7 @@ func _apply_instant_card_on_target(card: Card, player: Player, target: Player) -
 	var effect = card.effect
 
 	# Talisman — target immune to black card damage effects
-	if effect_type in ["vampire_drain", "mutual_damage", "self_damage_gamble"] and _has_active_equipment(target, "immunity_black_cards"):
+	if effect_type in ["vampire_drain", "mutual_damage"] and _has_active_equipment(target, "immunity_black_cards"):
 		if toast:
 			_toast(Tr.t("toast.talisman_protects", [PlayerColors.get_label(target)]), Color(0.3, 0.9, 0.5))
 		human_player_info.update_display()
@@ -1451,7 +1460,10 @@ func _ask_binary_choice(title: String, text: String, yes_text: String, no_text: 
 		var peer_id: int = _net.get_peer_for_player(player.id) if player and _net else -1
 		if peer_id > 0:
 			_net.request_ability_choice_from_peer(peer_id, title, text, yes_text, no_text)
-			return await _reveal_choice_made
+			_net_pending_choice_peer = peer_id
+			var choice: bool = await _reveal_choice_made
+			_net_pending_choice_peer = -1
+			return choice
 		return false  # bot ou peer introuvable
 	# Local / offline: dialog normal
 	var dialog = ConfirmationDialog.new()
@@ -1518,12 +1530,8 @@ func _start_vision_card(player: Player, card: Card, deck: DeckManager) -> void:
 		_finish_vision_card(player)
 		return
 
-	# In server network mode: auto-select a target (no UI)
-	if GameState.is_network_game and multiplayer.is_server():
-		var auto_target: Player = targets[randi() % targets.size()]
-		await _resolve_vision_card(auto_target)
-		return
-
+	# Server network mode: register targets in the panel (headless, invisible) —
+	# the choice is delegated to the drawing client in _on_net_remote_action
 	target_selection_panel.show_targets(targets, Tr.t("popup.vision_title"), Tr.t("popup.vision_send"))
 
 
@@ -1545,6 +1553,8 @@ func _resolve_vision_card(target: Player) -> void:
 				# Bot Unknown always lies to avoid faction-based effects
 				if toast:
 					_toast(Tr.t("toast.vision_deceit_bot"), Color(0.5, 0.5, 0.8))
+				# Everyone SAW "no effect" — the lie feeds the deduction tracker
+				GameState.vision_resolved.emit(current_player, target, _vision_card.effect if _vision_card else {}, false)
 				_update_display()
 				_finish_vision_card(current_player)
 				return
@@ -1632,10 +1642,22 @@ func _apply_vision_card_effect(target: Player, current_player: Player, effect: D
 					_toast(Tr.t("toast.vision_trigger_generic"), Color(0.8, 0.6, 1.0))
 		print("[GameBoard] Vision condition matched for %s" % target.display_name)
 	else:
-		# Condition does not match — no effect
-		if toast:
-			_toast(Tr.t("toast.vision_no_match", [target.display_name]), Color(0.7, 0.7, 0.7))
+		# Condition does not match — false bet: heal_or_damage and give_equipment_or_damage deal 1 damage
+		if action in ["heal_or_damage", "give_equipment_or_damage"]:
+			var died = target.take_damage(value, current_player)
+			GameState.damage_dealt.emit(current_player, target, value)
+			damage_tracker.update_player_hp(target)
+			if toast:
+				_toast(Tr.t("toast.vision_false_bet", [target.display_name, value]), Color(1.0, 0.4, 0.1))
+			if died:
+				GameState.player_died.emit(target, current_player)
+		else:
+			if toast:
+				_toast(Tr.t("toast.vision_no_match", [target.display_name]), Color(0.7, 0.7, 0.7))
 		print("[GameBoard] Vision condition not matched for %s" % target.display_name)
+
+	# Broadcast public vision evidence for deduction (BeliefTracker)
+	GameState.vision_resolved.emit(current_player, target, effect, condition_met)
 
 	_update_display()
 	_finish_vision_card(current_player)
@@ -1721,10 +1743,23 @@ func _on_net_remote_action(player_idx: int, action: Dictionary) -> void:
 			_on_ability_pressed()
 		"end_turn":
 			_on_end_turn_pressed()
+		"zone_effect":
+			# Client resolved a zone effect popup (Weird Woods / Underworld / Altar)
+			if has_drawn_this_turn:
+				push_warning("[GameBoard] Player %d sent zone_effect but already acted" % player_idx)
+				return
+			if not _zone_has_effect(player.position_zone):
+				push_warning("[GameBoard] Player %d sent zone_effect outside an effect zone" % player_idx)
+				return
+			var result: Dictionary = _deserialize_zone_effect_result(player, action.get("result", {}))
+			await _on_zone_effect_completed(result)
 		"target_selected":
-			var target_id: int = action.get("target", -1)
-			var target = _find_player_by_id(target_id)
-			if target:
+			# Only meaningful while the server awaits a delegated choice
+			if _vision_pending or _instant_card_pending or _pending_ability:
+				_net_pending_target_peer = -1
+				var target_id: int = action.get("target", -1)
+				var target = _find_player_by_id(target_id)
+				# null target = client cancelled — _on_target_selected resets pending state
 				target_selection_panel._emit_selection(target)
 		"reveal_choice":
 			_reveal_choice_made.emit(action.get("confirmed", false))
@@ -1744,17 +1779,21 @@ func _on_net_remote_action(player_idx: int, action: Dictionary) -> void:
 							_net.send_all_private_states()
 				# NO → le client envoie roll_dice via le dice popup déjà visible
 				return
-			# Cas général (Bob/Charles/Loup-Garou/Inconnu) : débloque la coroutine
+			# Cas général (Bob/Charles/Loup-Garou/Inconnu) : débloque la coroutine,
+			# puis broadcast ci-dessous (l'effet est appliqué pendant l'emit)
 			_reveal_choice_made.emit(choice)
-			return
-	# After synchronous action: check if target selection is now pending
-	# If so, delegate to the acting client rather than broadcasting immediately
-	if (_instant_card_pending or _pending_ability) and _net:
+	# After a synchronous action: if a target choice is now pending (vision card,
+	# instant card, ability), delegate it to the acting client instead of broadcasting
+	if action_type in ["draw_card", "ability", "zone_effect"] \
+			and (_vision_pending or _instant_card_pending or _pending_ability) and _net:
 		var peer_id = _net.get_peer_for_player(player_idx)
 		if peer_id > 0:
 			var target_ids: Array = target_selection_panel.get_current_targets().map(func(p): return p.id)
+			_net_pending_target_peer = peer_id
+			_net.broadcast_public_state()
+			_net.send_all_private_states()
 			_net.request_target_selection_from_peer(peer_id, target_ids)
-		return  # broadcast will happen after target is selected and card resolves
+			return  # broadcast will happen after target is selected and card resolves
 	# Normal broadcast
 	if _net:
 		_net.broadcast_public_state()
@@ -1826,12 +1865,92 @@ func _on_net_toast_received(message: String, color: Color) -> void:
 		toast.show_toast(message, color)
 
 
+## Server: a peer dropped mid-game — a bot takes over so the game never stalls
+func _on_net_peer_disconnected(peer_id: int) -> void:
+	if _game_ended or not GameState.is_network_game or not multiplayer.is_server() or _net == null:
+		return
+	var idx: int = _net.get_player_for_peer(peer_id)
+	_net.remove_peer(peer_id)
+	if idx < 0 or idx >= GameState.players.size():
+		return
+	var player: Player = GameState.players[idx]
+	if not player.is_human:
+		return
+	print("[GameBoard] Player %s disconnected — bot takes over" % player.display_name)
+	player.is_human = false
+	_toast(Tr.t("toast.player_disconnected", [player.display_name]), Color(1.0, 0.6, 0.3))
+
+	# Unblock a binary choice this peer owed (Bob/Werewolf/Charles/Unknown/reveal)
+	if _net_pending_choice_peer == peer_id:
+		_net_pending_choice_peer = -1
+		_reveal_choice_made.emit(false)
+
+	# Resolve a delegated target selection this peer owed (vision/instant/ability)
+	if _net_pending_target_peer == peer_id:
+		_net_pending_target_peer = -1
+		if _vision_pending or _instant_card_pending or _pending_ability:
+			var targets: Array = target_selection_panel.get_current_targets()
+			if not targets.is_empty():
+				target_selection_panel._emit_selection(targets[randi() % targets.size()])
+			else:
+				target_selection_panel._emit_selection(null)
+
+	# If it was their turn and nothing is pending, let the bot finish the turn
+	if not _game_ended and GameState.get_current_player() == player \
+			and not (_vision_pending or _instant_card_pending or _pending_ability):
+		if GameState.current_phase == GameState.TurnPhase.MOVEMENT and not has_rolled_this_turn:
+			_execute_bot_turn()
+		else:
+			_force_end_turn()
+
+	if _net:
+		_net.broadcast_public_state()
+		_net.send_all_private_states()
+
+
+## Server: advance phases to hand the turn to the next player (disconnect recovery)
+func _force_end_turn() -> void:
+	match GameState.current_phase:
+		GameState.TurnPhase.MOVEMENT:
+			GameState.advance_phase()
+			GameState.advance_phase()
+			GameState.advance_phase()
+		GameState.TurnPhase.ACTION:
+			GameState.advance_phase()
+			GameState.advance_phase()
+		GameState.TurnPhase.END:
+			GameState.advance_phase()
+
+
+## Client: lost the server mid-game — inform the player and return to the menu
+func _on_net_server_disconnected() -> void:
+	if _game_ended:
+		return
+	_game_ended = true
+	if toast:
+		toast.show_toast(Tr.t("toast.server_lost"), Color(1.0, 0.4, 0.4))
+	await get_tree().create_timer(2.5).timeout
+	GameState.reset()
+	NetworkManager.disconnect_from_server()
+	GameModeStateMachine.transition_to(GameModeStateMachine.GameMode.MAIN_MENU)
+
+
 ## Show a toast: broadcast to all clients in server network mode, otherwise local
 func _toast(message: String, color: Color = Color.WHITE) -> void:
 	if _net and multiplayer.is_server():
 		_net.broadcast_toast(message, color)
 	elif toast:
 		toast.show_toast(message, color)
+
+
+## Show a validation error: local popup, or targeted toast to the acting client online
+func _show_action_error(reason: String) -> void:
+	if GameState.is_network_game and multiplayer.is_server() and _net:
+		var peer_id: int = _net.get_peer_for_player(GameState.current_player_index)
+		if peer_id > 0:
+			_net.send_toast_to_peer(peer_id, reason, Color(1.0, 0.4, 0.4))
+	else:
+		error_message.show_error(reason)
 
 
 ## Client: show the right interactive UI when state is received from server
@@ -1866,6 +1985,11 @@ func _net_update_client_ui() -> void:
 				# Mirror local auto-draw: send draw_card to server immediately
 				has_drawn_this_turn = true
 				_net.send_draw_card()
+			elif not has_drawn_this_turn and _zone_has_effect(player.position_zone):
+				# Effect zone (Weird Woods / Underworld / Altar): let the player choose,
+				# the result is relayed to the server in _on_zone_effect_completed
+				has_drawn_this_turn = true
+				_show_zone_effect(player)
 			else:
 				_show_action_prompt(player)
 		GameState.TurnPhase.END:
@@ -1881,7 +2005,7 @@ func _on_net_private_state(_data: Dictionary) -> void:
 	human_player_info.update_display()
 
 
-## Client: server requests that we show a target selection panel (for instant cards / abilities)
+## Client: server requests that we show a target selection panel (for instant cards / abilities / visions)
 func _on_net_target_selection_requested(target_ids: Array) -> void:
 	if multiplayer.is_server():
 		return
@@ -1891,6 +2015,7 @@ func _on_net_target_selection_requested(target_ids: Array) -> void:
 		if p:
 			targets.append(p)
 	if not targets.is_empty():
+		_net_selection_requested = true
 		target_selection_panel.show_targets(targets)
 
 
@@ -1934,8 +2059,9 @@ func _server_roll_combat_damage(attacker: Player, target: Player) -> int:
 		base_damage = abs(d6 - d4)
 	var equip_bonus: int = attacker.get_attack_damage_bonus()
 	var defense: int = target.get_defense_bonus()
-	if equip_bonus > 0 or defense > 0:
-		return max(1, base_damage + equip_bonus - defense)
+	var attacker_defense: int = attacker.get_defense_bonus()
+	if equip_bonus > 0 or defense > 0 or attacker_defense > 0:
+		return max(1, base_damage + equip_bonus - defense - attacker_defense)
 	return base_damage
 
 
@@ -1944,6 +2070,11 @@ func _find_player_by_id(player_id: int) -> Player:
 		if p.id == player_id:
 			return p
 	return null
+
+
+func _on_passive_ability_triggered(player: Player, ability_name: String, _effect: Dictionary) -> void:
+	if toast:
+		_toast("%s — %s" % [player.display_name, ability_name], PlayerColors.get_color(player.id))
 
 
 func _on_damage_dealt(_attacker: Player, victim: Player, _amount: int) -> void:
@@ -2120,8 +2251,28 @@ func _apply_bot_zone_effect(bot: Player, result: Dictionary) -> void:
 						bot.equipment.append(card)
 						GameState.equipment_equipped.emit(bot, card)
 					elif card.type == "vision":
-						# Vision from Underworld draw — resolve inline (bot already chose deck)
-						pass  # BotController handles vision resolution separately
+						# Resolve bot vision card inline — pick a random alive target and evaluate
+						var alive_others: Array = GameState.players.filter(func(p: Player) -> bool: return p != bot and p.is_alive)
+						if alive_others.is_empty():
+							deck.discard_card(card)
+							_update_deck_displays()
+						else:
+							var vision_target: Player = alive_others[randi() % alive_others.size()]
+							var v_effect: Dictionary = card.effect if card.effect is Dictionary else {}
+							var v_condition_type: String = v_effect.get("condition_type", "")
+							var v_condition_factions: Array = v_effect.get("condition_factions", [])
+							var v_cond_value: int = v_effect.get("condition_value", 0)
+							var v_condition_met: bool = false
+							if v_condition_type != "":
+								match v_condition_type:
+									"hp_max_lte": v_condition_met = vision_target.hp_max <= v_cond_value
+									"hp_max_gte": v_condition_met = vision_target.hp_max >= v_cond_value
+							elif not v_condition_factions.is_empty():
+								v_condition_met = vision_target.faction in v_condition_factions
+							_apply_bot_vision_result(bot, {
+								"card": card, "deck": deck,
+								"target": vision_target, "condition_met": v_condition_met
+							})
 			else:
 				if toast:
 					_toast(Tr.t("toast.deck_type_empty", [deck_type]), Color(1.0, 0.6, 0.3))
@@ -2214,8 +2365,18 @@ func _apply_bot_vision_result(bot: Player, result: Dictionary) -> void:
 					if toast:
 						_toast(Tr.t("toast.vision_steal", [PlayerColors.get_label(bot), stolen_card.name, PlayerColors.get_label(target)]), Color(1.0, 0.7, 0.2))
 	else:
-		if toast:
-			_toast(Tr.t("toast.vision_no_effect", [PlayerColors.get_label(target)]), Color(0.7, 0.7, 0.7))
+		# False bet: heal_or_damage and give_equipment_or_damage deal 1 damage
+		if action in ["heal_or_damage", "give_equipment_or_damage"]:
+			var died = target.take_damage(value, bot)
+			GameState.damage_dealt.emit(bot, target, value)
+			damage_tracker.update_player_hp(target)
+			if toast:
+				_toast(Tr.t("toast.vision_false_bet", [PlayerColors.get_label(target), value]), Color(1.0, 0.4, 0.1))
+			if died:
+				GameState.player_died.emit(target, bot)
+		else:
+			if toast:
+				_toast(Tr.t("toast.vision_no_effect", [PlayerColors.get_label(target)]), Color(0.7, 0.7, 0.7))
 
 	# Discard vision card
 	if card and deck:
@@ -2368,20 +2529,8 @@ func _on_ability_pressed() -> void:
 			if toast:
 				_toast(Tr.t("toast.ability_unavailable"), Color(1.0, 0.6, 0.3))
 
-	# Server network mode: auto-select target for abilities that need one
-	if GameState.is_network_game and multiplayer.is_server() and _pending_ability:
-		var auto_targets: Array = []
-		match char_id:
-			"franklin", "george", "fuka":
-				auto_targets = _get_all_alive_others(player)
-			"ellen":
-				auto_targets = _get_revealed_with_abilities(player)
-			"ultra_soul":
-				auto_targets = _get_players_in_zone("underworld", player)
-		if not auto_targets.is_empty():
-			_resolve_ability_on_target(auto_targets[randi() % auto_targets.size()])
-		else:
-			_pending_ability = false
+	# Server network mode: target choice for pending abilities is delegated to the
+	# acting client in _on_net_remote_action (panel already holds the valid targets)
 
 
 ## Resolve ability on selected target
@@ -2491,6 +2640,26 @@ func _on_attack_button_pressed() -> void:
 
 ## Handle target selection
 func _on_target_selected(target: Player) -> void:
+	# Network client answering a server-requested selection: relay (including cancel)
+	if GameState.is_network_game and not multiplayer.is_server() and _net and _net_selection_requested:
+		_net_selection_requested = false
+		_net.send_target_selected(target.id if target else -1)
+		return
+
+	# Player cancelled the selection: reset pending states and return to action prompt
+	if target == null:
+		_vision_pending = false
+		_vision_card = null
+		_instant_card_pending = false
+		_instant_card = null
+		_instant_card_player = null
+		_pending_ability = false
+		var current = GameState.get_current_player()
+		if current and current.is_human:
+			var target_count = get_valid_targets().size()
+			human_player_info.update_after_draw(current, target_count, has_attacked_this_turn)
+		return
+
 	# Network client: relay to server only for server-initiated selections (instant/ability)
 	# Attack target is already handled via send_attack in _on_action_prompt_chosen
 	if GameState.is_network_game and not multiplayer.is_server() and _net:
@@ -2546,6 +2715,10 @@ func _on_combat_roll_completed(total_damage: int) -> void:
 		# Missed attack (D6 == D4)
 		if toast:
 			_toast(Tr.t("toast.attack_missed"), Color(1.0, 0.6, 0.3))
+		var miss_card = character_cards_row.get_card_panel(target.id)
+		if miss_card:
+			_show_floating_miss(miss_card.global_position + Vector2(30, -10))
+			_play_miss_dodge(miss_card)
 	else:
 		# Bob "Pillage" — offer to steal equipment instead of dealing damage
 		if attacker.character_id == "bob" and attacker.is_revealed and not attacker.ability_disabled:
@@ -2582,7 +2755,7 @@ func _on_combat_roll_completed(total_damage: int) -> void:
 		if toast:
 			var msg = "%s inflige %d dégâts à %s" % [attacker.display_name, total_damage, target.display_name]
 			if not target.is_alive:
-				msg += " — Mort !"
+				msg += Tr.t("toast.dead")
 			_toast(msg, Color(1.0, 0.5, 0.5))
 
 		# Machine Gun — AoE attack: hit all other valid targets in attack zone
@@ -2599,7 +2772,7 @@ func _on_combat_roll_completed(total_damage: int) -> void:
 				if toast:
 					var aoe_msg = "Machine Gun : %s subit %d dégâts" % [aoe_target.display_name, total_damage]
 					if not aoe_target.is_alive:
-						aoe_msg += " — Mort !"
+						aoe_msg += Tr.t("toast.dead")
 					_toast(aoe_msg, Color(1.0, 0.5, 0.5))
 
 		# Werewolf counterattack check
@@ -2661,6 +2834,8 @@ func _play_card_strike_animation(attacker: Player, target: Player, damage: int) 
 	if target_card == null:
 		return
 
+	_show_attack_announcement(attacker.display_name, target.display_name)
+
 	var lunge_duration = PolishConfig.get_value("attack_lunge_duration", 0.15)
 	var bounce_duration = PolishConfig.get_value("attack_bounce_duration", 0.25)
 
@@ -2692,6 +2867,14 @@ func _play_card_strike_animation(attacker: Player, target: Player, damage: int) 
 		var flash_tween = create_tween()
 		flash_tween.tween_property(target_card, "modulate", Color(1.5, 0.4, 0.4, 1.0), 0.1)
 		flash_tween.tween_property(target_card, "modulate", Color(1.0, 1.0, 1.0, 1.0), 0.3)
+
+		# Shake + squish on target card
+		AnimationHelper.shake(target_card, "damage_shake_intensity")
+		if not AnimationOrchestrator.is_reduced_motion():
+			var squish_tween = create_tween()
+			squish_tween.tween_property(target_card, "scale", Vector2(0.9, 0.9), 0.08)
+			squish_tween.tween_property(target_card, "scale", Vector2(1.0, 1.0), 0.25)\
+				.set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 
 		# Bounce back
 		var bounce_tween = create_tween()
@@ -2784,6 +2967,67 @@ func _play_heal_visual(player: Player, amount: int) -> void:
 		flash_tween.tween_property(card_panel, "modulate", Color(1.0, 1.0, 1.0, 1.0), 0.3)
 
 
+## Show floating "MISS!" text on a card position
+func _show_floating_miss(world_pos: Vector2) -> void:
+	var label = Label.new()
+	label.text = "MISS!"
+	label.add_theme_font_size_override("font_size", 28)
+	label.add_theme_color_override("font_color", Color(0.9, 0.9, 0.2))
+	label.add_theme_color_override("font_outline_color", Color(0, 0, 0))
+	label.add_theme_constant_override("outline_size", 3)
+	label.global_position = world_pos + Vector2(-15, -20)
+	label.z_index = 100
+	add_child(label)
+
+	var float_duration = PolishConfig.get_value("damage_float_duration", 0.8)
+	var float_distance = PolishConfig.get_value("damage_float_distance", 80)
+
+	var tween = create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(label, "global_position:y", world_pos.y - float_distance, float_duration)\
+		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tween.tween_property(label, "modulate:a", 0.0, float_duration * 0.6)\
+		.set_delay(float_duration * 0.4)
+	tween.set_parallel(false)
+	tween.tween_callback(label.queue_free)
+
+
+## Play a dodge wobble animation on a card when an attack misses
+func _play_miss_dodge(card: Control) -> void:
+	if not is_instance_valid(card):
+		return
+	if AnimationOrchestrator.is_reduced_motion():
+		return
+	var tween = create_tween()
+	tween.tween_property(card, "rotation_degrees", 5.0, 0.08).set_trans(Tween.TRANS_SINE)
+	tween.tween_property(card, "rotation_degrees", -5.0, 0.1).set_trans(Tween.TRANS_SINE)
+	tween.tween_property(card, "rotation_degrees", 0.0, 0.12).set_trans(Tween.TRANS_SINE)
+
+
+## Show a brief attack announcement banner: "Attacker → Target"
+func _show_attack_announcement(attacker_name: String, target_name: String) -> void:
+	var label = Label.new()
+	label.text = "%s \u2192 %s" % [attacker_name, target_name]
+	label.add_theme_font_size_override("font_size", 22)
+	label.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
+	label.add_theme_color_override("font_outline_color", Color(0, 0, 0))
+	label.add_theme_constant_override("outline_size", 4)
+	label.z_index = 200
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	add_child(label)
+	# Center near the top of the viewport
+	await get_tree().process_frame
+	var viewport_size = get_viewport_rect().size
+	label.global_position = Vector2((viewport_size.x - label.size.x) * 0.5, 80.0)
+	label.modulate.a = 0.0
+
+	var tween = create_tween()
+	tween.tween_property(label, "modulate:a", 1.0, 0.1)
+	tween.tween_interval(0.5)
+	tween.tween_property(label, "modulate:a", 0.0, 0.3)
+	tween.tween_callback(label.queue_free)
+
+
 ## Check for Charles "Bloody Feast" re-attack (2 self-damage to attack again)
 func _check_charles_reattack(attacker: Player, target: Player) -> void:
 	if not attacker.is_alive or not target.is_alive:
@@ -2837,9 +3081,9 @@ func _check_charles_reattack(attacker: Player, target: Player) -> void:
 			_update_dead_player_ui(target)
 		damage_tracker.update_player_hp(target)
 		if toast:
-			var msg = "Bloody Feast — %d dégâts à %s" % [result.total, target.display_name]
+			var msg = Tr.t("toast.bloody_feast_damage", [result.total, target.display_name])
 			if not target.is_alive:
-				msg += " — Mort !"
+				msg += Tr.t("toast.dead")
 			_toast(msg, Color(0.8, 0.3, 0.3))
 		_update_display()
 
@@ -2857,6 +3101,8 @@ func _show_unknown_deceit_choice(target: Player, drawer: Player, effect: Diction
 		# Unknown lies — card condition "misses"
 		if toast:
 			_toast(Tr.t("toast.vision_deceit_lied"), Color(0.5, 0.5, 0.8))
+		# Public observation: "no effect"
+		GameState.vision_resolved.emit(drawer, target, effect, false)
 		_update_display()
 		_finish_vision_card(drawer)
 	else:
@@ -2967,9 +3213,9 @@ func _check_werewolf_counterattack(target: Player, attacker: Player) -> void:
 			_update_dead_player_ui(attacker)
 		damage_tracker.update_player_hp(attacker)
 		if toast:
-			var msg = "Loup-Garou inflige %d dégâts à %s" % [result.total, attacker.display_name]
+			var msg = Tr.t("toast.werewolf_counter_damage", [result.total, attacker.display_name])
 			if not attacker.is_alive:
-				msg += " — Mort !"
+				msg += Tr.t("toast.dead")
 			_toast(msg, Color(0.7, 0.4, 1.0))
 		_update_display()
 
@@ -3052,14 +3298,9 @@ func _force_card_use(player: Player, card: Card) -> void:
 			_show_action_prompt(player)
 			return
 
-		# In server network mode: auto-select a target (server-authoritative, no UI)
-		if GameState.is_network_game and multiplayer.is_server():
-			var auto_target: Player = valid_targets[randi() % valid_targets.size()]
-			_apply_instant_card_on_target(card, player, auto_target)
-			has_drawn_this_turn = true
-			return
-
 		# Disable end turn button until card is used
+		# (server network mode: the target choice is delegated to the acting client
+		# in _on_net_remote_action — the panel below just registers the valid targets)
 		if player.is_human:
 			human_player_info.force_card_use()
 
@@ -3085,9 +3326,10 @@ func _on_game_over(winning_faction: String) -> void:
 		return
 	_game_ended = true
 	print("[GameBoard] Game Over! %s wins!" % winning_faction)
-	# Network server: broadcast to all clients before transitioning
+	# Network server: broadcast to all clients, then free the room for a new game
 	if GameState.is_network_game and multiplayer.is_server() and _net:
 		_net.broadcast_game_over(winning_faction)
+		NetworkManager.end_started_rooms()
 
 	# Hide action prompts
 	human_player_info.hide_prompt()

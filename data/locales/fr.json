@@ -67,6 +67,7 @@
 	"toast.vision_trigger_steal_none": "L'effet s'est déclenché mais %s n'a pas d'équipement",
 	"toast.vision_trigger_generic": "L'effet s'est déclenché !",
 	"toast.vision_no_match": "Aucun effet sur %s",
+	"toast.vision_false_bet": "Mauvais pari ! %s reçoit %d dégât(s)",
 	"toast.reveal_full_heal": "%s se révèle et récupère tous ses HP !",
 
 	"toast.daniel_cannot_reveal": "Daniel ne peut se révéler qu'au décès d'un autre personnage",
@@ -83,8 +84,10 @@
 	"toast.curse_ability": "%s maudit %s — compétence désactivée !",
 	"toast.ability_failed": "Échec de la compétence",
 	"toast.bloody_feast": "Festin Sanglant — %s re-attaque ! (-2 PV)",
+	"toast.bloody_feast_damage": "Festin Sanglant — %d dégâts à %s",
 	"toast.reattack_missed": "Re-attaque ratée !",
 	"toast.werewolf_counter": "Contre-attaque du Loup-Garou !",
+	"toast.werewolf_counter_damage": "Loup-Garou inflige %d dégâts à %s",
 	"toast.counter_missed": "Contre-attaque ratée !",
 	"toast.game_end": "Fin de partie — %s !",
 
@@ -198,6 +201,11 @@
 
 	"info.no_card": "Pas de carte",
 	"info.no_equipment": "Aucun",
+	"info.victory_hunter": "Victoire : éliminer toutes les Ombres",
+	"info.victory_shadow": "Victoire : éliminer tous les Chasseurs",
+	"info.victory_neutral": "Victoire : objectif personnel",
+	"info.victory_personal": "Victoire : %s",
+	"info.must_use_card": "Vous devez utiliser la carte piochée",
 
 	"validate.dice_phase": "Peut seulement lancer les dés pendant la phase Mouvement",
 	"validate.dice_used": "Dés déjà lancés ce tour",
@@ -279,6 +287,12 @@
 	"toast.vision_deceit_bot": "L'Inconnu refuse de révéler son identité.",
 	"toast.david_no_discard": "Aucun équipement dans les défausses",
 
+	"notebook.title": "🔍 Carnet du détective  [N]",
+	"notebook.subtitle": "Déductions basées sur les indices publics",
+
+	"toast.player_disconnected": "%s s'est déconnecté — un bot prend le relais",
+	"toast.server_lost": "Connexion au serveur perdue — retour au menu...",
+
 	"popup.murder_ray": "Rayon Meurtrier — Choisir une cible à la Porte des Enfers",
 	"popup.murder_ray_btn": "Frapper",
 
@@ -305,5 +319,11 @@
 	"unknown.deceit_title": "Duperie",
 	"unknown.deceit_text": "Une carte vous cible (%s vous vise). Voulez-vous mentir sur votre identité ?",
 	"unknown.deceit_lie": "Mentir",
-	"unknown.deceit_truth": "Révéler la vérité"
+	"unknown.deceit_truth": "Révéler la vérité",
+
+	"card_reveal.type_label": "Type : %s",
+	"card_reveal.deck_label": "Deck : %s",
+	"card_type.instant": "Instantanée",
+	"card_type.equipment": "Équipement",
+	"card_type.vision": "Vision"
 }

@@ -63,7 +63,6 @@ func show_effect(zone_data: Dictionary, current_player: Player, all_players: Arr
 			push_warning("[ZoneEffectPopup] Unknown effect: %s" % _zone_effect)
 			return
 
-	cancel_button.visible = true
 	_show_animated()
 
 
@@ -155,6 +154,7 @@ func _build_damage_or_heal_ui(all_players: Array) -> void:
 	if targets.is_empty():
 		hint.text = Tr.t("zone.no_targets")
 		cancel_button.text = Tr.t("zone.close")
+		cancel_button.visible = true
 		return
 
 	for target in targets:
@@ -197,9 +197,11 @@ func _build_choose_deck_ui() -> void:
 		{"type": "black", "label": Tr.t("zone.deck_black"), "color": Color(0.5, 0.5, 0.5)},
 	]
 
+	var any_available := false
 	for deck_info in decks:
-		var deck = _get_deck_by_type(deck_info.type)
-		var count = deck.get_card_count() if deck else 0
+		var count: int = _get_deck_count(deck_info.type)
+		if count > 0:
+			any_available = true
 
 		var btn = Button.new()
 		btn.text = Tr.t("zone.deck_cards", [deck_info.label, count])
@@ -209,6 +211,10 @@ func _build_choose_deck_ui() -> void:
 		btn.disabled = count == 0
 		btn.pressed.connect(_on_deck_chosen.bind(deck_info.type))
 		content_container.add_child(btn)
+
+	cancel_button.visible = not any_available
+	if not any_available:
+		cancel_button.text = Tr.t("zone.close")
 
 
 ## Build UI for Erstwhile Altar: steal equipment from a player
@@ -223,6 +229,7 @@ func _build_steal_equipment_ui(all_players: Array) -> void:
 		hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		content_container.add_child(hint)
 		cancel_button.text = Tr.t("zone.close")
+		cancel_button.visible = true
 		return
 
 	var hint = Label.new()
@@ -286,6 +293,14 @@ func _get_deck_by_type(deck_type: String) -> DeckManager:
 	return null
 
 
+## Deck size — network clients have no deck instances, only synced counters
+func _get_deck_count(deck_type: String) -> int:
+	if GameState.is_network_game and not multiplayer.is_server():
+		return GameState.net_deck_counts.get(deck_type, 0)
+	var deck = _get_deck_by_type(deck_type)
+	return deck.get_card_count() if deck else 0
+
+
 func _create_player_row(player: Player) -> HBoxContainer:
 	var row = HBoxContainer.new()
 	row.add_theme_constant_override("separation", 8)
@@ -318,8 +333,8 @@ func _show_animated() -> void:
 	scale = Vector2(0.9, 0.9)
 	var tween = create_tween()
 	tween.set_parallel(true)
-	tween.tween_property(self, "modulate:a", 1.0, 0.2)
-	tween.tween_property(self, "scale", Vector2(1.0, 1.0), 0.2).set_trans(Tween.TRANS_BACK)
+	tween.tween_property(self, "modulate:a", 1.0, 0.4)
+	tween.tween_property(self, "scale", Vector2(1.0, 1.0), 0.4).set_trans(Tween.TRANS_BACK)
 
 
 # -----------------------------------------------------------------------------

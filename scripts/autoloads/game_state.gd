@@ -57,6 +57,13 @@ signal equipment_discarded(player, card: Card)
 ## Emitted when a player moves to a new zone
 signal player_moved(player, zone_id: String)
 
+## Emitted when a vision card resolves publicly.
+## condition_met reflects what everyone SAW — a Duperie lie emits false.
+signal vision_resolved(drawer, target, effect: Dictionary, condition_met: bool)
+
+## Emitted when the game state is reset for a new game
+signal game_reset
+
 
 # =============================================================================
 # GAME STATE
@@ -67,6 +74,9 @@ var is_network_game: bool = false
 
 ## Index of the local player in network mode (-1 = server only, no local player)
 var my_network_player_index: int = -1
+
+## Deck counts received from the server (network clients have no deck instances)
+var net_deck_counts: Dictionary = {}
 
 ## All players in the game (human and bot)
 var players: Array = []  # Will be Array[Player] when Player class exists
@@ -385,8 +395,12 @@ func reset() -> void:
 	black_deck = null
 	zone_positions.clear()
 	last_win_result = {}
+	is_network_game = false
+	my_network_player_index = -1
+	net_deck_counts.clear()
 	if win_checker:
 		win_checker.reset()
+	game_reset.emit()
 	print("[GameState] Reset complete")
 
 
