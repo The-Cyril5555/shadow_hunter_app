@@ -78,6 +78,10 @@ func _create_particle_node() -> CPUParticles2D:
 ## @param world_position: Global position to spawn particles
 ## @returns: CPUParticles2D instance (or null if pool exhausted)
 func spawn_particles(effect_name: String, world_position: Vector2) -> CPUParticles2D:
+	# Headless (dedicated server): pool and presets are not initialized
+	if DisplayServer.get_name() == "headless":
+		return null
+
 	# Get available particle from pool
 	var particle = _get_available_particle()
 	if not particle:

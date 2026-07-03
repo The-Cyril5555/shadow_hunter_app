@@ -15,6 +15,7 @@ signal remote_action_received(player_idx: int, action: Dictionary)
 signal target_selection_requested(target_ids: Array)
 signal ability_choice_requested(title: String, text: String, yes_text: String, no_text: String)
 signal toast_received(message: String, color: Color)
+signal visual_event_received(event: Dictionary)
 
 
 # -----------------------------------------------------------------------------
@@ -174,6 +175,27 @@ func send_toast_to_peer(peer_id: int, message: String, color: Color = Color.WHIT
 	if not multiplayer.is_server() or peer_id <= 0:
 		return
 	_rpc_show_toast.rpc_id(peer_id, message, color)
+
+
+## Broadcast a visual event (attack, heal, miss...) — clients replay the local animation
+func broadcast_visual_event(event: Dictionary) -> void:
+	if not multiplayer.is_server():
+		return
+	_rpc_visual_event.rpc(event)
+
+
+## Send a visual event to a single peer (e.g. drawn card reveal for the drawer)
+func send_visual_event_to_peer(peer_id: int, event: Dictionary) -> void:
+	if not multiplayer.is_server() or peer_id <= 0:
+		return
+	_rpc_visual_event.rpc_id(peer_id, event)
+
+
+@rpc("authority", "reliable", "call_local")
+func _rpc_visual_event(event: Dictionary) -> void:
+	if multiplayer.is_server():
+		return
+	visual_event_received.emit(event)
 
 
 ## Broadcast game over to all clients

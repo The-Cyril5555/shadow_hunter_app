@@ -114,6 +114,7 @@ func _ready() -> void:
 		_net.target_selection_requested.connect(_on_net_target_selection_requested)
 		_net.ability_choice_requested.connect(_on_net_ability_choice_requested)
 		_net.toast_received.connect(_on_net_toast_received)
+		_net.visual_event_received.connect(_on_net_visual_event)
 		# Mid-game disconnect handling
 		if multiplayer.is_server():
 			NetworkManager.peer_disconnected.connect(_on_net_peer_disconnected)
@@ -712,6 +713,8 @@ func _auto_draw_card(player: Player) -> void:
 	if not (GameState.is_network_game and multiplayer.is_server()):
 		card_reveal.show_card(card)
 		await card_reveal.card_reveal_finished
+	else:
+		_net_show_card_to_drawer(player, card)
 
 	if card.type == "instant":
 		# Instant cards must be used immediately
@@ -805,6 +808,8 @@ func _on_zone_effect_completed(result: Dictionary) -> void:
 					if not (GameState.is_network_game and multiplayer.is_server()):
 						card_reveal.show_card(card)
 						await card_reveal.card_reveal_finished
+					else:
+						_net_show_card_to_drawer(current_player, card)
 					if card.type == "instant":
 						_apply_instant_card_effect(card, current_player)
 						deck.discard_card(card)
@@ -936,10 +941,12 @@ func _on_draw_card_pressed() -> void:
 
 	_update_deck_displays()
 
-	# Show card reveal animation — skip on headless server (no display)
+	# Show card reveal animation — on headless server, send it to the drawer's client
 	if not (GameState.is_network_game and multiplayer.is_server()):
 		card_reveal.show_card(card)
 		await card_reveal.card_reveal_finished
+	else:
+		_net_show_card_to_drawer(current_player, card)
 
 	# Apply card effect based on type
 	if card.type == "instant":
@@ -1892,6 +1899,42 @@ func _on_net_toast_received(message: String, color: Color) -> void:
 		toast.show_toast(message, color)
 
 
+## Server: send the drawn card to the drawer's client for the reveal animation
+func _net_show_card_to_drawer(player: Player, card: Card) -> void:
+	if _net == null or player == null or card == null:
+		return
+	var peer_id: int = _net.get_peer_for_player(player.id)
+	if peer_id > 0:
+		_net.send_visual_event_to_peer(peer_id, {"type": "card_drawn", "card": card.to_dict()})
+
+
+## Client: replay a server-side visual event with the same local animations
+func _on_net_visual_event(event: Dictionary) -> void:
+	if multiplayer.is_server():
+		return
+	match event.get("type", ""):
+		"attack":
+			var attacker = _find_player_by_id(event.get("attacker_id", -1))
+			var target = _find_player_by_id(event.get("target_id", -1))
+			if attacker and target:
+				await _play_card_strike_animation(attacker, target, int(event.get("damage", 0)))
+		"attack_missed":
+			var target = _find_player_by_id(event.get("target_id", -1))
+			if target:
+				var miss_card = character_cards_row.get_card_panel(target.id)
+				if miss_card:
+					_show_floating_miss(miss_card.global_position + Vector2(30, -10))
+					_play_miss_dodge(miss_card)
+		"heal":
+			var player = _find_player_by_id(event.get("player_id", -1))
+			if player:
+				_play_heal_visual(player, int(event.get("amount", 0)))
+		"card_drawn":
+			var card = Card.new()
+			card.from_dict(event.get("card", {}))
+			card_reveal.show_card(card)
+
+
 ## Server: a peer dropped mid-game — a bot takes over so the game never stalls
 func _on_net_peer_disconnected(peer_id: int) -> void:
 	if _game_ended or not GameState.is_network_game or not multiplayer.is_server() or _net == null:
@@ -2804,6 +2847,8 @@ func _on_combat_roll_completed(total_damage: int) -> void:
 		# Missed attack (D6 == D4)
 		if toast:
 			_toast(Tr.t("toast.attack_missed"), Color(1.0, 0.6, 0.3))
+		if GameState.is_network_game and multiplayer.is_server() and _net:
+			_net.broadcast_visual_event({"type": "attack_missed", "target_id": target.id})
 		var miss_card = character_cards_row.get_card_panel(target.id)
 		if miss_card:
 			_show_floating_miss(miss_card.global_position + Vector2(30, -10))
@@ -2913,8 +2958,15 @@ func _find_player_token(player: Player) -> PlayerToken:
 
 ## Play card strike animation: attacker card lunges toward target card
 func _play_card_strike_animation(attacker: Player, target: Player, damage: int) -> void:
-	# Skip on headless server (no display, ParticlePool not initialized)
+	# Headless server: relay the visual to clients, which replay it locally
 	if GameState.is_network_game and multiplayer.is_server():
+		if _net:
+			_net.broadcast_visual_event({
+				"type": "attack",
+				"attacker_id": attacker.id,
+				"target_id": target.id,
+				"damage": damage,
+			})
 		return
 	var attacker_card = character_cards_row.get_card_panel(attacker.id)
 	var target_card = character_cards_row.get_card_panel(target.id)
@@ -3039,7 +3091,14 @@ func _show_floating_heal(world_pos: Vector2, amount: int) -> void:
 
 ## Play heal visual effects on a player's character card (particles + float number + green flash)
 func _play_heal_visual(player: Player, amount: int) -> void:
+	# Headless server: relay the visual to clients, which replay it locally
 	if GameState.is_network_game and multiplayer.is_server():
+		if _net:
+			_net.broadcast_visual_event({
+				"type": "heal",
+				"player_id": player.id,
+				"amount": amount,
+			})
 		return
 	var card_panel = character_cards_row.get_card_panel(player.id)
 	if card_panel == null:
