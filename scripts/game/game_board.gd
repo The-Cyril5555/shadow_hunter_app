@@ -75,6 +75,12 @@ var _net_pending_target_peer: int = -1
 ## Online server: peer owing a pending binary choice (-1 = none)
 var _net_pending_choice_peer: int = -1
 
+## Online server: seconds of inactivity before the bot plays the current turn
+const NET_TURN_TIMEOUT: float = 90.0
+
+## Online server: anti-AFK timer (null on clients / local games)
+var _net_afk_timer: Timer = null
+
 
 # -----------------------------------------------------------------------------
 # Lifecycle
@@ -111,6 +117,12 @@ func _ready() -> void:
 		# Mid-game disconnect handling
 		if multiplayer.is_server():
 			NetworkManager.peer_disconnected.connect(_on_net_peer_disconnected)
+			NetworkManager.peer_rejoined.connect(_on_net_peer_rejoined)
+			# Anti-AFK: if the current player stays idle too long, the bot plays for them
+			_net_afk_timer = Timer.new()
+			_net_afk_timer.one_shot = true
+			_net_afk_timer.timeout.connect(_on_net_afk_timeout)
+			add_child(_net_afk_timer)
 		else:
 			NetworkManager.server_disconnected.connect(_on_net_server_disconnected)
 		print("[GameBoard] Network bridge active — I am player %d" % GameState.my_network_player_index)
@@ -440,11 +452,16 @@ func _on_phase_changed(new_phase: GameState.TurnPhase) -> void:
 					cp.set_meta("damage_immune", false)
 			# If current player is a bot, server auto-plays their turn
 			if cp and not cp.is_human:
+				if _net_afk_timer:
+					_net_afk_timer.stop()
 				if _net:
 					_net.broadcast_public_state()
 					_net.send_all_private_states()
 				_execute_bot_turn()
 				return
+			# Human player: arm the anti-AFK timer for their turn
+			if cp and cp.is_human and _net_afk_timer:
+				_net_afk_timer.start(NET_TURN_TIMEOUT)
 			# Emi "Téléportation" — send choice to client before broadcasting
 			if cp and cp.character_id == "emi" and cp.is_revealed and not cp.ability_disabled and _net:
 				var paired_zone_id = _get_emi_paired_zone(cp.position_zone)
@@ -549,15 +566,19 @@ func _on_action_prompt_chosen(action: String) -> void:
 				has_drawn_this_turn = true
 				_net.send_draw_card()
 			"attack":
-				# Client picks target locally, then sends attack+target to server
+				# Client picks target and rolls its dice locally (full combat popup),
+				# then sends target + dice to the server which validates and applies
 				var targets = get_valid_targets()
 				if targets.is_empty():
 					return
 				target_selection_panel.show_targets(targets)
 				var chosen: Player = await target_selection_panel.target_selected
 				if chosen:
+					var me: Player = GameState.get_current_player()
+					dice_roll_popup.show_for_combat(me, chosen)
+					await dice_roll_popup.combat_roll_completed
 					has_attacked_this_turn = true
-					_net.send_attack(chosen.id)
+					_net.send_attack(chosen.id, dice_roll_popup.dice.dice1_result, dice_roll_popup.dice.dice2_result)
 			"reveal":
 				_net.send_reveal()
 			"ability":
@@ -1705,6 +1726,10 @@ func _on_net_remote_action(player_idx: int, action: Dictionary) -> void:
 		return
 	var action_type: String = action.get("type", "")
 
+	# Any client activity resets the anti-AFK countdown
+	if _net_afk_timer and not _net_afk_timer.is_stopped():
+		_net_afk_timer.start(NET_TURN_TIMEOUT)
+
 	# --- Async actions (return early; broadcast handled by subsequent phase change) ---
 
 	# Zone move: client picked a zone after rolling dice
@@ -1717,7 +1742,8 @@ func _on_net_remote_action(player_idx: int, action: Dictionary) -> void:
 			# _move_player_to_zone → advance_phase → _on_phase_changed broadcasts
 		return
 
-	# Attack: client already chose the target — server rolls damage and applies it
+	# Attack: client chose target and rolled dice in its popup — server validates
+	# the dice and recomputes damage with the authoritative formula
 	if action_type == "attack":
 		if has_attacked_this_turn:
 			push_warning("[GameBoard] Player %d already attacked this turn" % player_idx)
@@ -1726,7 +1752,8 @@ func _on_net_remote_action(player_idx: int, action: Dictionary) -> void:
 		var target = _find_player_by_id(target_id)
 		if target:
 			_combat_target = target
-			var damage: int = _server_roll_combat_damage(player, target)
+			var damage: int = _server_roll_combat_damage(player, target,
+				action.get("d6", 0), action.get("d4", 0))
 			await _on_combat_roll_completed(damage)
 		if _net:
 			_net.broadcast_public_state()
@@ -1908,6 +1935,67 @@ func _on_net_peer_disconnected(peer_id: int) -> void:
 		_net.send_all_private_states()
 
 
+## Server: current player idle too long — resolve pending waits, bot plays this turn
+func _on_net_afk_timeout() -> void:
+	if _game_ended or not (GameState.is_network_game and multiplayer.is_server()):
+		return
+	var player: Player = GameState.get_current_player()
+	if player == null or not player.is_human:
+		return
+	print("[GameBoard] %s is AFK — bot plays this turn" % player.display_name)
+	_toast(Tr.t("toast.player_afk", [player.display_name]), Color(1.0, 0.7, 0.3))
+
+	# Unblock pending waits exactly like a disconnect would
+	if _net_pending_choice_peer > 0:
+		_net_pending_choice_peer = -1
+		_reveal_choice_made.emit(false)
+	_net_pending_target_peer = -1
+	if _vision_pending or _instant_card_pending or _pending_ability:
+		var targets: Array = target_selection_panel.get_current_targets()
+		if not targets.is_empty():
+			target_selection_panel._emit_selection(targets[randi() % targets.size()])
+		else:
+			target_selection_panel._emit_selection(null)
+
+	# Resolving a pending wait may already have ended the turn
+	if _game_ended or GameState.get_current_player() != player:
+		if _net:
+			_net.broadcast_public_state()
+			_net.send_all_private_states()
+		return
+
+	# Let the bot finish this turn WITHOUT permanently converting the player
+	if GameState.current_phase == GameState.TurnPhase.MOVEMENT and not has_rolled_this_turn:
+		player.is_human = false
+		await _execute_bot_turn()
+		player.is_human = true
+	else:
+		_force_end_turn()
+	if _net:
+		_net.broadcast_public_state()
+		_net.send_all_private_states()
+
+
+## Server: a disconnected player rejoined with the room code — hand control back
+func _on_net_peer_rejoined(peer_id: int, player_idx: int) -> void:
+	if _game_ended or not (GameState.is_network_game and multiplayer.is_server()) or _net == null:
+		return
+	if player_idx < 0 or player_idx >= GameState.players.size():
+		return
+	var player: Player = GameState.players[player_idx]
+	player.is_human = true
+	_net.add_peer(peer_id, player_idx)
+	print("[GameBoard] %s rejoined as peer %d" % [player.display_name, peer_id])
+	_toast(Tr.t("toast.player_rejoined", [player.display_name]), Color(0.4, 1.0, 0.5))
+	# Send the full current game snapshot so their client rebuilds the board
+	NetworkManager.send_game_snapshot_to_peer(peer_id, player_idx)
+	# Give the client a moment to load the board, then sync live state
+	await get_tree().create_timer(1.5).timeout
+	if _net and not _game_ended:
+		_net.broadcast_public_state()
+		_net.send_private_state_to_peer(peer_id)
+
+
 ## Server: advance phases to hand the turn to the next player (disconnect recovery)
 func _force_end_turn() -> void:
 	match GameState.current_phase:
@@ -2042,9 +2130,10 @@ func _on_net_ability_choice_requested(title: String, text: String, yes_text: Str
 
 ## Helper: find a player by their id
 ## Server: compute combat damage without UI — same formula as DiceRollPopup
-func _server_roll_combat_damage(attacker: Player, target: Player) -> int:
-	var d6: int = randi_range(1, 6)
-	var d4: int = randi_range(1, 4)
+func _server_roll_combat_damage(attacker: Player, target: Player, client_d6: int = 0, client_d4: int = 0) -> int:
+	# Use the dice the client rolled in its popup when valid, otherwise roll here
+	var d6: int = client_d6 if client_d6 >= 1 and client_d6 <= 6 else randi_range(1, 6)
+	var d4: int = client_d4 if client_d4 >= 1 and client_d4 <= 4 else randi_range(1, 4)
 	# Valkyrie: d4 only, no miss
 	var is_valkyrie: bool = attacker.character_id == "valkyrie" \
 		and attacker.is_revealed and not attacker.ability_disabled
@@ -3328,6 +3417,8 @@ func _on_game_over(winning_faction: String) -> void:
 	print("[GameBoard] Game Over! %s wins!" % winning_faction)
 	# Network server: broadcast to all clients, then free the room for a new game
 	if GameState.is_network_game and multiplayer.is_server() and _net:
+		if _net_afk_timer:
+			_net_afk_timer.stop()
 		_net.broadcast_game_over(winning_faction)
 		NetworkManager.end_started_rooms()
 

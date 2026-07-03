@@ -292,6 +292,8 @@
 
 	"toast.player_disconnected": "%s s'est déconnecté — un bot prend le relais",
 	"toast.server_lost": "Connexion au serveur perdue — retour au menu...",
+	"toast.player_rejoined": "%s est de retour dans la partie !",
+	"toast.player_afk": "%s est inactif — l'ordinateur joue ce tour",
 
 	"popup.murder_ray": "Rayon Meurtrier — Choisir une cible à la Porte des Enfers",
 	"popup.murder_ray_btn": "Frapper",

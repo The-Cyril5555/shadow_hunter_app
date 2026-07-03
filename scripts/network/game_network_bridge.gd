@@ -55,6 +55,12 @@ func remove_peer(peer_id: int) -> void:
 		print("[GameNetworkBridge] Peer %d removed from map" % peer_id)
 
 
+## Server: register a peer controlling a player (mid-game rejoin)
+func add_peer(peer_id: int, player_idx: int) -> void:
+	_peer_to_player[peer_id] = player_idx
+	print("[GameNetworkBridge] Peer %d mapped to player %d (rejoin)" % [peer_id, player_idx])
+
+
 ## Returns true if local peer controls the current active player
 func is_my_turn() -> bool:
 	return _my_player_index == GameState.current_player_index
@@ -72,8 +78,14 @@ func send_draw_card() -> void:
 	_rpc_client_action.rpc_id(1, {"type": "draw_card", "player_idx": _my_player_index})
 
 
-func send_attack(target_player_id: int) -> void:
-	_rpc_client_action.rpc_id(1, {"type": "attack", "target": target_player_id, "player_idx": _my_player_index})
+func send_attack(target_player_id: int, d6: int = 0, d4: int = 0) -> void:
+	_rpc_client_action.rpc_id(1, {
+		"type": "attack",
+		"target": target_player_id,
+		"d6": d6,
+		"d4": d4,
+		"player_idx": _my_player_index,
+	})
 
 
 func send_use_card(card_id: String, target_player_id: int) -> void:

@@ -19,6 +19,7 @@ signal lobby_updated(players: Array)
 signal game_started(initial_players: Array, my_player_index: int, zone_positions: Array)
 signal bot_count_updated(count: int)
 signal start_failed(reason: String)
+signal peer_rejoined(peer_id: int, player_idx: int)
 
 
 # -----------------------------------------------------------------------------
@@ -204,7 +205,23 @@ func _rpc_join_room(code: String, player_name: String) -> void:
 	var room = _rooms[code]
 
 	if room.started:
-		_rpc_join_failed.rpc_id(sender_id, "game_already_started")
+		# Mid-game rejoin: reattach to a disconnected player slot matching the name
+		var rejoin_idx: int = -1
+		for i in range(room.players.size()):
+			var entry: Dictionary = room.players[i]
+			if not entry.get("connected", true) and entry.get("name", "") == player_name \
+					and i < GameState.players.size() and not GameState.players[i].is_human:
+				rejoin_idx = i
+				break
+		if rejoin_idx == -1:
+			_rpc_join_failed.rpc_id(sender_id, "game_already_started")
+			return
+		room.players[rejoin_idx]["id"] = sender_id
+		room.players[rejoin_idx]["connected"] = true
+		room.peers.append(sender_id)
+		print("[NetworkManager] Peer %d rejoined room %s as player %d (%s)" % [sender_id, code, rejoin_idx, player_name])
+		_rpc_room_joined.rpc_id(sender_id, code, room.players)
+		peer_rejoined.emit(sender_id, rejoin_idx)
 		return
 
 	if room.peers.size() >= MAX_PLAYERS:
@@ -393,6 +410,49 @@ func _setup_network_game(room: Dictionary) -> void:
 	GameModeStateMachine.transition_to(GameModeStateMachine.GameMode.GAME, true)
 
 
+## Send the CURRENT game state to a rejoining peer (drives the client game-start flow)
+func send_game_snapshot_to_peer(peer_id: int, player_idx: int) -> void:
+	var serialized: Array = _serialize_players_snapshot(GameState.players, player_idx)
+	_rpc_game_started.rpc_id(peer_id, serialized, player_idx, GameState.zone_positions.duplicate())
+
+
+## Serialize players with their current state for a mid-game rejoin (viewer-filtered)
+func _serialize_players_snapshot(players: Array, viewer_idx: int) -> Array:
+	var result: Array = []
+	for i in range(players.size()):
+		var p: Player = players[i]
+		var p_dict: Dictionary = {
+			"id": p.id,
+			"display_name": p.display_name,
+			"is_human": p.is_human,
+			"hp": p.hp,
+			"hp_max": p.hp_max,
+			"is_alive": p.is_alive,
+			"is_revealed": p.is_revealed,
+			"position_zone": p.position_zone,
+			"equipment": [],
+			"hand": [],
+		}
+		for card in p.equipment:
+			p_dict["equipment"].append(card.to_dict())
+		# Identity is visible for the viewer themselves and publicly revealed players
+		if i == viewer_idx or p.is_revealed:
+			p_dict["character_id"] = p.character_id
+			p_dict["character_name"] = p.character_name
+			p_dict["faction"] = p.faction
+			p_dict["ability_data"] = p.ability_data
+		else:
+			p_dict["character_id"] = ""
+			p_dict["character_name"] = ""
+			p_dict["faction"] = ""
+			p_dict["ability_data"] = {}
+		if i == viewer_idx:
+			for card in p.hand:
+				p_dict["hand"].append(card.to_dict())
+		result.append(p_dict)
+	return result
+
+
 ## Serialize all players for initial state, filtering private data per viewer
 func _serialize_initial_players(players: Array, viewer_idx: int) -> Array:
 	var result: Array = []
@@ -467,8 +527,17 @@ func _remove_peer_from_rooms(peer_id: int) -> void:
 		var room = _rooms[code]
 		if peer_id in room.peers:
 			room.peers.erase(peer_id)
-			room.players = room.players.filter(func(p): return p.id != peer_id)
 
+			if room.started:
+				# Keep the player entry so they can rejoin mid-game with the room code.
+				# The room itself is cleaned up at game over (end_started_rooms).
+				for entry in room.players:
+					if entry.get("id", 0) == peer_id:
+						entry["connected"] = false
+				print("[NetworkManager] Peer %d left started room %s (rejoin possible)" % [peer_id, code])
+				return
+
+			room.players = room.players.filter(func(p): return p.id != peer_id)
 			if room.peers.is_empty():
 				_rooms.erase(code)
 				print("[NetworkManager] Room %s deleted (empty)" % code)

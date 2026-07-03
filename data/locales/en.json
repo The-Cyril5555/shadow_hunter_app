@@ -298,6 +298,8 @@
 
 	"toast.player_disconnected": "%s disconnected — a bot takes over",
 	"toast.server_lost": "Connection to server lost — returning to menu...",
+	"toast.player_rejoined": "%s is back in the game!",
+	"toast.player_afk": "%s is idle — the computer plays this turn",
 
 	"popup.murder_ray": "Murder Ray — Choose a target at the Underworld Gate",
 	"popup.murder_ray_btn": "Strike",
