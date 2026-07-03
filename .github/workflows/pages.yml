@@ -1,4 +1,4 @@
-name: Deploy to GitHub Pages
+name: Validate & Deploy to GitHub Pages
 
 on:
   push:
@@ -9,31 +9,94 @@ on:
 permissions:
   contents: write
 
+env:
+  GODOT_VERSION: "4.6"
+
 jobs:
-  export-and-deploy:
+  validate:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Godot 4.6
+      - name: Install Godot
         run: |
           wget -q \
-            "https://github.com/godotengine/godot/releases/download/4.6-stable/Godot_v4.6-stable_linux.x86_64.zip" \
+            "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip" \
             -O /tmp/godot.zip
           unzip -q /tmp/godot.zip -d /tmp/
-          sudo mv "/tmp/Godot_v4.6-stable_linux.x86_64" /usr/local/bin/godot
+          sudo mv "/tmp/Godot_v${GODOT_VERSION}-stable_linux.x86_64" /usr/local/bin/godot
+          sudo chmod +x /usr/local/bin/godot
+
+      - name: Import resources
+        run: |
+          timeout 180 godot --headless --editor --path . --quit 2>&1 || true
+
+      - name: Script compilation check
+        run: |
+          godot --headless --path . -s res://tests/e2e/compile_check.gd
+
+      - name: E2E multiplayer — full game
+        run: |
+          godot --headless --path . > server.log 2>&1 &
+          SERVER_PID=$!
+          sleep 8
+          set +e
+          GODOT_WS_PORT=9091 timeout 150 godot --headless --path . -s res://tests/e2e/net_client.gd
+          RESULT=$?
+          set -e
+          kill $SERVER_PID 2>/dev/null || true
+          if [ $RESULT -ne 0 ]; then
+            echo "=== server.log (tail) ==="
+            tail -60 server.log
+            exit $RESULT
+          fi
+
+      - name: E2E multiplayer — disconnect and rejoin
+        run: |
+          sleep 3
+          godot --headless --path . > server2.log 2>&1 &
+          SERVER_PID=$!
+          sleep 8
+          set +e
+          GODOT_WS_PORT=9092 timeout 60 godot --headless --path . -s res://tests/e2e/net_dropper.gd
+          DROP_RESULT=$?
+          GODOT_WS_PORT=9093 timeout 90 godot --headless --path . -s res://tests/e2e/net_rejoiner.gd
+          REJOIN_RESULT=$?
+          set -e
+          kill $SERVER_PID 2>/dev/null || true
+          if [ $DROP_RESULT -ne 0 ] || [ $REJOIN_RESULT -ne 0 ]; then
+            echo "=== server2.log (tail) ==="
+            tail -60 server2.log
+            exit 1
+          fi
+
+  export-and-deploy:
+    runs-on: ubuntu-latest
+    needs: validate
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Godot
+        run: |
+          wget -q \
+            "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip" \
+            -O /tmp/godot.zip
+          unzip -q /tmp/godot.zip -d /tmp/
+          sudo mv "/tmp/Godot_v${GODOT_VERSION}-stable_linux.x86_64" /usr/local/bin/godot
           sudo chmod +x /usr/local/bin/godot
 
       - name: Install export templates
         run: |
           wget -q \
-            "https://github.com/godotengine/godot/releases/download/4.6-stable/Godot_v4.6-stable_export_templates.tpz" \
+            "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_export_templates.tpz" \
             -O /tmp/templates.tpz
-          mkdir -p ~/.local/share/godot/export_templates/4.6.stable
+          mkdir -p ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
           unzip -q /tmp/templates.tpz -d /tmp/tpl/
-          mv /tmp/tpl/templates/* ~/.local/share/godot/export_templates/4.6.stable/
+          mv /tmp/tpl/templates/* ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable/
 
       - name: Import resources
         run: |
