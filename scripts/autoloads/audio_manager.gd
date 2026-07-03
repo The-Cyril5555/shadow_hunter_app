@@ -121,6 +121,10 @@ func _load_volume_settings() -> void:
 ## @param custom_pitch: Override pitch (1.0 = normal, 0.0 = disabled pitch variation)
 ## @returns: AudioStreamPlayer if played successfully, null otherwise
 func play_sfx(sound_name: String, pitch_variation: bool = true, custom_pitch: float = 0.0) -> AudioStreamPlayer:
+	# Headless (dedicated server): audio players are not initialized
+	if DisplayServer.get_name() == "headless":
+		return null
+
 	# Get available sound player
 	var player = _get_available_player()
 	if not player:

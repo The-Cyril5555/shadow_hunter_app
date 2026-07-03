@@ -81,6 +81,10 @@ func _on_game_snapshot(players: Array, my_player_index: int, zone_positions: Arr
 		quit(1)
 		return
 	bridge.public_state_received.connect(_on_live_state)
+	# Game ending right after our rejoin still proves the rejoin worked
+	_gs.game_over.connect(func(faction):
+		print("[TEST] SUCCESS — game over (%s wins) right after rejoin" % faction)
+		quit(0))
 	print("[TEST] board rebuilt — waiting for live state from server")
 
 

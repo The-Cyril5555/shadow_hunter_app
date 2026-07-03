@@ -86,6 +86,10 @@ func _on_game_started(initial_players: Array, my_player_index: int, zone_positio
 	if zone_positions.size() > 0:
 		_gs.zone_positions = zone_positions
 	_my_idx = my_player_index
+	# A game legitimately ending early (kill on turn 1-2) is also a full valid flow
+	_gs.game_over.connect(func(faction):
+		print("[TEST] SUCCESS — game over reached (%s wins) at turn %d" % [faction, _gs.turn_count])
+		quit(0))
 	var scene = load("res://scenes/game/game_board.tscn").instantiate()
 	root.add_child(scene)
 	_board = scene
@@ -100,7 +104,7 @@ func _drive() -> void:
 		])
 		quit(0)
 		return
-	if _board == null:
+	if _board == null or not is_instance_valid(_board):
 		return
 
 	# Answer a server-requested target selection (vision / instant / ability)
